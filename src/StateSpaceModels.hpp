@@ -34,6 +34,7 @@
 #include <iostream>
 #include <exception>
 #include <vector>
+#include <math.h>
 #include "MatrixOperations.hpp"
 
 #define pi 3.14159265359
@@ -67,20 +68,40 @@ private:
     // Model properties //
     //******************//
 
-    // Size of the state vector
-    uint number_states;
+    // Indexes of the pose of the arm end effector from the world reference frame
+    // Size: 3
+    std::vector<uint> world_ee_pose_indexes;
 
-    // Size of the control input vector
-    uint number_inputs;
+    // Indexes of the pose of the arm end effector from its base reference frame
+    // Size: 6
+    std::vector<uint> base_ee_pose_indexes;
 
     // Indexes of the XY pose of the robot
-    std::vector<uint> pose_indexes;
+    // Size: 2
+    std::vector<uint> rover_pose_indexes;
 
     // Index of the yaw of the robot
     uint yaw_index;
 
-    // Indexes of the XY speed of the robot
+    // Indexes of the XY and yaw speed of the robot
+    // Size: 3
     std::vector<uint> base_speed_indexes;
+
+    // Indexes of the arm joints position of the robot
+    // Size: number_arm_joints
+    std::vector<uint> arm_position_indexes;
+
+    // Indexes of the wheels speed
+    // Size: 2 (right and left speed trains, differential steering)
+    std::vector<uint> wheels_speed_indexes;
+
+    // Indexes of the arm joints speed control input of the robot
+    // Size: number_arm_joints
+    std::vector<uint> arm_actuators_indexes;
+
+    // Indexes of the arm joints speed control input of the robot
+    // Size: 2 (right and left speed trains, differential steering)
+    std::vector<uint> wheels_actuators_indexes;
 
     // Indexes of the constrained states
     std::vector<uint> state_constrained_indexes;
@@ -188,7 +209,27 @@ private:
     //**********************//
     // Supporting variables //
     //**********************//
+   
+    // Size of the state vector
+    uint number_states;
 
+    // Size of the control input vector
+    uint number_inputs;
+
+    // Name of the robot
+    std::string robot_name;
+
+    // Numebr of manipulator degrees of freedom
+    uint number_arm_joints;
+
+    // Number of wheels of the robot base
+    uint number_wheels;
+
+    // Number of state input constraints
+    uint number_si_constraints;
+
+    // Number of pure state constraints
+    uint number_ps_constraints;
 
     //**********************//
     // Supporting Functions //
@@ -200,7 +241,7 @@ public:
     // Class Constructor //
     //*******************//
 
-    MobileManipulator(std::string robot_name);
+    MobileManipulator(std::string _robot_name);
 
     ~MobileManipulator();
 
@@ -211,15 +252,14 @@ public:
     // Returns the linearized state space model matrix A.
     // Size of A: number_states x number_states
     std::vector<std::vector<double>> getLinearizedMatrixA(
-                                                   std::vector<std::vector<double>> x,
-                                                   std::vector<std::vector<double>> u,
+                                                   std::vector<double> x,
                                                    double time_step);
 
     // Returns the linearized state space model matrix B.
     // Size of B: number_states x number_inputs
     std::vector<std::vector<double>> getLinearizedMatrixB(
-                                                   std::vector<std::vector<double>> x,
-                                                   std::vector<std::vector<double>> u,
+                                                   std::vector<double> x,
+                                                   std::vector<double> u,
                                                    double time_step);
 
 
@@ -251,9 +291,10 @@ public:
     std::vector<double> getConstraintsMatrixH();
 
 
-    // Returns the pure state cost matrix Q.
+    // Returns the pure state cost matrix Q, in function of the time step provided
+    // e.g. If percentage_horizon is 100, the goal state cost matrix will be returned
     // Size of Q: number_states x number_states
-    std::vector<std::vector<double>> getStateCostMatrix();
+    std::vector<std::vector<double>> getStateCostMatrix(double percentage_horizon);
 
     // Returns the pure input cost matrix R.
     // Size of R: number_inputs x number_inputs
@@ -266,24 +307,31 @@ public:
 
     // Returns the gravity matrix given the arm state. 
     // Size of G: number_arm_joints
-    std::vector<double> getArmGravityMatrix(std::vector<double> x);
+    std::vector<double> getArmGravityMatrix(std::vector<double> arm_positions);
 
     // Returns the inertia matrix given the arm state. 
     // Size of B: number_arm_joints x number_arm_joints
-    std::vector<std::vector<double>> getArmInertiaMatrix(std::vector<double> x);
+    std::vector<std::vector<double>> getArmInertiaMatrix(std::vector<double> arm_positions);
 
     // Returns the coriolis matrix given the arm state. 
     // Size of C: number_arm_joints x number_arm_joints
-    std::vector<std::vector<double>> getArmCoriolisMatrix(std::vector<double> x);
+    std::vector<std::vector<double>> getArmCoriolisMatrix(std::vector<double> arm_positions,
+                                                          std::vector<double> arm_speeds);
 
     // Returns the jacobian matrix given the arm state. 
     // Size of J: 6DoF x number_arm_joints
-    std::vector<std::vector<double>> getArmJacobianMatrix(std::vector<double> x);
+    std::vector<std::vector<double>> getArmJacobianMatrix(std::vector<double> arm_positions);
 
-    // Returns the base-to-end-effector transform matrix given the arm state, 
+    // Returns the base-to-joint_index transform matrix given the arm state, 
     // using direct kinematics
     // Size of TBEE: 4 x 4
-    std::vector<std::vector<double>> getDirectKinematicsTransform(std::vector<double> x);
+    std::vector<std::vector<double>> getDirectKinematicsTransform(
+                                        std::vector<double> arm_positions,
+                                        uint joint_index);
+
+
+    // Returns the wheel inertia
+    double getWheelInertia();
 
 
     // Returns the updated state after applying the control input u into the previous state x

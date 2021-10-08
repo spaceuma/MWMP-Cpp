@@ -74,6 +74,25 @@ std::vector<double> MatrixOperations::dot(std::vector<std::vector<double>> A,
     return c;
 }
 
+double MatrixOperations::dot(std::vector<double> a,
+                             std::vector<double> b)
+{
+    // This function performs vector and vector product
+    int n = a.size();
+    int m = b.size();
+    double c = 0;
+
+    if (n != m)
+    {
+        throw std::domain_error( "\033[1;31mERROR [MatrixOperations::dot]: Vectors do not have the same size\033[0m\n");
+    }
+
+    for (int i = 0; i < n; i++)
+        c += a[i] * b[i];
+
+    return c;
+}
+
 std::vector<double> MatrixOperations::dot(double n, std::vector<double> a)
 {
     // This function performs scalar product
@@ -216,10 +235,7 @@ std::vector<std::vector<double>> MatrixOperations::getInverse(
     double det = getDeterminant(A);
     if (det == 0)
     {
-        std::cout
-            << "\033[1;31mERROR [MatrixOperations::getInverse]: Singular "
-               "matrix, can't find its inverse\033[0m\n";
-        return std::vector<std::vector<double>>(1, std::vector<double>(1, 0));
+        throw std::domain_error( "\033[1;31mERROR [MatrixOperations::getInverse]: Singular matrix, can't find its inverse\033[0m\n");
     }
 
     std::vector<std::vector<double>> adj = getAdjoint(A);
@@ -235,7 +251,7 @@ std::vector<std::vector<double>> MatrixOperations::getInverse(
 }
 
 std::vector<double> MatrixOperations::getCrossProduct(std::vector<double> a,
-                                                        std::vector<double> b)
+                                                      std::vector<double> b)
 {
     std::vector<double> c(3);
 
@@ -247,12 +263,12 @@ std::vector<double> MatrixOperations::getCrossProduct(std::vector<double> a,
 }
 
 std::vector<double> MatrixOperations::getSum(std::vector<double> a,
-                                               std::vector<double> b)
+                                             std::vector<double> b)
 {
     std::vector<double> c;
     if (a.size() != b.size())
     {
-        std::cout << "\033[1;31mERROR [MatrixOperations::getSum]: Vector "
+        throw std::domain_error( "\033[1;31mERROR [MatrixOperations::getSum]: Vectors do not have the same size\033[0m\n");
                      "sizes don't match\033[0m\n";
         return std::vector<double>(1, 0);
     }
@@ -266,12 +282,12 @@ std::vector<double> MatrixOperations::getSum(std::vector<double> a,
 }
 
 std::vector<double> MatrixOperations::getDifference(std::vector<double> a,
-                                                      std::vector<double> b)
+                                                    std::vector<double> b)
 {
     std::vector<double> c;
     if (a.size() != b.size())
     {
-        std::cout << "\033[1;31mERROR [MatrixOperations::getDifference]: "
+        throw std::domain_error( "\033[1;31mERROR [MatrixOperations::getDifference]: Vectors do not have the same size\033[0m\n");
                      "Vector sizes don't match\033[0m\n";
         return std::vector<double>(1, 0);
     }

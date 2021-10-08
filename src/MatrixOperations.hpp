@@ -48,6 +48,8 @@ std::vector<double> dot(std::vector<std::vector<double>> A,
 
 std::vector<double> dot(double n, std::vector<double> a);
 
+double dot(std::vector<double> a, std::vector<double> b);
+
 std::vector<std::vector<double>> getTraslation(std::vector<double> position);
 
 std::vector<std::vector<double>> getXrot(double angle);

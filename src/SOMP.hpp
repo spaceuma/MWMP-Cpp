@@ -31,7 +31,12 @@
 #ifndef __MOTION_PLANNER_SOMP__
 #define __MOTION_PLANNER_SOMP__
 
-#include "SSModels.hpp"
+#include <exception>
+#include <vector>
+
+#include "StateSpaceModels.hpp"
+
+#define pi 3.14159265359
 
 /**
  *  Motion planner using Stepped Optimal SLQr.

@@ -78,7 +78,7 @@ private:
 
     // Indexes of the XY pose of the robot
     // Size: 2
-    std::vector<uint> rover_pose_indexes;
+    std::vector<uint> robot_pose_indexes;
 
     // Index of the yaw of the robot
     uint yaw_index;

@@ -45,7 +45,7 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         world_ee_pose_indexes = {0, 1, 2};
         base_ee_pose_indexes = {3, 4, 5, 6, 7, 8};
 
-        rover_pose_indexes = {9, 10};
+        robot_pose_indexes = {9, 10};
         yaw_index = 11;
 
         base_speed_indexes = {12, 13, 14};
@@ -143,9 +143,9 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(
 {
     std::vector<std::vector<double>> A(number_states,std::vector<double>(number_states,0));
 
-    double rover_yaw = x[yaw_index];
+    double robot_yaw = x[yaw_index];
 
-    std::vector<double> rover_speed = {x[base_speed_indexes[0]], x[base_speed_indexes[1]], x[base_speed_indexes[2]]};
+    std::vector<double> robot_speed = {x[base_speed_indexes[0]], x[base_speed_indexes[1]], x[base_speed_indexes[2]]};
 
     std::vector<double> arm_positions;
     for(uint i = 0; i < number_arm_joints; i++)
@@ -154,14 +154,14 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(
     }
 
     // W2EEx
-    A[world_ee_pose_indexes[0]][base_ee_pose_indexes[2]] = cos(rover_yaw);
-    A[world_ee_pose_indexes[0]][base_ee_pose_indexes[1]] = -sin(rover_yaw);
-    A[world_ee_pose_indexes[0]][rover_pose_indexes[0]] = 1;
+    A[world_ee_pose_indexes[0]][base_ee_pose_indexes[2]] = cos(robot_yaw);
+    A[world_ee_pose_indexes[0]][base_ee_pose_indexes[1]] = -sin(robot_yaw);
+    A[world_ee_pose_indexes[0]][robot_pose_indexes[0]] = 1;
 
     // W2EEy
-    A[world_ee_pose_indexes[1]][base_ee_pose_indexes[2]] = sin(rover_yaw);
-    A[world_ee_pose_indexes[1]][base_ee_pose_indexes[1]] = cos(rover_yaw);
-    A[world_ee_pose_indexes[1]][rover_pose_indexes[1]]  = 1;
+    A[world_ee_pose_indexes[1]][base_ee_pose_indexes[2]] = sin(robot_yaw);
+    A[world_ee_pose_indexes[1]][base_ee_pose_indexes[1]] = cos(robot_yaw);
+    A[world_ee_pose_indexes[1]][robot_pose_indexes[1]]  = 1;
 
     // W2EEz
     A[world_ee_pose_indexes[2]][world_ee_pose_indexes[2]] = 1;
@@ -173,23 +173,23 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(
     }
 
     // W2Cx
-    A[rover_pose_indexes[0]][rover_pose_indexes[0]] = 1;
-    A[rover_pose_indexes[0]][yaw_index] = time_step*
-                         (-sin(rover_yaw)*rover_speed[0]*yaw_linearization_cost -
-                           cos(rover_yaw)*rover_speed[1]*yaw_linearization_cost);
-    A[rover_pose_indexes[0]][base_speed_indexes[0]] = time_step*(cos(rover_yaw) +
-                          sin(rover_yaw)*rover_yaw*yaw_linearization_cost);
-    A[rover_pose_indexes[0]][base_speed_indexes[1]] = -time_step*(sin(rover_yaw) -
-                           cos(rover_yaw)*rover_yaw*yaw_linearization_cost);
+    A[robot_pose_indexes[0]][robot_pose_indexes[0]] = 1;
+    A[robot_pose_indexes[0]][yaw_index] = time_step*
+                         (-sin(robot_yaw)*robot_speed[0]*yaw_linearization_cost -
+                           cos(robot_yaw)*robot_speed[1]*yaw_linearization_cost);
+    A[robot_pose_indexes[0]][base_speed_indexes[0]] = time_step*(cos(robot_yaw) +
+                          sin(robot_yaw)*robot_yaw*yaw_linearization_cost);
+    A[robot_pose_indexes[0]][base_speed_indexes[1]] = -time_step*(sin(robot_yaw) -
+                           cos(robot_yaw)*robot_yaw*yaw_linearization_cost);
 
     // W2Cy
-    A[rover_pose_indexes[1]][rover_pose_indexes[1]] = 1;
-    A[rover_pose_indexes[1]][yaw_index] = time_step*(cos(rover_yaw)*rover_speed[0]*yaw_linearization_cost -
-                           sin(rover_yaw)*rover_speed[1]*yaw_linearization_cost);
-    A[rover_pose_indexes[1]][base_speed_indexes[0]] = time_step*(sin(rover_yaw) -
-                           cos(rover_yaw)*rover_yaw*yaw_linearization_cost);
-    A[rover_pose_indexes[1]][base_speed_indexes[1]] = time_step*(cos(rover_yaw) +
-                           sin(rover_yaw)*rover_yaw*yaw_linearization_cost);
+    A[robot_pose_indexes[1]][robot_pose_indexes[1]] = 1;
+    A[robot_pose_indexes[1]][yaw_index] = time_step*(cos(robot_yaw)*robot_speed[0]*yaw_linearization_cost -
+                           sin(robot_yaw)*robot_speed[1]*yaw_linearization_cost);
+    A[robot_pose_indexes[1]][base_speed_indexes[0]] = time_step*(sin(robot_yaw) -
+                           cos(robot_yaw)*robot_yaw*yaw_linearization_cost);
+    A[robot_pose_indexes[1]][base_speed_indexes[1]] = time_step*(cos(robot_yaw) +
+                           sin(robot_yaw)*robot_yaw*yaw_linearization_cost);
 
     // W2C Heading
     A[yaw_index][yaw_index] = 1;
@@ -691,8 +691,69 @@ std::vector<std::vector<double>> MobileManipulator::getArmJacobianMatrix(
     if(robot_name == "exoter")
     {
         //TODO This should be obtained from a URDF file, not hardcoded
-    }
 
+        std::vector<std::vector<double>> TB0 = getDirectKinematicsTransform(arm_positions,0);
+        std::vector<std::vector<double>> TB1 = getDirectKinematicsTransform(arm_positions,1);
+        std::vector<std::vector<double>> TB2 = getDirectKinematicsTransform(arm_positions,2);
+        std::vector<std::vector<double>> TB3 = getDirectKinematicsTransform(arm_positions,3);
+        std::vector<std::vector<double>> TB4 = getDirectKinematicsTransform(arm_positions,4);
+        std::vector<std::vector<double>> TB5 = getDirectKinematicsTransform(arm_positions,5);
+
+        for (uint i = 0; i < TB0.size(); i++)
+        {
+            for (uint j = 0; j < TB0[0].size(); j++)
+            {
+                if (abs(TB0[i][j]) < 1e-6) TB0[i][j] = 0;
+                if (abs(TB1[i][j]) < 1e-6) TB1[i][j] = 0;
+                if (abs(TB2[i][j]) < 1e-6) TB2[i][j] = 0;
+                if (abs(TB3[i][j]) < 1e-6) TB3[i][j] = 0;
+                if (abs(TB4[i][j]) < 1e-6) TB4[i][j] = 0;
+                if (abs(TB5[i][j]) < 1e-6) TB5[i][j] = 0;
+            }
+        }
+
+        std::vector<std::vector<double>> z;
+        z.push_back(std::vector<double>{TB0[0][2], TB0[1][2], TB0[2][2]});
+        z.push_back(std::vector<double>{TB1[0][2], TB1[1][2], TB1[2][2]});
+        z.push_back(std::vector<double>{TB2[0][2], TB2[1][2], TB2[2][2]});
+        z.push_back(std::vector<double>{TB3[0][2], TB3[1][2], TB3[2][2]});
+        z.push_back(std::vector<double>{TB4[0][2], TB4[1][2], TB4[2][2]});
+        z.push_back(std::vector<double>{TB5[0][2], TB5[1][2], TB5[2][2]});
+
+        std::vector<std::vector<double>> p;
+        p.push_back(std::vector<double>{TB0[0][3], TB0[1][3], TB0[2][3]});
+        p.push_back(std::vector<double>{TB1[0][3], TB1[1][3], TB1[2][3]});
+        p.push_back(std::vector<double>{TB2[0][3], TB2[1][3], TB2[2][3]});
+        p.push_back(std::vector<double>{TB3[0][3], TB3[1][3], TB3[2][3]});
+        p.push_back(std::vector<double>{TB4[0][3], TB4[1][3], TB4[2][3]});
+        p.push_back(std::vector<double>{TB5[0][3], TB5[1][3], TB5[2][3]});
+
+        std::vector<std::vector<double>> Jp, Jo;
+        for (uint i = 1; i < p.size(); i++)
+        {
+            Jp.push_back(getCrossProduct(z[i - 1], getDifference(p[p.size()-1], p[i - 1])));
+            //Jo.push_back(z[i - 1]);
+        }
+
+        // Manually generating orientation jacobian
+        Jo.resize(3);
+        Jo[0] = {0, 0, 0, 0, 1};
+        Jo[1] = {0, 1, 1, 1, 0};
+        Jo[2] = {1, 0, 0, 0, 0};
+
+        for (uint i = 0; i < number_arm_joints; i++)
+        {
+            for (uint j = 0; j < 6; j++)
+            {
+                if (j < 3)
+                    J[j][i] = Jp[i][j];
+                else
+                    J[j][i] = Jo[j-3][i];
+
+                if (abs(J[j][i]) < 1e-6) J[j][i] = 0;
+            }
+        }
+    }
 
     return J;
 }
@@ -706,7 +767,7 @@ std::vector<std::vector<double>> MobileManipulator::getDirectKinematicsTransform
         //TODO This should be obtained from a URDF file, not hardcoded
         if(joint_index > number_arm_joints)
         {
-            throw std::domain_error( "[StateSpaceModel] ERROR: index provided greater than the number of joints");
+            throw std::domain_error( "\033[1;31mERROR [MobileManipulator::getDirectKinematicsTransform]: Provided index is greater than the number of joints \033[0m\n");
         }
 
         std::vector<std::vector<double>> TB0(4,std::vector<double>(4,0));
@@ -786,4 +847,155 @@ std::vector<std::vector<double>> MobileManipulator::getDirectKinematicsTransform
     }
 
     return std::vector<std::vector<double>>(4,std::vector<double>(4,0));
+}
+
+double MobileManipulator::getWheelInertia()
+{
+    double I = 1/2*wheels_weight*pow(wheels_radius,2);
+    return I;
+}
+
+std::vector<double> MobileManipulator::forwardIntegrateModel(std::vector<double> x,
+                                                             std::vector<double> u,
+                                                             double time_step)
+{
+    std::vector<double> xf = x;
+
+    std::vector<double> world_ee_pose;
+    for(uint i = 0; i < 3; i++)
+    {
+        world_ee_pose.push_back(x[world_ee_pose_indexes[i]]);
+    }
+
+    std::vector<double> arm_positions;
+    for(uint i = 0; i < number_arm_joints; i++)
+    {
+        arm_positions.push_back(x[arm_position_indexes[i]]);
+    }
+
+    std::vector<double> arm_speeds;
+    for(uint i = 0; i < number_arm_joints; i++)
+    {
+        arm_speeds.push_back(u[arm_actuators_indexes[i]]);
+    }
+
+    std::vector<double> arm_previous_speeds;
+    for(uint i = 0; i < number_arm_joints; i++)
+    {
+        arm_previous_speeds.push_back(x[arm_position_indexes[i]+number_arm_joints]);
+    }
+
+    std::vector<double> arm_accelerations;
+    for(uint i = 0; i < number_arm_joints; i++)
+    {
+        arm_accelerations.push_back(x[arm_position_indexes[i]+number_arm_joints*2]);
+    }
+
+    std::vector<double> base_ee_pose;
+    for(uint i = 0; i < 6; i++)
+    {
+        base_ee_pose.push_back(x[base_ee_pose_indexes[i]]);
+    }
+
+    std::vector<double> robot_pose;
+    for(uint i = 0; i < 3; i++)
+    {
+        robot_pose.push_back(x[robot_pose_indexes[i]]);
+    }
+
+    double robot_yaw = x[yaw_index];
+
+    std::vector<double> base_speed = {x[base_speed_indexes[0]],
+                                      x[base_speed_indexes[1]],
+                                      x[base_speed_indexes[2]]};
+
+    std::vector<double> wheels_speed = {u[wheels_actuators_indexes[0]],
+                                        u[wheels_actuators_indexes[1]]};
+
+    std::vector<double> wheels_previous_speed = {x[wheels_speed_indexes[0]],
+                                                 x[wheels_speed_indexes[1]]};
+
+    std::vector<double> wheels_accelerations = {x[wheels_speed_indexes[0] +
+                                                  wheels_speed_indexes.size()],
+                                                x[wheels_speed_indexes[1] +
+                                                  wheels_speed_indexes.size()]};
+
+    std::vector<std::vector<double>> J = getArmJacobianMatrix(arm_positions);
+
+
+    // W2EE
+    xf[world_ee_pose_indexes[0]] = cos(robot_yaw)*base_ee_pose[2] -
+                                   sin(robot_yaw)*base_ee_pose[1] + robot_pose[0];
+    xf[world_ee_pose_indexes[1]] = sin(robot_yaw)*base_ee_pose[2] +
+                                   cos(robot_yaw)*base_ee_pose[1] + robot_pose[1];
+    xf[world_ee_pose_indexes[2]] = world_ee_pose[2] - dot(J[0],arm_speeds)*time_step;
+
+    // B2EE
+    for(uint i = 0; i < 6; i++)
+    {
+        xf[base_ee_pose_indexes[i]] = base_ee_pose[i] + dot(J[i],arm_speeds)*time_step;
+    }
+
+    // W2C
+    xf[robot_pose_indexes[0]] = robot_pose[0] + cos(robot_yaw)*base_speed[0]*time_step -
+                                                sin(robot_yaw)*base_speed[1]*time_step;
+    xf[robot_pose_indexes[1]] = robot_pose[1] + sin(robot_yaw)*base_speed[0]*time_step +
+                                                cos(robot_yaw)*base_speed[1]*time_step;
+    xf[robot_pose_indexes[2]] = robot_pose[2] + base_speed[2]*time_step;
+
+    // BSpeed
+    xf[base_speed_indexes[0]] = wheels_radius/2*(wheels_speed[0] + wheels_speed[1]);
+    xf[base_speed_indexes[1]] = 0;
+    xf[base_speed_indexes[2]] = wheels_radius*(wheels_speed[0] - wheels_speed[1])
+                                              /(2*differential_width);
+
+    // Arm joints position
+    for(uint i = 0; i < number_arm_joints; i++)
+    {
+        xf[arm_position_indexes[i]] = arm_positions[i] + arm_speeds[i]*time_step;
+    }
+
+    // Arm joints speed
+    for(uint i = 0; i < number_arm_joints; i++)
+    {
+        xf[arm_position_indexes[i]+number_arm_joints] = arm_speeds[i];
+    }
+
+    // Arm joints acceleration
+    for(uint i = 0; i < number_arm_joints; i++)
+    {
+        xf[arm_position_indexes[i]+number_arm_joints*2] =
+                         (arm_speeds[i]-arm_previous_speeds[i])/time_step;
+    }
+
+    // Arm joints torques
+    std::vector<double> G = getArmGravityMatrix(arm_positions);
+    std::vector<std::vector<double>> B = getArmInertiaMatrix(arm_positions);
+    std::vector<std::vector<double>> C = getArmCoriolisMatrix(arm_positions, arm_speeds);
+
+    for(uint i = 0; i < number_arm_joints; i++)
+    {
+        xf[arm_position_indexes[i]+number_arm_joints*3] = dot(B[i],arm_accelerations) +
+                                                          dot(C[i],arm_speeds) + G[i];
+    }
+
+    // Wheels speeds
+    xf[wheels_speed_indexes[0]] = wheels_speed[0];
+    xf[wheels_speed_indexes[1]] = wheels_speed[1];
+
+    // Wheels accelerations
+    xf[wheels_speed_indexes[0] + wheels_speed_indexes.size()] = (wheels_speed[0] -
+                                                        wheels_previous_speed[0])/time_step;
+    xf[wheels_speed_indexes[1] + wheels_speed_indexes.size()] = (wheels_speed[1] -
+                                                        wheels_previous_speed[1])/time_step;
+
+    // Wheels torques
+    xf[wheels_speed_indexes[0] + wheels_speed_indexes.size()*2] = wheels_accelerations[0]*
+                        (getWheelInertia() + robot_weight/number_wheels*pow(wheels_radius,2)) +
+                         rolling_resistance*robot_weight*gravity*wheels_radius/number_wheels;
+    xf[wheels_speed_indexes[1] + wheels_speed_indexes.size()*2] = wheels_accelerations[1]*
+                        (getWheelInertia() + robot_weight/number_wheels*pow(wheels_radius,2)) +
+                         rolling_resistance*robot_weight*gravity*wheels_radius/number_wheels;
+
+    return xf;
 }

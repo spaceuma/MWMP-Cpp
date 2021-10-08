@@ -53,16 +53,16 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         arm_position_indexes = {15, 16, 17, 18, 19};
         arm_actuators_indexes = {0, 1, 2, 3, 4};
 
-        wheels_speed_indexes = {35,36};
-        wheels_actuators_indexes = {5,6};
+        wheels_speed_indexes = {35, 36};
+        wheels_actuators_indexes = {5, 6};
 
-        state_constrained_indexes = {15,16,17,18,19,39,40};
-        input_constrained_indexes = {0,1,2,3,4};
+        state_constrained_indexes = {15, 16, 17, 18, 19, 39, 40};
+        input_constrained_indexes = {0, 1, 2, 3, 4};
 
-        goal_states_indexes = {0,1,2,15,7,19};
-        whole_states_indexes = {9,10,11,30,31,32,33,34,39,40};
+        goal_states_indexes = {0, 1, 2, 15, 7, 19};
+        whole_states_indexes = {9, 10, 11, 30, 31, 32, 33, 34, 39, 40};
 
-        whole_inputs_indexes = {0,1,2,3,4,5,6};
+        whole_inputs_indexes = {0, 1, 2, 3, 4, 5, 6};
 
         //********************//
         // General parameters //
@@ -86,18 +86,29 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
 
         nominal_speed = 0.10;
 
-        state_limits = {90*pi/180, -30*pi/180, -10*pi/180, -190*pi/180, 160*pi/180, -160*pi/180, 250*pi/180,
-                        -70*pi/180, 160*pi/180, -160*pi/180, 2.85, -2.85, 2.85, -2.85};
+        state_limits = {90 * pi / 180,
+                        -30 * pi / 180,
+                        -10 * pi / 180,
+                        -190 * pi / 180,
+                        160 * pi / 180,
+                        -160 * pi / 180,
+                        250 * pi / 180,
+                        -70 * pi / 180,
+                        160 * pi / 180,
+                        -160 * pi / 180,
+                        2.85,
+                        -2.85,
+                        2.85,
+                        -2.85};
 
-        input_limits = {0.01, -0.01, 0.01, -0.01, 0.01,
-                        -0.01, 0.01, -0.01, 0.01, -0.01};
+        input_limits = {0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01};
 
         arm_lengths = {0.0895, 0.206, 0.176, 0.0555, 0.14};
         arm_masses = {0.5, 0.8, 0.8, 0.3, 0.2};
         arm_widths = {0.055, 0.02, 0.02, 0.05, 0.02};
 
         position_offset_cb = {0.165, -0.15, 0.028};
-        orientation_offset_cb = {0.0, pi/2, 0.0};
+        orientation_offset_cb = {0.0, pi / 2, 0.0};
 
         arm_reachability = 0.65;
 
@@ -137,15 +148,15 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
     }
 }
 
-std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(
-                                                std::vector<double> x,
-                                                double time_step)
+std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(std::vector<double> x,
+                                                                         double time_step)
 {
-    std::vector<std::vector<double>> A(number_states,std::vector<double>(number_states,0));
+    std::vector<std::vector<double>> A(number_states, std::vector<double>(number_states, 0));
 
     double robot_yaw = x[yaw_index];
 
-    std::vector<double> robot_speed = {x[base_speed_indexes[0]], x[base_speed_indexes[1]], x[base_speed_indexes[2]]};
+    std::vector<double> robot_speed = {
+        x[base_speed_indexes[0]], x[base_speed_indexes[1]], x[base_speed_indexes[2]]};
 
     std::vector<double> arm_positions;
     for(uint i = 0; i < number_arm_joints; i++)
@@ -161,35 +172,36 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(
     // W2EEy
     A[world_ee_pose_indexes[1]][base_ee_pose_indexes[2]] = sin(robot_yaw);
     A[world_ee_pose_indexes[1]][base_ee_pose_indexes[1]] = cos(robot_yaw);
-    A[world_ee_pose_indexes[1]][robot_pose_indexes[1]]  = 1;
+    A[world_ee_pose_indexes[1]][robot_pose_indexes[1]] = 1;
 
     // W2EEz
     A[world_ee_pose_indexes[2]][world_ee_pose_indexes[2]] = 1;
 
     // B2EE
-    for(uint i = 0; i < base_ee_pose_indexes.size(); i ++)
+    for(uint i = 0; i < base_ee_pose_indexes.size(); i++)
     {
         A[base_ee_pose_indexes[i]][base_ee_pose_indexes[i]] = 1;
     }
 
     // W2Cx
     A[robot_pose_indexes[0]][robot_pose_indexes[0]] = 1;
-    A[robot_pose_indexes[0]][yaw_index] = time_step*
-                         (-sin(robot_yaw)*robot_speed[0]*yaw_linearization_cost -
-                           cos(robot_yaw)*robot_speed[1]*yaw_linearization_cost);
-    A[robot_pose_indexes[0]][base_speed_indexes[0]] = time_step*(cos(robot_yaw) +
-                          sin(robot_yaw)*robot_yaw*yaw_linearization_cost);
-    A[robot_pose_indexes[0]][base_speed_indexes[1]] = -time_step*(sin(robot_yaw) -
-                           cos(robot_yaw)*robot_yaw*yaw_linearization_cost);
+    A[robot_pose_indexes[0]][yaw_index] =
+        time_step * (-sin(robot_yaw) * robot_speed[0] * yaw_linearization_cost -
+                     cos(robot_yaw) * robot_speed[1] * yaw_linearization_cost);
+    A[robot_pose_indexes[0]][base_speed_indexes[0]] =
+        time_step * (cos(robot_yaw) + sin(robot_yaw) * robot_yaw * yaw_linearization_cost);
+    A[robot_pose_indexes[0]][base_speed_indexes[1]] =
+        -time_step * (sin(robot_yaw) - cos(robot_yaw) * robot_yaw * yaw_linearization_cost);
 
     // W2Cy
     A[robot_pose_indexes[1]][robot_pose_indexes[1]] = 1;
-    A[robot_pose_indexes[1]][yaw_index] = time_step*(cos(robot_yaw)*robot_speed[0]*yaw_linearization_cost -
-                           sin(robot_yaw)*robot_speed[1]*yaw_linearization_cost);
-    A[robot_pose_indexes[1]][base_speed_indexes[0]] = time_step*(sin(robot_yaw) -
-                           cos(robot_yaw)*robot_yaw*yaw_linearization_cost);
-    A[robot_pose_indexes[1]][base_speed_indexes[1]] = time_step*(cos(robot_yaw) +
-                           sin(robot_yaw)*robot_yaw*yaw_linearization_cost);
+    A[robot_pose_indexes[1]][yaw_index] =
+        time_step * (cos(robot_yaw) * robot_speed[0] * yaw_linearization_cost -
+                     sin(robot_yaw) * robot_speed[1] * yaw_linearization_cost);
+    A[robot_pose_indexes[1]][base_speed_indexes[0]] =
+        time_step * (sin(robot_yaw) - cos(robot_yaw) * robot_yaw * yaw_linearization_cost);
+    A[robot_pose_indexes[1]][base_speed_indexes[1]] =
+        time_step * (cos(robot_yaw) + sin(robot_yaw) * robot_yaw * yaw_linearization_cost);
 
     // W2C Heading
     A[yaw_index][yaw_index] = 1;
@@ -204,8 +216,8 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(
     // Arm joints acceleration
     for(uint i = 0; i < number_arm_joints; i++)
     {
-        A[arm_position_indexes[i]+number_arm_joints*2]
-         [arm_position_indexes[i]+number_arm_joints] = -1/time_step;
+        A[arm_position_indexes[i] + number_arm_joints * 2]
+         [arm_position_indexes[i] + number_arm_joints] = -1 / time_step;
     }
 
     // Arm joints torques
@@ -214,35 +226,34 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(
     {
         for(uint j = 0; j < number_arm_joints; j++)
         {
-            A[arm_position_indexes[i]+number_arm_joints*3]
-             [arm_position_indexes[0]+number_arm_joints*2+j] = B[i][j];
+            A[arm_position_indexes[i] + number_arm_joints * 3]
+             [arm_position_indexes[0] + number_arm_joints * 2 + j] = B[i][j];
         }
     }
 
     // Wheels accelerations
     for(uint i = 0; i < wheels_speed_indexes.size(); i++)
     {
-        A[wheels_speed_indexes[i]+wheels_speed_indexes.size()]
-         [wheels_speed_indexes[i]] = -1/time_step;
+        A[wheels_speed_indexes[i] + wheels_speed_indexes.size()][wheels_speed_indexes[i]] =
+            -1 / time_step;
     }
 
     // Wheels torques
     for(uint i = 0; i < wheels_speed_indexes.size(); i++)
     {
-        A[wheels_speed_indexes[i]+wheels_speed_indexes.size()*2]
-         [wheels_speed_indexes[i]+wheels_speed_indexes.size()] = getWheelInertia() +
-                                robot_weight/number_wheels*pow(wheels_radius,2);
+        A[wheels_speed_indexes[i] + wheels_speed_indexes.size() * 2]
+         [wheels_speed_indexes[i] + wheels_speed_indexes.size()] =
+             getWheelInertia() + robot_weight / number_wheels * pow(wheels_radius, 2);
     }
 
     return A;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixB(
-                                                std::vector<double> x,
-                                                std::vector<double> u,
-                                                double time_step)
+std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixB(std::vector<double> x,
+                                                                         std::vector<double> u,
+                                                                         double time_step)
 {
-    std::vector<std::vector<double>> B(number_states,std::vector<double>(number_states,0));
+    std::vector<std::vector<double>> B(number_states, std::vector<double>(number_states, 0));
 
     std::vector<double> arm_positions;
     for(uint i = 0; i < number_arm_joints; i++)
@@ -261,7 +272,7 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixB(
 
     for(uint i = 0; i < number_arm_joints; i++)
     {
-        B[world_ee_pose_indexes[2]][arm_actuators_indexes[i]] = -time_step*J[1][i];
+        B[world_ee_pose_indexes[2]][arm_actuators_indexes[i]] = -time_step * J[1][i];
     }
 
     // BTEE
@@ -269,19 +280,19 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixB(
     {
         for(uint j = 0; j < number_arm_joints; j++)
         {
-            B[base_ee_pose_indexes[i]][arm_actuators_indexes[j]] = -time_step*J[i][j];
+            B[base_ee_pose_indexes[i]][arm_actuators_indexes[j]] = -time_step * J[i][j];
         }
     }
 
     // W2C Speed x
-    B[base_speed_indexes[0]][wheels_actuators_indexes[0]] = wheels_radius/2;
-    B[base_speed_indexes[0]][wheels_actuators_indexes[1]] = wheels_radius/2;
+    B[base_speed_indexes[0]][wheels_actuators_indexes[0]] = wheels_radius / 2;
+    B[base_speed_indexes[0]][wheels_actuators_indexes[1]] = wheels_radius / 2;
 
     // W2C Speed heading
     B[base_speed_indexes[2]][wheels_actuators_indexes[0]] =
-                                        wheels_radius/(2*differential_width);
+        wheels_radius / (2 * differential_width);
     B[base_speed_indexes[2]][wheels_actuators_indexes[1]] =
-                                       -wheels_radius/(2*differential_width);
+        -wheels_radius / (2 * differential_width);
 
     // Arm joints position
     for(uint i = 0; i < number_arm_joints; i++)
@@ -292,37 +303,37 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixB(
     // Arm joints speed
     for(uint i = 0; i < number_arm_joints; i++)
     {
-        B[arm_position_indexes[i]+number_arm_joints][arm_actuators_indexes[i]] = 1;
+        B[arm_position_indexes[i] + number_arm_joints][arm_actuators_indexes[i]] = 1;
     }
 
     // Arm joints acceleration
     for(uint i = 0; i < number_arm_joints; i++)
     {
-        B[arm_position_indexes[i]+number_arm_joints*2][arm_actuators_indexes[i]] = 1/time_step;
+        B[arm_position_indexes[i] + number_arm_joints * 2][arm_actuators_indexes[i]] =
+            1 / time_step;
     }
-    
+
     // Arm joints torques
     std::vector<std::vector<double>> C = getArmCoriolisMatrix(arm_positions, arm_actuators);
     for(uint i = 0; i < number_arm_joints; i++)
     {
         for(uint j = 0; j < number_arm_joints; j++)
         {
-            B[arm_position_indexes[i]+number_arm_joints*3][arm_actuators_indexes[j]] = C[i][j];
+            B[arm_position_indexes[i] + number_arm_joints * 3][arm_actuators_indexes[j]] = C[i][j];
         }
     }
 
     // Wheels speeds
     for(uint i = 0; i < wheels_speed_indexes.size(); i++)
     {
-        B[wheels_speed_indexes[i]]
-         [wheels_actuators_indexes[i]] = 1;
+        B[wheels_speed_indexes[i]][wheels_actuators_indexes[i]] = 1;
     }
 
     // Wheels speeds
     for(uint i = 0; i < wheels_speed_indexes.size(); i++)
     {
-        B[wheels_speed_indexes[i] + wheels_speed_indexes.size()]
-         [wheels_actuators_indexes[i]] = 1/time_step;
+        B[wheels_speed_indexes[i] + wheels_speed_indexes.size()][wheels_actuators_indexes[i]] =
+            1 / time_step;
     }
 
     return B;
@@ -336,7 +347,7 @@ int MobileManipulator::getNumberStateInputConstraints()
 std::vector<std::vector<double>> MobileManipulator::getConstraintsMatrixC()
 {
     std::vector<std::vector<double>> C(number_si_constraints,
-                                       std::vector<double>(number_states,0));
+                                       std::vector<double>(number_states, 0));
 
     return C;
 }
@@ -344,26 +355,25 @@ std::vector<std::vector<double>> MobileManipulator::getConstraintsMatrixC()
 std::vector<std::vector<double>> MobileManipulator::getConstraintsMatrixD()
 {
     std::vector<std::vector<double>> D(number_si_constraints,
-                                       std::vector<double>(number_inputs,0));
+                                       std::vector<double>(number_inputs, 0));
 
-    for(uint i = 0; i < number_si_constraints; i+=2)
+    for(uint i = 0; i < number_si_constraints; i += 2)
     {
-        D[i][input_constrained_indexes[i/2]] = -1;
-        D[i+1][input_constrained_indexes[i/2]] = 1;
+        D[i][input_constrained_indexes[i / 2]] = -1;
+        D[i + 1][input_constrained_indexes[i / 2]] = 1;
     }
 
     return D;
 }
 
-
 std::vector<double> MobileManipulator::getConstraintsMatrixR()
 {
-    std::vector<double> r(number_si_constraints,0);
+    std::vector<double> r(number_si_constraints, 0);
 
-    for(uint i = 0; i < number_si_constraints; i+=2)
+    for(uint i = 0; i < number_si_constraints; i += 2)
     {
         r[i] = -input_limits[i];
-        r[i+1] = input_limits[i+1];
+        r[i + 1] = input_limits[i + 1];
     }
 
     return r;
@@ -377,12 +387,12 @@ int MobileManipulator::getNumberPureStateConstraints()
 std::vector<std::vector<double>> MobileManipulator::getConstraintsMatrixG()
 {
     std::vector<std::vector<double>> G(number_ps_constraints,
-                                       std::vector<double>(number_states,0));
+                                       std::vector<double>(number_states, 0));
 
-    for(uint i = 0; i < number_ps_constraints; i+=2)
+    for(uint i = 0; i < number_ps_constraints; i += 2)
     {
-        G[i][input_constrained_indexes[i/2]] = -1;
-        G[i+1][input_constrained_indexes[i/2]] = 1;
+        G[i][input_constrained_indexes[i / 2]] = -1;
+        G[i + 1][input_constrained_indexes[i / 2]] = 1;
     }
 
     return G;
@@ -390,12 +400,12 @@ std::vector<std::vector<double>> MobileManipulator::getConstraintsMatrixG()
 
 std::vector<double> MobileManipulator::getConstraintsMatrixH()
 {
-    std::vector<double> h(number_ps_constraints,0);
+    std::vector<double> h(number_ps_constraints, 0);
 
-    for(uint i = 0; i < number_ps_constraints; i+=2)
+    for(uint i = 0; i < number_ps_constraints; i += 2)
     {
         h[i] = -state_limits[i];
-        h[i+1] = state_limits[i+number_ps_constraints];
+        h[i + 1] = state_limits[i + number_ps_constraints];
     }
 
     return h;
@@ -403,8 +413,7 @@ std::vector<double> MobileManipulator::getConstraintsMatrixH()
 
 std::vector<std::vector<double>> MobileManipulator::getStateCostMatrix(double percentage_horizon)
 {
-    std::vector<std::vector<double>> Q(number_states,
-                                       std::vector<double>(number_states,0));
+    std::vector<std::vector<double>> Q(number_states, std::vector<double>(number_states, 0));
 
     for(uint i = 0; i < whole_states_indexes.size(); i++)
     {
@@ -418,25 +427,23 @@ std::vector<std::vector<double>> MobileManipulator::getStateCostMatrix(double pe
             Q[goal_states_indexes[i]][goal_states_indexes[i]] = goal_states_cost[i];
         }
     }
-    else if (percentage_horizon > horizon_speed_reduction)
+    else if(percentage_horizon > horizon_speed_reduction)
     {
-        double linear_cost = (percentage_horizon - horizon_speed_reduction)/
-                             (100 - horizon_speed_reduction);
+        double linear_cost =
+            (percentage_horizon - horizon_speed_reduction) / (100 - horizon_speed_reduction);
 
         for(uint i = 0; i < base_speed_indexes.size(); i++)
         {
-            Q[base_speed_indexes[i]][base_speed_indexes[i]] = linear_cost*goal_speed_cost;
+            Q[base_speed_indexes[i]][base_speed_indexes[i]] = linear_cost * goal_speed_cost;
         }
     }
-
 
     return Q;
 }
 
 std::vector<std::vector<double>> MobileManipulator::getInputCostMatrix()
 {
-    std::vector<std::vector<double>> R(number_inputs,
-                                       std::vector<double>(number_inputs,0));
+    std::vector<std::vector<double>> R(number_inputs, std::vector<double>(number_inputs, 0));
 
     for(uint i = 0; i < whole_inputs_indexes.size(); i++)
     {
@@ -448,37 +455,36 @@ std::vector<std::vector<double>> MobileManipulator::getInputCostMatrix()
 
 std::vector<std::vector<double>> MobileManipulator::getStateInputCostMatrix()
 {
-    std::vector<std::vector<double>> K(number_states,
-                                       std::vector<double>(number_inputs,0));
+    std::vector<std::vector<double>> K(number_states, std::vector<double>(number_inputs, 0));
 
     return K;
 }
 
 std::vector<double> MobileManipulator::getArmGravityMatrix(std::vector<double> arm_positions)
 {
-    std::vector<double> G(number_arm_joints,0);
+    std::vector<double> G(number_arm_joints, 0);
 
     if(robot_name == "exoter")
     {
-        //TODO This should be obtained from a URDF file, not hardcoded
-        G[0] = 2.45e-4*sin(arm_positions[0])*
-               (333.0*sin(arm_positions[1] + arm_positions[2] + arm_positions[3]) +
-               5630.0*cos(arm_positions[1] + arm_positions[2]) + 1.4e+4*cos(arm_positions[1]));
+        // TODO This should be obtained from a URDF file, not hardcoded
+        G[0] = 2.45e-4 * sin(arm_positions[0]) *
+               (333.0 * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]) +
+                5630.0 * cos(arm_positions[1] + arm_positions[2]) + 1.4e+4 * cos(arm_positions[1]));
 
-        G[1] = 0.404*sin(arm_positions[0] + arm_positions[1]) -
-               0.404*sin(arm_positions[0] - 1.0*arm_positions[1]) +
-               2.63*cos(arm_positions[0])*sin(arm_positions[1]) +
-               1.38*sin(arm_positions[1] + arm_positions[2])*cos(arm_positions[0]) -
-               0.0817*cos(arm_positions[1] + 
-               arm_positions[2])*cos(arm_positions[0])*cos(arm_positions[3]) +
-               0.0817*sin(arm_positions[1] + arm_positions[2])*
-               cos(arm_positions[0])*sin(arm_positions[3]);
+        G[1] = 0.404 * sin(arm_positions[0] + arm_positions[1]) -
+               0.404 * sin(arm_positions[0] - 1.0 * arm_positions[1]) +
+               2.63 * cos(arm_positions[0]) * sin(arm_positions[1]) +
+               1.38 * sin(arm_positions[1] + arm_positions[2]) * cos(arm_positions[0]) -
+               0.0817 * cos(arm_positions[1] + arm_positions[2]) * cos(arm_positions[0]) *
+                   cos(arm_positions[3]) +
+               0.0817 * sin(arm_positions[1] + arm_positions[2]) * cos(arm_positions[0]) *
+                   sin(arm_positions[3]);
 
-        G[2] = -2.45e-4*cos(arm_positions[0])*(333.0*cos(arm_positions[1] +
-               arm_positions[2] + arm_positions[3]) -
-               5630.0*sin(arm_positions[1] + arm_positions[2]));
+        G[2] = -2.45e-4 * cos(arm_positions[0]) *
+               (333.0 * cos(arm_positions[1] + arm_positions[2] + arm_positions[3]) -
+                5630.0 * sin(arm_positions[1] + arm_positions[2]));
 
-        G[3] = -0.136*cos(arm_positions[1] + arm_positions[2] + arm_positions[3])*
+        G[3] = -0.136 * cos(arm_positions[1] + arm_positions[2] + arm_positions[3]) *
                cos(arm_positions[0]);
 
         G[4] = 0;
@@ -486,50 +492,53 @@ std::vector<double> MobileManipulator::getArmGravityMatrix(std::vector<double> a
     return G;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getArmInertiaMatrix(std::vector<double> arm_positions)
+std::vector<std::vector<double>> MobileManipulator::getArmInertiaMatrix(
+    std::vector<double> arm_positions)
 {
     std::vector<std::vector<double>> B(number_arm_joints,
-                                       std::vector<double>(number_arm_joints,0));
+                                       std::vector<double>(number_arm_joints, 0));
 
     if(robot_name == "exoter")
     {
-        //TODO This should be obtained from a URDF file, not hardcoded
-        B[0][0] = 0.029*cos(2.0*arm_positions[1] + arm_positions[2]) + 
-                  0.00147*sin(2.0*arm_positions[1] + 2.0*arm_positions[2] + arm_positions[3]) +
-                  0.0318*cos(2.0*arm_positions[1]) +
-                  0.00171*sin(arm_positions[2] + arm_positions[3]) +
-                  0.00171*sin(2.0*arm_positions[1] + arm_positions[2] + arm_positions[3]) +
-                  0.029*cos(arm_positions[2]) + 0.00147*sin(arm_positions[3]) +
-                  0.00852*cos(2.0*arm_positions[1] + 2.0*arm_positions[2]) -
-                  3.17e-4*cos(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                              2.0*arm_positions[3]) + 0.047;
+        // TODO This should be obtained from a URDF file, not hardcoded
+        B[0][0] =
+            0.029 * cos(2.0 * arm_positions[1] + arm_positions[2]) +
+            0.00147 * sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + arm_positions[3]) +
+            0.0318 * cos(2.0 * arm_positions[1]) +
+            0.00171 * sin(arm_positions[2] + arm_positions[3]) +
+            0.00171 * sin(2.0 * arm_positions[1] + arm_positions[2] + arm_positions[3]) +
+            0.029 * cos(arm_positions[2]) + 0.00147 * sin(arm_positions[3]) +
+            0.00852 * cos(2.0 * arm_positions[1] + 2.0 * arm_positions[2]) -
+            3.17e-4 *
+                cos(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + 2.0 * arm_positions[3]) +
+            0.047;
 
-        B[0][4] = 4.0e-5*cos(arm_positions[1] + arm_positions[2] + arm_positions[3]);
+        B[0][4] = 4.0e-5 * cos(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        B[1][1] = 0.00343*sin(arm_positions[2] + arm_positions[3]) +
-                  0.058*cos(arm_positions[2]) + 0.00293*sin(arm_positions[3]) + 0.0821;
+        B[1][1] = 0.00343 * sin(arm_positions[2] + arm_positions[3]) +
+                  0.058 * cos(arm_positions[2]) + 0.00293 * sin(arm_positions[3]) + 0.0821;
 
-        B[1][2] = 0.00171*sin(arm_positions[2] + arm_positions[3]) +
-                  0.029*cos(arm_positions[2]) + 0.00293*sin(arm_positions[3]) + 0.0182;
+        B[1][2] = 0.00171 * sin(arm_positions[2] + arm_positions[3]) +
+                  0.029 * cos(arm_positions[2]) + 0.00293 * sin(arm_positions[3]) + 0.0182;
 
-        B[1][3] = 0.00286*sin(arm_positions[2] + arm_positions[3]) +
-                  0.00195*sin(arm_positions[3]) + 0.00105;
+        B[1][3] = 0.00286 * sin(arm_positions[2] + arm_positions[3]) +
+                  0.00195 * sin(arm_positions[3]) + 0.00105;
 
-        B[2][1] = 0.00171*sin(arm_positions[2] + arm_positions[3]) +
-                  0.029*cos(arm_positions[2]) + 0.00293*sin(arm_positions[3]) + 0.0182;
+        B[2][1] = 0.00171 * sin(arm_positions[2] + arm_positions[3]) +
+                  0.029 * cos(arm_positions[2]) + 0.00293 * sin(arm_positions[3]) + 0.0182;
 
-        B[2][2] = 0.00293*sin(arm_positions[3]) + 0.0182;
+        B[2][2] = 0.00293 * sin(arm_positions[3]) + 0.0182;
 
-        B[2][3] = 0.00195*sin(arm_positions[3]) + 0.00105;
+        B[2][3] = 0.00195 * sin(arm_positions[3]) + 0.00105;
 
-        B[3][1] = 0.00286*sin(arm_positions[2] + arm_positions[3]) +
-                  0.00195*sin(arm_positions[3]) + 0.00105;
+        B[3][1] = 0.00286 * sin(arm_positions[2] + arm_positions[3]) +
+                  0.00195 * sin(arm_positions[3]) + 0.00105;
 
-        B[3][2] = 0.00195*sin(arm_positions[3]) + 0.00105;
+        B[3][2] = 0.00195 * sin(arm_positions[3]) + 0.00105;
 
         B[3][3] = 0.0012;
 
-        B[4][0] = 4.0e-5*cos(arm_positions[1] + arm_positions[2] + arm_positions[3]);
+        B[4][0] = 4.0e-5 * cos(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
         B[4][4] = 4.0e-5;
     }
@@ -538,177 +547,177 @@ std::vector<std::vector<double>> MobileManipulator::getArmInertiaMatrix(std::vec
 }
 
 std::vector<std::vector<double>> MobileManipulator::getArmCoriolisMatrix(
-                                                      std::vector<double> arm_positions,
-                                                      std::vector<double> arm_speeds)
+    std::vector<double> arm_positions,
+    std::vector<double> arm_speeds)
 {
     std::vector<std::vector<double>> C(number_arm_joints,
-                                       std::vector<double>(number_arm_joints,0));
+                                       std::vector<double>(number_arm_joints, 0));
 
     if(robot_name == "exoter")
     {
-        //TODO This should be obtained from a URDF file, not hardcoded
-        C[0][1] = 0.00293*arm_speeds[0]*cos(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            arm_positions[3]) -
-                  0.058*arm_speeds[0]*sin(2.0*arm_positions[1] + arm_positions[2]) -
-                  0.0637*arm_speeds[0]*sin(2.0*arm_positions[1]) +
-                  0.00343*arm_speeds[0]*cos(2.0*arm_positions[1] + arm_positions[2] +
-                                            arm_positions[3]) -
-                  0.017*arm_speeds[0]*sin(2.0*arm_positions[1] + 2.0*arm_positions[2]) +
-                  6.35e-4*arm_speeds[0]*sin(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            2.0*arm_positions[3]) -
-                  4.0e-5*arm_speeds[4]*sin(arm_positions[1] + arm_positions[2] +
-                                           arm_positions[3]);
+        // TODO This should be obtained from a URDF file, not hardcoded
+        C[0][1] =
+            0.00293 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + arm_positions[3]) -
+            0.058 * arm_speeds[0] * sin(2.0 * arm_positions[1] + arm_positions[2]) -
+            0.0637 * arm_speeds[0] * sin(2.0 * arm_positions[1]) +
+            0.00343 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + arm_positions[2] + arm_positions[3]) -
+            0.017 * arm_speeds[0] * sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2]) +
+            6.35e-4 * arm_speeds[0] *
+                sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + 2.0 * arm_positions[3]) -
+            4.0e-5 * arm_speeds[4] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        C[0][2] = 0.00293*arm_speeds[0]*cos(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            arm_positions[3]) -
-                  0.029*arm_speeds[0]*sin(2.0*arm_positions[1] + arm_positions[2]) +
-                  0.00171*arm_speeds[0]*cos(arm_positions[2] + arm_positions[3]) +
-                  0.00171*arm_speeds[0]*cos(2.0*arm_positions[1] + arm_positions[2] +
-                                            arm_positions[3]) -
-                  0.029*arm_speeds[0]*sin(arm_positions[2]) -
-                  0.017*arm_speeds[0]*sin(2.0*arm_positions[1] + 2.0*arm_positions[2]) +
-                  6.35e-4*arm_speeds[0]*sin(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            2.0*arm_positions[3]) -
-                  4.0e-5*arm_speeds[4]*sin(arm_positions[1] + arm_positions[2] +
-                                           arm_positions[3]);
+        C[0][2] =
+            0.00293 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + arm_positions[3]) -
+            0.029 * arm_speeds[0] * sin(2.0 * arm_positions[1] + arm_positions[2]) +
+            0.00171 * arm_speeds[0] * cos(arm_positions[2] + arm_positions[3]) +
+            0.00171 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + arm_positions[2] + arm_positions[3]) -
+            0.029 * arm_speeds[0] * sin(arm_positions[2]) -
+            0.017 * arm_speeds[0] * sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2]) +
+            6.35e-4 * arm_speeds[0] *
+                sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + 2.0 * arm_positions[3]) -
+            4.0e-5 * arm_speeds[4] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        C[0][3] = 0.00147*arm_speeds[0]*cos(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            arm_positions[3]) +
-                  0.00171*arm_speeds[0]*cos(arm_positions[2] + arm_positions[3]) +
-                  0.00171*arm_speeds[0]*cos(2.0*arm_positions[1] + arm_positions[2] +
-                                            arm_positions[3]) +
-                  0.00147*arm_speeds[0]*cos(arm_positions[3]) +
-                  6.35e-4*arm_speeds[0]*sin(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            2.0*arm_positions[3]) -
-                  4.0e-5*arm_speeds[4]*sin(arm_positions[1] + arm_positions[2] +
-                                           arm_positions[3]);
+        C[0][3] =
+            0.00147 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + arm_positions[3]) +
+            0.00171 * arm_speeds[0] * cos(arm_positions[2] + arm_positions[3]) +
+            0.00171 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + arm_positions[2] + arm_positions[3]) +
+            0.00147 * arm_speeds[0] * cos(arm_positions[3]) +
+            6.35e-4 * arm_speeds[0] *
+                sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + 2.0 * arm_positions[3]) -
+            4.0e-5 * arm_speeds[4] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        C[1][0] = 0.029*arm_speeds[0]*sin(2.0*arm_positions[1] + arm_positions[2]) -
-                  0.00147*arm_speeds[0]*cos(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            arm_positions[3]) +
-                  0.0318*arm_speeds[0]*sin(2.0*arm_positions[1]) -
-                  0.00171*arm_speeds[0]*cos(2.0*arm_positions[1] + arm_positions[2] +
-                                            arm_positions[3]) +
-                  0.00852*arm_speeds[0]*sin(2.0*arm_positions[1] + 2.0*arm_positions[2]) -
-                  3.17e-4*arm_speeds[0]*sin(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            2.0*arm_positions[3]) +
-                  2.0e-5*arm_speeds[4]*sin(arm_positions[1] + arm_positions[2] +
-                                           arm_positions[3]);
+        C[1][0] =
+            0.029 * arm_speeds[0] * sin(2.0 * arm_positions[1] + arm_positions[2]) -
+            0.00147 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + arm_positions[3]) +
+            0.0318 * arm_speeds[0] * sin(2.0 * arm_positions[1]) -
+            0.00171 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + arm_positions[2] + arm_positions[3]) +
+            0.00852 * arm_speeds[0] * sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2]) -
+            3.17e-4 * arm_speeds[0] *
+                sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + 2.0 * arm_positions[3]) +
+            2.0e-5 * arm_speeds[4] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        C[1][2] = 0.00343*arm_speeds[1]*cos(arm_positions[2] + arm_positions[3]) +
-                  0.00171*arm_speeds[2]*cos(arm_positions[2] + arm_positions[3]) +
-                  0.00286*arm_speeds[3]*cos(arm_positions[2] + arm_positions[3]) -
-                  0.058*arm_speeds[1]*sin(arm_positions[2]) -
-                  0.029*arm_speeds[2]*sin(arm_positions[2]);
+        C[1][2] = 0.00343 * arm_speeds[1] * cos(arm_positions[2] + arm_positions[3]) +
+                  0.00171 * arm_speeds[2] * cos(arm_positions[2] + arm_positions[3]) +
+                  0.00286 * arm_speeds[3] * cos(arm_positions[2] + arm_positions[3]) -
+                  0.058 * arm_speeds[1] * sin(arm_positions[2]) -
+                  0.029 * arm_speeds[2] * sin(arm_positions[2]);
 
-        C[1][3] = 0.00343*arm_speeds[1]*cos(arm_positions[2] + arm_positions[3]) +
-                  0.00171*arm_speeds[2]*cos(arm_positions[2] + arm_positions[3]) +
-                  0.00286*arm_speeds[3]*cos(arm_positions[2] + arm_positions[3]) +
-                  0.00293*arm_speeds[1]*cos(arm_positions[3]) +
-                  0.00293*arm_speeds[2]*cos(arm_positions[3]) +
-                  0.00195*arm_speeds[3]*cos(arm_positions[3]);
+        C[1][3] = 0.00343 * arm_speeds[1] * cos(arm_positions[2] + arm_positions[3]) +
+                  0.00171 * arm_speeds[2] * cos(arm_positions[2] + arm_positions[3]) +
+                  0.00286 * arm_speeds[3] * cos(arm_positions[2] + arm_positions[3]) +
+                  0.00293 * arm_speeds[1] * cos(arm_positions[3]) +
+                  0.00293 * arm_speeds[2] * cos(arm_positions[3]) +
+                  0.00195 * arm_speeds[3] * cos(arm_positions[3]);
 
-        C[1][4] = 2.0e-5*arm_speeds[0]*sin(arm_positions[1] + arm_positions[2] +
-                                           arm_positions[3]);
+        C[1][4] =
+            2.0e-5 * arm_speeds[0] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        C[2][0] = 0.0145*arm_speeds[0]*sin(2.0*arm_positions[1] + arm_positions[2]) -
-                  0.00147*arm_speeds[0]*cos(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            arm_positions[3]) -
-                  8.57e-4*arm_speeds[0]*cos(arm_positions[2] + arm_positions[3]) -
-                  8.57e-4*arm_speeds[0]*cos(2.0*arm_positions[1] + arm_positions[2] +
-                                            arm_positions[3]) +
-                  0.0145*arm_speeds[0]*sin(arm_positions[2]) +
-                  0.00852*arm_speeds[0]*sin(2.0*arm_positions[1] + 2.0*arm_positions[2]) -
-                  3.17e-4*arm_speeds[0]*sin(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            2.0*arm_positions[3]) +
-                  2.0e-5*arm_speeds[4]*sin(arm_positions[1] + arm_positions[2] +
-                                            arm_positions[3]);
+        C[2][0] =
+            0.0145 * arm_speeds[0] * sin(2.0 * arm_positions[1] + arm_positions[2]) -
+            0.00147 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + arm_positions[3]) -
+            8.57e-4 * arm_speeds[0] * cos(arm_positions[2] + arm_positions[3]) -
+            8.57e-4 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + arm_positions[2] + arm_positions[3]) +
+            0.0145 * arm_speeds[0] * sin(arm_positions[2]) +
+            0.00852 * arm_speeds[0] * sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2]) -
+            3.17e-4 * arm_speeds[0] *
+                sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + 2.0 * arm_positions[3]) +
+            2.0e-5 * arm_speeds[4] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        C[2][1] = 0.029*arm_speeds[1]*sin(arm_positions[2]) -
-                  8.57e-4*arm_speeds[2]*cos(arm_positions[2] + arm_positions[3]) -
-                  0.00143*arm_speeds[3]*cos(arm_positions[2] + arm_positions[3]) -
-                  0.00171*arm_speeds[1]*cos(arm_positions[2] + arm_positions[3]) +
-                  0.0145*arm_speeds[2]*sin(arm_positions[2]);
+        C[2][1] = 0.029 * arm_speeds[1] * sin(arm_positions[2]) -
+                  8.57e-4 * arm_speeds[2] * cos(arm_positions[2] + arm_positions[3]) -
+                  0.00143 * arm_speeds[3] * cos(arm_positions[2] + arm_positions[3]) -
+                  0.00171 * arm_speeds[1] * cos(arm_positions[2] + arm_positions[3]) +
+                  0.0145 * arm_speeds[2] * sin(arm_positions[2]);
 
-        C[2][2] = 2.58e-6*arm_speeds[1]*(333.0*cos(arm_positions[2] + arm_positions[3]) -
-                  5630.0*sin(arm_positions[2]));
+        C[2][2] =
+            2.58e-6 * arm_speeds[1] *
+            (333.0 * cos(arm_positions[2] + arm_positions[3]) - 5630.0 * sin(arm_positions[2]));
 
-        C[2][3] = 2.86e-4*arm_speeds[1]*cos(arm_positions[2] + arm_positions[3]) +
-                  0.00293*arm_speeds[1]*cos(arm_positions[3]) +
-                  0.00293*arm_speeds[2]*cos(arm_positions[3]) +
-                  0.00195*arm_speeds[3]*cos(arm_positions[3]);
+        C[2][3] = 2.86e-4 * arm_speeds[1] * cos(arm_positions[2] + arm_positions[3]) +
+                  0.00293 * arm_speeds[1] * cos(arm_positions[3]) +
+                  0.00293 * arm_speeds[2] * cos(arm_positions[3]) +
+                  0.00195 * arm_speeds[3] * cos(arm_positions[3]);
 
-        C[2][4] = 2.0e-5*arm_speeds[0]*sin(arm_positions[1] + arm_positions[2] +
-                                           arm_positions[3]);
+        C[2][4] =
+            2.0e-5 * arm_speeds[0] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        C[3][0] = 2.0e-5*arm_speeds[4]*sin(arm_positions[1] + arm_positions[2] +
-                                           arm_positions[3]) -
-                  8.57e-4*arm_speeds[0]*cos(arm_positions[2] + arm_positions[3]) -
-                  8.57e-4*arm_speeds[0]*cos(2.0*arm_positions[1] + arm_positions[2] +
-                                            arm_positions[3]) -
-                  7.33e-4*arm_speeds[0]*cos(arm_positions[3]) -
-                  3.17e-4*arm_speeds[0]*sin(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            2.0*arm_positions[3]) -
-                  7.33e-4*arm_speeds[0]*cos(2.0*arm_positions[1] + 2.0*arm_positions[2] +
-                                            arm_positions[3]);
+        C[3][0] =
+            2.0e-5 * arm_speeds[4] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]) -
+            8.57e-4 * arm_speeds[0] * cos(arm_positions[2] + arm_positions[3]) -
+            8.57e-4 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + arm_positions[2] + arm_positions[3]) -
+            7.33e-4 * arm_speeds[0] * cos(arm_positions[3]) -
+            3.17e-4 * arm_speeds[0] *
+                sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + 2.0 * arm_positions[3]) -
+            7.33e-4 * arm_speeds[0] *
+                cos(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + arm_positions[3]);
 
-        C[3][1] = - 0.00171*arm_speeds[1]*cos(arm_positions[2] + arm_positions[3]) -
-                    8.57e-4*arm_speeds[2]*cos(arm_positions[2] + arm_positions[3]) -
-                    0.00143*arm_speeds[3]*cos(arm_positions[2] + arm_positions[3]) -
-                    0.00147*arm_speeds[1]*cos(arm_positions[3]) -
-                    0.00147*arm_speeds[2]*cos(arm_positions[3]) -
-                    9.77e-4*arm_speeds[3]*cos(arm_positions[3]);
+        C[3][1] = -0.00171 * arm_speeds[1] * cos(arm_positions[2] + arm_positions[3]) -
+                  8.57e-4 * arm_speeds[2] * cos(arm_positions[2] + arm_positions[3]) -
+                  0.00143 * arm_speeds[3] * cos(arm_positions[2] + arm_positions[3]) -
+                  0.00147 * arm_speeds[1] * cos(arm_positions[3]) -
+                  0.00147 * arm_speeds[2] * cos(arm_positions[3]) -
+                  9.77e-4 * arm_speeds[3] * cos(arm_positions[3]);
 
-        C[3][2] = 0.002*arm_speeds[1]*cos(arm_positions[2] + arm_positions[3]) -
-                  0.00147*arm_speeds[1]*cos(arm_positions[3]) -
-                  0.00147*arm_speeds[2]*cos(arm_positions[3]) -
-                  9.77e-4*arm_speeds[3]*cos(arm_positions[3]);
-        C[3][3] = 0.00143*arm_speeds[1]*cos(arm_positions[2] + arm_positions[3]) +
-                  9.77e-4*arm_speeds[1]*cos(arm_positions[3]) +
-                  9.77e-4*arm_speeds[2]*cos(arm_positions[3]);
+        C[3][2] = 0.002 * arm_speeds[1] * cos(arm_positions[2] + arm_positions[3]) -
+                  0.00147 * arm_speeds[1] * cos(arm_positions[3]) -
+                  0.00147 * arm_speeds[2] * cos(arm_positions[3]) -
+                  9.77e-4 * arm_speeds[3] * cos(arm_positions[3]);
+        C[3][3] = 0.00143 * arm_speeds[1] * cos(arm_positions[2] + arm_positions[3]) +
+                  9.77e-4 * arm_speeds[1] * cos(arm_positions[3]) +
+                  9.77e-4 * arm_speeds[2] * cos(arm_positions[3]);
 
-        C[3][4] = 2.0e-5*arm_speeds[0]*sin(arm_positions[1] + arm_positions[2] +
-                                           arm_positions[3]);
+        C[3][4] =
+            2.0e-5 * arm_speeds[0] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        C[4][1] = -4.0e-5*arm_speeds[0]*sin(arm_positions[1] + arm_positions[2] +
-                                            arm_positions[3]);
+        C[4][1] =
+            -4.0e-5 * arm_speeds[0] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        C[4][2] = -4.0e-5*arm_speeds[0]*sin(arm_positions[1] + arm_positions[2] +
-                                            arm_positions[3]);
+        C[4][2] =
+            -4.0e-5 * arm_speeds[0] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        C[4][3] = -4.0e-5*arm_speeds[0]*sin(arm_positions[1] + arm_positions[2] +
-                                            arm_positions[3]);
+        C[4][3] =
+            -4.0e-5 * arm_speeds[0] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
     }
 
     return C;
 }
 
 std::vector<std::vector<double>> MobileManipulator::getArmJacobianMatrix(
-                                                    std::vector<double> arm_positions)
+    std::vector<double> arm_positions)
 {
-    std::vector<std::vector<double>> J(6,
-                                       std::vector<double>(number_arm_joints,0));
+    std::vector<std::vector<double>> J(6, std::vector<double>(number_arm_joints, 0));
     if(robot_name == "exoter")
     {
-        //TODO This should be obtained from a URDF file, not hardcoded
+        // TODO This should be obtained from a URDF file, not hardcoded
 
-        std::vector<std::vector<double>> TB0 = getDirectKinematicsTransform(arm_positions,0);
-        std::vector<std::vector<double>> TB1 = getDirectKinematicsTransform(arm_positions,1);
-        std::vector<std::vector<double>> TB2 = getDirectKinematicsTransform(arm_positions,2);
-        std::vector<std::vector<double>> TB3 = getDirectKinematicsTransform(arm_positions,3);
-        std::vector<std::vector<double>> TB4 = getDirectKinematicsTransform(arm_positions,4);
-        std::vector<std::vector<double>> TB5 = getDirectKinematicsTransform(arm_positions,5);
+        std::vector<std::vector<double>> TB0 = getDirectKinematicsTransform(arm_positions, 0);
+        std::vector<std::vector<double>> TB1 = getDirectKinematicsTransform(arm_positions, 1);
+        std::vector<std::vector<double>> TB2 = getDirectKinematicsTransform(arm_positions, 2);
+        std::vector<std::vector<double>> TB3 = getDirectKinematicsTransform(arm_positions, 3);
+        std::vector<std::vector<double>> TB4 = getDirectKinematicsTransform(arm_positions, 4);
+        std::vector<std::vector<double>> TB5 = getDirectKinematicsTransform(arm_positions, 5);
 
-        for (uint i = 0; i < TB0.size(); i++)
+        for(uint i = 0; i < TB0.size(); i++)
         {
-            for (uint j = 0; j < TB0[0].size(); j++)
+            for(uint j = 0; j < TB0[0].size(); j++)
             {
-                if (abs(TB0[i][j]) < 1e-6) TB0[i][j] = 0;
-                if (abs(TB1[i][j]) < 1e-6) TB1[i][j] = 0;
-                if (abs(TB2[i][j]) < 1e-6) TB2[i][j] = 0;
-                if (abs(TB3[i][j]) < 1e-6) TB3[i][j] = 0;
-                if (abs(TB4[i][j]) < 1e-6) TB4[i][j] = 0;
-                if (abs(TB5[i][j]) < 1e-6) TB5[i][j] = 0;
+                if(abs(TB0[i][j]) < 1e-6) TB0[i][j] = 0;
+                if(abs(TB1[i][j]) < 1e-6) TB1[i][j] = 0;
+                if(abs(TB2[i][j]) < 1e-6) TB2[i][j] = 0;
+                if(abs(TB3[i][j]) < 1e-6) TB3[i][j] = 0;
+                if(abs(TB4[i][j]) < 1e-6) TB4[i][j] = 0;
+                if(abs(TB5[i][j]) < 1e-6) TB5[i][j] = 0;
             }
         }
 
@@ -729,10 +738,10 @@ std::vector<std::vector<double>> MobileManipulator::getArmJacobianMatrix(
         p.push_back(std::vector<double>{TB5[0][3], TB5[1][3], TB5[2][3]});
 
         std::vector<std::vector<double>> Jp, Jo;
-        for (uint i = 1; i < p.size(); i++)
+        for(uint i = 1; i < p.size(); i++)
         {
-            Jp.push_back(getCrossProduct(z[i - 1], getDifference(p[p.size()-1], p[i - 1])));
-            //Jo.push_back(z[i - 1]);
+            Jp.push_back(getCrossProduct(z[i - 1], getDifference(p[p.size() - 1], p[i - 1])));
+            // Jo.push_back(z[i - 1]);
         }
 
         // Manually generating orientation jacobian
@@ -741,16 +750,16 @@ std::vector<std::vector<double>> MobileManipulator::getArmJacobianMatrix(
         Jo[1] = {0, 1, 1, 1, 0};
         Jo[2] = {1, 0, 0, 0, 0};
 
-        for (uint i = 0; i < number_arm_joints; i++)
+        for(uint i = 0; i < number_arm_joints; i++)
         {
-            for (uint j = 0; j < 6; j++)
+            for(uint j = 0; j < 6; j++)
             {
-                if (j < 3)
+                if(j < 3)
                     J[j][i] = Jp[i][j];
                 else
-                    J[j][i] = Jo[j-3][i];
+                    J[j][i] = Jo[j - 3][i];
 
-                if (abs(J[j][i]) < 1e-6) J[j][i] = 0;
+                if(abs(J[j][i]) < 1e-6) J[j][i] = 0;
             }
         }
     }
@@ -759,99 +768,77 @@ std::vector<std::vector<double>> MobileManipulator::getArmJacobianMatrix(
 }
 
 std::vector<std::vector<double>> MobileManipulator::getDirectKinematicsTransform(
-                                                    std::vector<double> arm_positions,
-                                                    uint joint_index)
+    std::vector<double> arm_positions,
+    uint joint_index)
 {
     if(robot_name == "exoter")
     {
-        //TODO This should be obtained from a URDF file, not hardcoded
+        // TODO This should be obtained from a URDF file, not hardcoded
         if(joint_index > number_arm_joints)
         {
-            throw std::domain_error( "\033[1;31mERROR [MobileManipulator::getDirectKinematicsTransform]: Provided index is greater than the number of joints \033[0m\n");
+            throw std::domain_error(
+                "\033[1;31mERROR [MobileManipulator::getDirectKinematicsTransform]: "
+                "Provided index is greater than the number of joints \033[0m\n");
         }
 
-        std::vector<std::vector<double>> TB0(4,std::vector<double>(4,0));
+        std::vector<std::vector<double>> TB0(4, std::vector<double>(4, 0));
 
         TB0 = getTraslation({0, 0, 0});
-        if(joint_index == 0)
-        {
-            return TB0;
-        }
+        if(joint_index == 0) { return TB0; }
 
-        std::vector<std::vector<double>> TB1(4,std::vector<double>(4,0));
+        std::vector<std::vector<double>> TB1(4, std::vector<double>(4, 0));
 
-        std::vector<std::vector<double>> T01 = dot(getTraslation({0, 0,
-                                                                  arm_lengths[0]}),
-                                               dot(getZrot(arm_positions[0]),
-                                               dot(getTraslation({0, 0, 0}),
-                                                   getXrot(-pi/2))));
+        std::vector<std::vector<double>> T01 =
+            dot(getTraslation({0, 0, arm_lengths[0]}),
+                dot(getZrot(arm_positions[0]), dot(getTraslation({0, 0, 0}), getXrot(-pi / 2))));
 
-        TB1 = dot(TB0,T01);
-        if(joint_index == 1)
-        {
-            return TB1;
-        }
+        TB1 = dot(TB0, T01);
+        if(joint_index == 1) { return TB1; }
 
-        std::vector<std::vector<double>> TB2(4,std::vector<double>(4,0));
+        std::vector<std::vector<double>> TB2(4, std::vector<double>(4, 0));
 
-        std::vector<std::vector<double>> T12 = dot(getTraslation({0, 0, 0}),
-                                               dot(getZrot(arm_positions[1]),
-                                               dot(getTraslation({arm_lengths[1],
-                                                                  0, 0}),
-                                                   getXrot(0))));
+        std::vector<std::vector<double>> T12 = dot(
+            getTraslation({0, 0, 0}),
+            dot(getZrot(arm_positions[1]), dot(getTraslation({arm_lengths[1], 0, 0}), getXrot(0))));
 
-        TB2 = dot(TB1,T12);
+        TB2 = dot(TB1, T12);
 
-        if(joint_index == 2)
-        {
-            return TB2;
-        }
-               
-        std::vector<std::vector<double>> TB3(4,std::vector<double>(4,0));
+        if(joint_index == 2) { return TB2; }
 
-        std::vector<std::vector<double>> T23 = dot(getTraslation({0, 0, 0}),
-                                               dot(getZrot(arm_positions[2]),
-                                               dot(getTraslation({arm_lengths[2],
-                                                                  0, 0}),
-                                                   getXrot(0))));
+        std::vector<std::vector<double>> TB3(4, std::vector<double>(4, 0));
 
-        TB3 = dot(TB2,T23);
-        if(joint_index == 3)
-        {
-            return TB3;
-        }
-               
-        std::vector<std::vector<double>> TB4(4,std::vector<double>(4,0));
+        std::vector<std::vector<double>> T23 = dot(
+            getTraslation({0, 0, 0}),
+            dot(getZrot(arm_positions[2]), dot(getTraslation({arm_lengths[2], 0, 0}), getXrot(0))));
 
-        std::vector<std::vector<double>> T34 = dot(getTraslation({0, 0, 0}),
-                                               dot(getZrot(arm_positions[3]),
-                                               dot(getTraslation({0, 0, 0}),
-                                                   getXrot(pi/2))));
+        TB3 = dot(TB2, T23);
+        if(joint_index == 3) { return TB3; }
 
-        TB4 = dot(TB3,T34);
-        if(joint_index == 4)
-        {
-            return TB4;
-        }
+        std::vector<std::vector<double>> TB4(4, std::vector<double>(4, 0));
 
-        std::vector<std::vector<double>> TB5(4,std::vector<double>(4,0));
+        std::vector<std::vector<double>> T34 =
+            dot(getTraslation({0, 0, 0}),
+                dot(getZrot(arm_positions[3]), dot(getTraslation({0, 0, 0}), getXrot(pi / 2))));
 
-        std::vector<std::vector<double>> T45 = dot(getTraslation({0,
-                                                 0, arm_lengths[3]+arm_lengths[4]}),
-                                               dot(getZrot(arm_positions[4]),
-                                               dot(getTraslation({0, 0, 0}),
-                                                   getXrot(0))));
+        TB4 = dot(TB3, T34);
+        if(joint_index == 4) { return TB4; }
 
-        TB5 = dot(TB4,T45);
+        std::vector<std::vector<double>> TB5(4, std::vector<double>(4, 0));
+
+        std::vector<std::vector<double>> T45 =
+            dot(getTraslation({0, 0, arm_lengths[3] + arm_lengths[4]}),
+                dot(getZrot(arm_positions[4]), dot(getTraslation({0, 0, 0}), getXrot(0))));
+
+        TB5 = dot(TB4, T45);
         return TB5;
     }
 
-    return std::vector<std::vector<double>>(4,std::vector<double>(4,0));
+    return std::vector<std::vector<double>>(4, std::vector<double>(4, 0));
 }
 
 double MobileManipulator::getWheelInertia()
 {
-    double I = 1/2*wheels_weight*pow(wheels_radius,2);
+    double I = 1 / 2 * wheels_weight * pow(wheels_radius, 2);
     return I;
 }
 
@@ -882,13 +869,13 @@ std::vector<double> MobileManipulator::forwardIntegrateModel(std::vector<double>
     std::vector<double> arm_previous_speeds;
     for(uint i = 0; i < number_arm_joints; i++)
     {
-        arm_previous_speeds.push_back(x[arm_position_indexes[i]+number_arm_joints]);
+        arm_previous_speeds.push_back(x[arm_position_indexes[i] + number_arm_joints]);
     }
 
     std::vector<double> arm_accelerations;
     for(uint i = 0; i < number_arm_joints; i++)
     {
-        arm_accelerations.push_back(x[arm_position_indexes[i]+number_arm_joints*2]);
+        arm_accelerations.push_back(x[arm_position_indexes[i] + number_arm_joints * 2]);
     }
 
     std::vector<double> base_ee_pose;
@@ -905,9 +892,8 @@ std::vector<double> MobileManipulator::forwardIntegrateModel(std::vector<double>
 
     double robot_yaw = x[yaw_index];
 
-    std::vector<double> base_speed = {x[base_speed_indexes[0]],
-                                      x[base_speed_indexes[1]],
-                                      x[base_speed_indexes[2]]};
+    std::vector<double> base_speed = {
+        x[base_speed_indexes[0]], x[base_speed_indexes[1]], x[base_speed_indexes[2]]};
 
     std::vector<double> wheels_speed = {u[wheels_actuators_indexes[0]],
                                         u[wheels_actuators_indexes[1]]};
@@ -915,57 +901,55 @@ std::vector<double> MobileManipulator::forwardIntegrateModel(std::vector<double>
     std::vector<double> wheels_previous_speed = {x[wheels_speed_indexes[0]],
                                                  x[wheels_speed_indexes[1]]};
 
-    std::vector<double> wheels_accelerations = {x[wheels_speed_indexes[0] +
-                                                  wheels_speed_indexes.size()],
-                                                x[wheels_speed_indexes[1] +
-                                                  wheels_speed_indexes.size()]};
+    std::vector<double> wheels_accelerations = {
+        x[wheels_speed_indexes[0] + wheels_speed_indexes.size()],
+        x[wheels_speed_indexes[1] + wheels_speed_indexes.size()]};
 
     std::vector<std::vector<double>> J = getArmJacobianMatrix(arm_positions);
 
-
     // W2EE
-    xf[world_ee_pose_indexes[0]] = cos(robot_yaw)*base_ee_pose[2] -
-                                   sin(robot_yaw)*base_ee_pose[1] + robot_pose[0];
-    xf[world_ee_pose_indexes[1]] = sin(robot_yaw)*base_ee_pose[2] +
-                                   cos(robot_yaw)*base_ee_pose[1] + robot_pose[1];
-    xf[world_ee_pose_indexes[2]] = world_ee_pose[2] - dot(J[0],arm_speeds)*time_step;
+    xf[world_ee_pose_indexes[0]] =
+        cos(robot_yaw) * base_ee_pose[2] - sin(robot_yaw) * base_ee_pose[1] + robot_pose[0];
+    xf[world_ee_pose_indexes[1]] =
+        sin(robot_yaw) * base_ee_pose[2] + cos(robot_yaw) * base_ee_pose[1] + robot_pose[1];
+    xf[world_ee_pose_indexes[2]] = world_ee_pose[2] - dot(J[0], arm_speeds) * time_step;
 
     // B2EE
     for(uint i = 0; i < 6; i++)
     {
-        xf[base_ee_pose_indexes[i]] = base_ee_pose[i] + dot(J[i],arm_speeds)*time_step;
+        xf[base_ee_pose_indexes[i]] = base_ee_pose[i] + dot(J[i], arm_speeds) * time_step;
     }
 
     // W2C
-    xf[robot_pose_indexes[0]] = robot_pose[0] + cos(robot_yaw)*base_speed[0]*time_step -
-                                                sin(robot_yaw)*base_speed[1]*time_step;
-    xf[robot_pose_indexes[1]] = robot_pose[1] + sin(robot_yaw)*base_speed[0]*time_step +
-                                                cos(robot_yaw)*base_speed[1]*time_step;
-    xf[robot_pose_indexes[2]] = robot_pose[2] + base_speed[2]*time_step;
+    xf[robot_pose_indexes[0]] = robot_pose[0] + cos(robot_yaw) * base_speed[0] * time_step -
+                                sin(robot_yaw) * base_speed[1] * time_step;
+    xf[robot_pose_indexes[1]] = robot_pose[1] + sin(robot_yaw) * base_speed[0] * time_step +
+                                cos(robot_yaw) * base_speed[1] * time_step;
+    xf[robot_pose_indexes[2]] = robot_pose[2] + base_speed[2] * time_step;
 
     // BSpeed
-    xf[base_speed_indexes[0]] = wheels_radius/2*(wheels_speed[0] + wheels_speed[1]);
+    xf[base_speed_indexes[0]] = wheels_radius / 2 * (wheels_speed[0] + wheels_speed[1]);
     xf[base_speed_indexes[1]] = 0;
-    xf[base_speed_indexes[2]] = wheels_radius*(wheels_speed[0] - wheels_speed[1])
-                                              /(2*differential_width);
+    xf[base_speed_indexes[2]] =
+        wheels_radius * (wheels_speed[0] - wheels_speed[1]) / (2 * differential_width);
 
     // Arm joints position
     for(uint i = 0; i < number_arm_joints; i++)
     {
-        xf[arm_position_indexes[i]] = arm_positions[i] + arm_speeds[i]*time_step;
+        xf[arm_position_indexes[i]] = arm_positions[i] + arm_speeds[i] * time_step;
     }
 
     // Arm joints speed
     for(uint i = 0; i < number_arm_joints; i++)
     {
-        xf[arm_position_indexes[i]+number_arm_joints] = arm_speeds[i];
+        xf[arm_position_indexes[i] + number_arm_joints] = arm_speeds[i];
     }
 
     // Arm joints acceleration
     for(uint i = 0; i < number_arm_joints; i++)
     {
-        xf[arm_position_indexes[i]+number_arm_joints*2] =
-                         (arm_speeds[i]-arm_previous_speeds[i])/time_step;
+        xf[arm_position_indexes[i] + number_arm_joints * 2] =
+            (arm_speeds[i] - arm_previous_speeds[i]) / time_step;
     }
 
     // Arm joints torques
@@ -975,8 +959,8 @@ std::vector<double> MobileManipulator::forwardIntegrateModel(std::vector<double>
 
     for(uint i = 0; i < number_arm_joints; i++)
     {
-        xf[arm_position_indexes[i]+number_arm_joints*3] = dot(B[i],arm_accelerations) +
-                                                          dot(C[i],arm_speeds) + G[i];
+        xf[arm_position_indexes[i] + number_arm_joints * 3] =
+            dot(B[i], arm_accelerations) + dot(C[i], arm_speeds) + G[i];
     }
 
     // Wheels speeds
@@ -984,18 +968,20 @@ std::vector<double> MobileManipulator::forwardIntegrateModel(std::vector<double>
     xf[wheels_speed_indexes[1]] = wheels_speed[1];
 
     // Wheels accelerations
-    xf[wheels_speed_indexes[0] + wheels_speed_indexes.size()] = (wheels_speed[0] -
-                                                        wheels_previous_speed[0])/time_step;
-    xf[wheels_speed_indexes[1] + wheels_speed_indexes.size()] = (wheels_speed[1] -
-                                                        wheels_previous_speed[1])/time_step;
+    xf[wheels_speed_indexes[0] + wheels_speed_indexes.size()] =
+        (wheels_speed[0] - wheels_previous_speed[0]) / time_step;
+    xf[wheels_speed_indexes[1] + wheels_speed_indexes.size()] =
+        (wheels_speed[1] - wheels_previous_speed[1]) / time_step;
 
     // Wheels torques
-    xf[wheels_speed_indexes[0] + wheels_speed_indexes.size()*2] = wheels_accelerations[0]*
-                        (getWheelInertia() + robot_weight/number_wheels*pow(wheels_radius,2)) +
-                         rolling_resistance*robot_weight*gravity*wheels_radius/number_wheels;
-    xf[wheels_speed_indexes[1] + wheels_speed_indexes.size()*2] = wheels_accelerations[1]*
-                        (getWheelInertia() + robot_weight/number_wheels*pow(wheels_radius,2)) +
-                         rolling_resistance*robot_weight*gravity*wheels_radius/number_wheels;
+    xf[wheels_speed_indexes[0] + wheels_speed_indexes.size() * 2] =
+        wheels_accelerations[0] *
+            (getWheelInertia() + robot_weight / number_wheels * pow(wheels_radius, 2)) +
+        rolling_resistance * robot_weight * gravity * wheels_radius / number_wheels;
+    xf[wheels_speed_indexes[1] + wheels_speed_indexes.size() * 2] =
+        wheels_accelerations[1] *
+            (getWheelInertia() + robot_weight / number_wheels * pow(wheels_radius, 2)) +
+        rolling_resistance * robot_weight * gravity * wheels_radius / number_wheels;
 
     return xf;
 }

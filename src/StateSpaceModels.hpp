@@ -31,22 +31,21 @@
 #ifndef __STATE_SPACE_MODEL__
 #define __STATE_SPACE_MODEL__
 
-#include <iostream>
-#include <exception>
-#include <vector>
-#include <math.h>
 #include "MatrixOperations.hpp"
+#include <exception>
+#include <iostream>
+#include <math.h>
+#include <vector>
 
 #define pi 3.14159265359
 
 namespace StateSpaceModels
 {
-
 /***************************************************************************
   Library containing state space models for different robots.
 
   CONSTRUCTORS:
-  StateSpaceModels::MobileManipulator * robot_ss_model = 
+  StateSpaceModels::MobileManipulator * robot_ss_model =
                  new StateSpaceModels::MobileManipulator(string robot_name);
 
   "string robot_name" should contain the name of the robot model to be used.
@@ -57,13 +56,7 @@ namespace StateSpaceModels
 
 class MobileManipulator
 {
-
 private:
-
-    //********************//
-    // Dependency classes //
-    //********************//
-
     //******************//
     // Model properties //
     //******************//
@@ -108,13 +101,13 @@ private:
 
     // Indexes of the constrained inputs
     std::vector<uint> input_constrained_indexes;
-     
+
     // Indexes of the goal states with associated cost
     std::vector<uint> goal_states_indexes;
-     
+
     // Indexes of the states with an associated cost during the whole motion
     std::vector<uint> whole_states_indexes;
-     
+
     // Indexes of the inputs with an associated cost during the whole motion
     std::vector<uint> whole_inputs_indexes;
 
@@ -209,7 +202,7 @@ private:
     //**********************//
     // Supporting variables //
     //**********************//
-   
+
     // Size of the state vector
     uint number_states;
 
@@ -231,12 +224,7 @@ private:
     // Number of pure state constraints
     uint number_ps_constraints;
 
-    //**********************//
-    // Supporting Functions //
-    //**********************//
-
 public:
-
     //*******************//
     // Class Constructor //
     //*******************//
@@ -251,17 +239,13 @@ public:
 
     // Returns the linearized state space model matrix A.
     // Size of A: number_states x number_states
-    std::vector<std::vector<double>> getLinearizedMatrixA(
-                                                   std::vector<double> x,
-                                                   double time_step);
+    std::vector<std::vector<double>> getLinearizedMatrixA(std::vector<double> x, double time_step);
 
     // Returns the linearized state space model matrix B.
     // Size of B: number_states x number_inputs
-    std::vector<std::vector<double>> getLinearizedMatrixB(
-                                                   std::vector<double> x,
-                                                   std::vector<double> u,
-                                                   double time_step);
-
+    std::vector<std::vector<double>> getLinearizedMatrixB(std::vector<double> x,
+                                                          std::vector<double> u,
+                                                          double time_step);
 
     // Returns the number of state input constraints.
     int getNumberStateInputConstraints();
@@ -278,7 +262,6 @@ public:
     // Size of r: number_si_constraints
     std::vector<double> getConstraintsMatrixR();
 
-
     // Returns the number of pure state constraints.
     int getNumberPureStateConstraints();
 
@@ -289,7 +272,6 @@ public:
     // Returns the pure state constraint matrix h.
     // Size of G: number_ps_constraints
     std::vector<double> getConstraintsMatrixH();
-
 
     // Returns the pure state cost matrix Q, in function of the time step provided
     // e.g. If percentage_horizon is 100, the goal state cost matrix will be returned
@@ -304,35 +286,31 @@ public:
     // Size of K: number_states x number_inputs
     std::vector<std::vector<double>> getStateInputCostMatrix();
 
-
-    // Returns the gravity matrix given the arm state. 
+    // Returns the gravity matrix given the arm state.
     // Size of G: number_arm_joints
     std::vector<double> getArmGravityMatrix(std::vector<double> arm_positions);
 
-    // Returns the inertia matrix given the arm state. 
+    // Returns the inertia matrix given the arm state.
     // Size of B: number_arm_joints x number_arm_joints
     std::vector<std::vector<double>> getArmInertiaMatrix(std::vector<double> arm_positions);
 
-    // Returns the coriolis matrix given the arm state. 
+    // Returns the coriolis matrix given the arm state.
     // Size of C: number_arm_joints x number_arm_joints
     std::vector<std::vector<double>> getArmCoriolisMatrix(std::vector<double> arm_positions,
                                                           std::vector<double> arm_speeds);
 
-    // Returns the jacobian matrix given the arm state. 
+    // Returns the jacobian matrix given the arm state.
     // Size of J: 6DoF x number_arm_joints
     std::vector<std::vector<double>> getArmJacobianMatrix(std::vector<double> arm_positions);
 
-    // Returns the base-to-joint_index transform matrix given the arm state, 
+    // Returns the base-to-joint_index transform matrix given the arm state,
     // using direct kinematics
     // Size of TBEE: 4 x 4
-    std::vector<std::vector<double>> getDirectKinematicsTransform(
-                                        std::vector<double> arm_positions,
-                                        uint joint_index);
-
+    std::vector<std::vector<double>> getDirectKinematicsTransform(std::vector<double> arm_positions,
+                                                                  uint joint_index);
 
     // Returns the wheel inertia
     double getWheelInertia();
-
 
     // Returns the updated state after applying the control input u into the previous state x
     // over a time interval time_step.
@@ -340,11 +318,7 @@ public:
                                               std::vector<double> u,
                                               double time_step);
 
-    //********************//
-    // Checking Functions //
-    //********************//
-
 };
-}
+}    // namespace StateSpaceModels
 
 #endif

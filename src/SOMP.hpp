@@ -38,8 +38,11 @@
 
 #define pi 3.14159265359
 
-/**
- *  Motion planner using Stepped Optimal SLQr.
+namespace SOMP
+{
+/*********************************************************************************************
+ *
+ *  SOMP: Stepped Optimal Motion Planner, based on unconstrained and constrained SLQr.
  *  Given the system modelled by "state_space_model",
  *  and the configurations given in "config", the SLQR motion planning
  *  problem is solved, trying to reach the objective given by "x0" and "u0"
@@ -48,11 +51,11 @@
  *  Info about the map can be provided through "map_info" parameter.
  *
  * CONSTRUCTORS:
- * MotionPlannerSOMP * somp_planner = new MotionPlannerSOMP(Config config,
- *                                                          SSModel state_space_model);
- * MotionPlannerSOMP * somp_planner = new MotionPlannerSOMP(Config config,
- *                                                          SSModel state_space_model,
- *                                                          MapInfo map_info);
+ * SOMP::MotionPlanner * somp_planner = new SOMP::MotionPlanner(Config config,
+ *                                                              SSModel state_space_model);
+ * SOMP::MotionPlanner * somp_planner = new SOMP::MotionPlanner(Config config,
+ *                                                              SSModel state_space_model,
+ *                                                              MapInfo map_info);
  *
  * "Config config" is a struct containing:
  *     - Planner horizon time "double time_horizon". Default: 160s.
@@ -82,90 +85,90 @@
  *     - Digital elevation map "std::vector<std::vector<uint>> dem".
  *     - Repulsive cost from obstacles "double obstacles_cost".
  *
- * USAGE:
- * int status = somp_planner.generateUnconstrainedMotionPlan(std::vector<std::vector<double>> x,
- *                                                           std::vector<std::vector<double>> x0,
- *                                                           std::vector<std::vector<double>> u,
- *                                                           std::vector<std::vector<double>> u0);
- *
- * int status = somp_planner.generateConstrainedMotionPlan(std::vector<std::vector<double>> x,
- *                                                         std::vector<std::vector<double>> x0,
- *                                                         std::vector<std::vector<double>> u,
- *                                                         std::vector<std::vector<double>> u0);
- *
- * int status = somp_planner.generateSteppedMotionPlan(std::vector<std::vector<double>> x,
- *                                                     std::vector<std::vector<double>> x0,
- *                                                     std::vector<std::vector<double>> u,
- *                                                     std::vector<std::vector<double>> u0);
- *
- * "std::vector<std::vector<double>> x, x0" are the initial
- * and goal states respectively. Size number_states x number_time_steps.
- *
- * "std::vector<std::vector<double>> u, u0" are the initial and goal
- * control inputs respectively (u0 is usually filled with zeros).
- * Size number_inputs x number_time_steps.
- *
- * If convergence is reached, "int status" will be "1", if not:
- *     " 0" --> something unexpected happened.
- *     "-1" --> the goal is still far away.
- *     "-2" --> the algorithm is still hardly updating the control.
- *     "-3" --> the generated state is not safe.
- *     "-4" --> something unexpected happened.
- *
- * bool success = somp_planner.updateTimeHorizon(double new_time_horizon);
- * bool success = somp_planner.updateTimeStep(double new_time_step);
- *
- * RESULTS:
- *
- * std::vector<std::vector<double>> getPlannedState(); -> returns x
- * std::vector<std::vector<double>> getPlannedControl(); -> returns u
- **/
+ *********************************************************************************************/
 
-class MotionPlannerSLQ
+class MotionPlanner
 {
-
 private:
+    //********************//
+    // Dependency classes //
+    //********************//
 
-    /**
-    * Dependency classes
-    */
-   
-    /**
-     * Configurable Parameters
-     */
+    //*************************//
+    // Configurable Parameters //
+    //*************************//
     bool checkSafety;
 
-    /**
-     * Flags
-     */
-    
-    /**
-     * Motion Plan results
-     */
+    //*******//
+    // Flags //
+    //*******//
 
-    /**
-     * Supporting Functions
-     */
+    //*********************//
+    // Motion Plan Results //
+    //*********************//
+
+    //**********************//
+    // Supporting Functions //
+    //**********************//
 
 public:
-
-    /**
-     * Class Constructor.
-     */
+    //*******************//
+    // Class Constructor //
+    //*******************//
     MotionPlannerSLQ();
 
-    /**
-     * Planning Functions
-     */
-       
-    /**
-     * Get Data
-     */
+    //***********************//
+    // Configuring Functions //
+    //***********************//
+    bool updateTimeHorizon(double new_time_horizon);
+    bool updateTimeStep(double new_time_step);
 
-    /*
-     * Checking Functions
-     */
+    //********************//
+    // Planning Functions //
+    //********************//
+    /*********************************************************************************************
+     *
+     * USAGE:
+     *
+     * "std::vector<std::vector<double>> x, x0" are the initial
+     * and goal states respectively. Size number_states x number_time_steps.
+     *
+     * "std::vector<std::vector<double>> u, u0" are the initial and goal
+     * control inputs respectively (u0 is usually filled with zeros).
+     * Size number_inputs x number_time_steps.
+     *
+     * If convergence is reached, "int status" will be "1", if not:
+     *     " 0" --> something unexpected happened.
+     *     "-1" --> the goal is still far away.
+     *     "-2" --> the algorithm is still hardly updating the control.
+     *     "-3" --> the generated state is not safe.
+     *     "-4" --> something unexpected happened.
+     *
+     *********************************************************************************************/
 
+    int generateUnconstrainedMotionPlan(std::vector<std::vector<double>> x,
+                                        std::vector<std::vector<double>> x0,
+                                        std::vector<std::vector<double>> u,
+                                        std::vector<std::vector<double>> u0);
+
+    int generateConstrainedMotionPlan(std::vector<std::vector<double>> x,
+                                      std::vector<std::vector<double>> x0,
+                                      std::vector<std::vector<double>> u,
+                                      std::vector<std::vector<double>> u0);
+
+    int generateSteppedMotionPlan(std::vector<std::vector<double>> x,
+                                  std::vector<std::vector<double>> x0,
+                                  std::vector<std::vector<double>> u,
+                                  std::vector<std::vector<double>> u0);
+    //**********//
+    // Get Data //
+    //**********//
+    std::vector<std::vector<double>> getPlannedState();
+    std::vector<std::vector<double>> getPlannedControl();
+
+    //********************//
+    // Checking Functions //
+    //********************//
 };
-
+}    // namespace SOMP
 #endif

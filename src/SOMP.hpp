@@ -170,17 +170,21 @@ private:
 
     // TODO what to do with obstacles_cost?
 
-    //*******//
-    // Flags //
-    //*******//
-
     //*********************//
     // Motion Plan Results //
     //*********************//
 
+    // Resulting state vector. Size: number_states x time_steps
+    std::vector<std::vector<double>> planned_state;
+
+    // Resulting state vector. Size: number_inputs x time_steps
+    std::vector<std::vector<double>> planned_control;
+
     //**********************//
-    // Supporting Functions //
+    // Supporting variables //
     //**********************//
+
+    bool is_motion_planned = false;
 
 public:
     //*******************//
@@ -221,29 +225,26 @@ public:
      *
      ******************************************************************************************/
 
-    int generateUnconstrainedMotionPlan(std::vector<std::vector<double>> x,
-                                        std::vector<std::vector<double>> x0,
-                                        std::vector<std::vector<double>> u,
-                                        std::vector<std::vector<double>> u0);
+    int generateUnconstrainedMotionPlan(std::vector<double> x,
+                                        std::vector<double> x0,
+                                        std::vector<double> u,
+                                        std::vector<double> u0);
 
-    int generateConstrainedMotionPlan(std::vector<std::vector<double>> x,
-                                      std::vector<std::vector<double>> x0,
-                                      std::vector<std::vector<double>> u,
-                                      std::vector<std::vector<double>> u0);
+    int generateConstrainedMotionPlan(std::vector<double> x,
+                                      std::vector<double> x0,
+                                      std::vector<double> u,
+                                      std::vector<double> u0);
 
-    int generateSteppedMotionPlan(std::vector<std::vector<double>> x,
-                                  std::vector<std::vector<double>> x0,
-                                  std::vector<std::vector<double>> u,
-                                  std::vector<std::vector<double>> u0);
+    int generateSteppedMotionPlan(std::vector<double> x,
+                                  std::vector<double> x0,
+                                  std::vector<double> u,
+                                  std::vector<double> u0);
     //**********//
     // Get Data //
     //**********//
-    std::vector<std::vector<double>> getPlannedState();
-    std::vector<std::vector<double>> getPlannedControl();
+    bool getPlannedState(std::vector<std::vector<double>> & x);
 
-    //********************//
-    // Checking Functions //
-    //********************//
+    bool getPlannedControl(std::vector<std::vector<double>> & u);
 };
 }    // namespace SOMP
 #endif

@@ -127,3 +127,34 @@ bool MotionPlanner::setTimeStep(double new_time_step)
     }
     return true;
 }
+
+bool MotionPlanner::getPlannedState(std::vector<std::vector<double>> & x)
+{
+    if(!is_motion_planned)
+    {
+        std::cout << red
+                  << "ERROR [MotionPlanner::getPlannedState]: No motion plan has yet been generated"
+                  << reset << std::endl;
+        return false;
+    }
+    else
+        x = planned_state;
+
+    return true;
+}
+
+bool MotionPlanner::getPlannedControl(std::vector<std::vector<double>> & u)
+{
+    if(!is_motion_planned)
+    {
+        std::cout
+            << red
+            << "ERROR [MotionPlanner::getPlannedControl]: No motion plan has yet been generated"
+            << reset << std::endl;
+        return false;
+    }
+    else
+        u = planned_control;
+
+    return true;
+}

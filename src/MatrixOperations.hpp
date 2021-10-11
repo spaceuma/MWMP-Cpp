@@ -28,7 +28,6 @@
 // Affiliation: Department of Systems Engineering and Automation
 // Space Robotics Lab (www.uma.es/space-robotics)
 
-
 #ifndef __MATRIX_OPERATIONS__
 #define __MATRIX_OPERATIONS__
 
@@ -37,24 +36,22 @@
 
 #define pi 3.14159265359
 
-#define reset   "\033[0m"
-#define black   "\033[1;30m"
-#define red     "\033[1;31m"
-#define green   "\033[1;32m"
-#define yellow  "\033[1;33m"
-#define blue    "\033[1;34m"
+#define reset "\033[0m"
+#define black "\033[1;30m"
+#define red "\033[1;31m"
+#define green "\033[1;32m"
+#define yellow "\033[1;33m"
+#define blue "\033[1;34m"
 #define magenta "\033[1;35m"
-#define cyan    "\033[1;36m"
-#define white   "\033[1;37m"
+#define cyan "\033[1;36m"
+#define white "\033[1;37m"
 
 namespace MatrixOperations
 {
-
 std::vector<std::vector<double>> dot(std::vector<std::vector<double>> A,
                                      std::vector<std::vector<double>> B);
 
-std::vector<double> dot(std::vector<std::vector<double>> A,
-                        std::vector<double> b);
+std::vector<double> dot(std::vector<std::vector<double>> A, std::vector<double> b);
 
 std::vector<double> dot(double n, std::vector<double> a);
 
@@ -68,27 +65,23 @@ std::vector<std::vector<double>> getYrot(double angle);
 
 std::vector<std::vector<double>> getZrot(double angle);
 
-double getDeterminant(const std::vector<std::vector<double>> *A);
+double getDeterminant(const std::vector<std::vector<double>> * A);
 
-std::vector<std::vector<double>> getCofactor(
-    const std::vector<std::vector<double>> *A,
-    int row,
-    int col);
+std::vector<std::vector<double>> getCofactor(const std::vector<std::vector<double>> * A,
+                                             int row,
+                                             int col);
 
-std::vector<std::vector<double>> getAdjoint(
-    const std::vector<std::vector<double>> *A);
+std::vector<std::vector<double>> getAdjoint(const std::vector<std::vector<double>> * A);
 
-std::vector<std::vector<double>> getInverse(
-    const std::vector<std::vector<double>> *A);
+std::vector<std::vector<double>> getInverse(const std::vector<std::vector<double>> * A);
 
-std::vector<double> getCrossProduct(std::vector<double> a,
-                                    std::vector<double> b);
+std::vector<double> getCrossProduct(std::vector<double> a, std::vector<double> b);
 
 std::vector<double> getSum(std::vector<double> a, std::vector<double> b);
 
 std::vector<double> getDifference(std::vector<double> a, std::vector<double> b);
 
 double getNorm(std::vector<double> a);
-} // namespace MatrixOperations
+}    // namespace MatrixOperations
 #endif
 // namespace MatrixOperations

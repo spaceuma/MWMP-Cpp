@@ -28,7 +28,6 @@
 // Affiliation: Department of Systems Engineering and Automation
 // Space Robotics Lab (www.uma.es/space-robotics)
 
-
 #include "MatrixOperations.hpp"
 #include <iostream>
 #include <math.h>
@@ -37,36 +36,34 @@
 
 using namespace MatrixOperations;
 
-std::vector<std::vector<double>> MatrixOperations::dot(
-    std::vector<std::vector<double>> A,
-    std::vector<std::vector<double>> B)
+std::vector<std::vector<double>> MatrixOperations::dot(std::vector<std::vector<double>> A,
+                                                       std::vector<std::vector<double>> B)
 {
     // This function performs matrixes product
     int n = A.size();
     int m = B[0].size();
     std::vector<std::vector<double>> C(n, std::vector<double>(m));
 
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < m; j++)
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < m; j++)
         {
             C[i][j] = 0;
-            for (int k = 0; k < B.size(); k++)
+            for(int k = 0; k < B.size(); k++)
                 C[i][j] += A[i][k] * B[k][j];
         }
 
     return C;
 }
 
-std::vector<double> MatrixOperations::dot(std::vector<std::vector<double>> A,
-                                            std::vector<double> b)
+std::vector<double> MatrixOperations::dot(std::vector<std::vector<double>> A, std::vector<double> b)
 {
     // This function performs matrix and vector product
     int n = A.size();
     int m = b.size();
     std::vector<double> c(n, 0);
 
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < m; j++)
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < m; j++)
         {
             c[i] += A[i][j] * b[j];
         }
@@ -74,20 +71,21 @@ std::vector<double> MatrixOperations::dot(std::vector<std::vector<double>> A,
     return c;
 }
 
-double MatrixOperations::dot(std::vector<double> a,
-                             std::vector<double> b)
+double MatrixOperations::dot(std::vector<double> a, std::vector<double> b)
 {
     // This function performs vector and vector product
     int n = a.size();
     int m = b.size();
     double c = 0;
 
-    if (n != m)
+    if(n != m)
     {
-        throw std::domain_error(red+std::string("ERROR [MatrixOperations::dot]: Vectors do not have the same size")+reset);
+        throw std::domain_error(
+            red + std::string("ERROR [MatrixOperations::dot]: Vectors do not have the same size") +
+            reset);
     }
 
-    for (int i = 0; i < n; i++)
+    for(int i = 0; i < n; i++)
         c += a[i] * b[i];
 
     return c;
@@ -99,19 +97,16 @@ std::vector<double> MatrixOperations::dot(double n, std::vector<double> a)
     int m = a.size();
     std::vector<double> c(m);
 
-    for (int i = 0; i < m; i++)
+    for(int i = 0; i < m; i++)
         c[i] = n * a[i];
 
     return c;
 }
 
-std::vector<std::vector<double>> MatrixOperations::getTraslation(
-    std::vector<double> position)
+std::vector<std::vector<double>> MatrixOperations::getTraslation(std::vector<double> position)
 {
-    std::vector<std::vector<double>> T{{1, 0, 0, position[0]},
-                                       {0, 1, 0, position[1]},
-                                       {0, 0, 1, position[2]},
-                                       {0, 0, 0, 1}};
+    std::vector<std::vector<double>> T{
+        {1, 0, 0, position[0]}, {0, 1, 0, position[1]}, {0, 0, 1, position[2]}, {0, 0, 0, 1}};
     return T;
 }
 
@@ -120,11 +115,10 @@ std::vector<std::vector<double>> MatrixOperations::getXrot(double angle)
     double s = sin(angle);
     double c = cos(angle);
 
-    if (abs(s) < 0.000000001) s = 0;
-    if (abs(c) < 0.000000001) c = 0;
+    if(abs(s) < 0.000000001) s = 0;
+    if(abs(c) < 0.000000001) c = 0;
 
-    std::vector<std::vector<double>> T{
-        {1, 0, 0, 0}, {0, c, -s, 0}, {0, s, c, 0}, {0, 0, 0, 1}};
+    std::vector<std::vector<double>> T{{1, 0, 0, 0}, {0, c, -s, 0}, {0, s, c, 0}, {0, 0, 0, 1}};
     return T;
 }
 
@@ -133,11 +127,10 @@ std::vector<std::vector<double>> MatrixOperations::getYrot(double angle)
     double s = sin(angle);
     double c = cos(angle);
 
-    if (abs(s) < 0.000000001) s = 0;
-    if (abs(c) < 0.000000001) c = 0;
+    if(abs(s) < 0.000000001) s = 0;
+    if(abs(c) < 0.000000001) c = 0;
 
-    std::vector<std::vector<double>> T{
-        {c, 0, s, 0}, {0, 1, 0, 0}, {-s, 0, c, 0}, {0, 0, 0, 1}};
+    std::vector<std::vector<double>> T{{c, 0, s, 0}, {0, 1, 0, 0}, {-s, 0, c, 0}, {0, 0, 0, 1}};
     return T;
 }
 
@@ -146,56 +139,51 @@ std::vector<std::vector<double>> MatrixOperations::getZrot(double angle)
     double s = sin(angle);
     double c = cos(angle);
 
-    if (abs(s) < 0.000000001) s = 0;
-    if (abs(c) < 0.000000001) c = 0;
+    if(abs(s) < 0.000000001) s = 0;
+    if(abs(c) < 0.000000001) c = 0;
 
-    std::vector<std::vector<double>> T{
-        {c, -s, 0, 0}, {s, c, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
+    std::vector<std::vector<double>> T{{c, -s, 0, 0}, {s, c, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
     return T;
 }
 
-double MatrixOperations::getDeterminant(
-    const std::vector<std::vector<double>> *A)
+double MatrixOperations::getDeterminant(const std::vector<std::vector<double>> * A)
 {
     int n = A->size();
 
-    if (n == 2)
-    {
-        return (*A)[0][0] * (*A)[1][1] - (*A)[1][0] * (*A)[0][1];
-    }
+    if(n == 2) { return (*A)[0][0] * (*A)[1][1] - (*A)[1][0] * (*A)[0][1]; }
     else
     {
         double d;
         int c, i, j, subi, subj;
         std::vector<std::vector<double>> subA;
 
-        for (c = 0; c < n; c++)
+        for(c = 0; c < n; c++)
         {
             subA = getCofactor(A, 0, c);
             d = d + (pow(-1, c) * (*A)[0][c] * getDeterminant(&subA));
         }
-        if (abs(d) < 0.0000001) d = 0;
+        if(abs(d) < 0.0000001) d = 0;
         return d;
     }
 }
 
 std::vector<std::vector<double>> MatrixOperations::getCofactor(
-    const std::vector<std::vector<double>> *A,
+    const std::vector<std::vector<double>> * A,
     int row,
     int col)
 {
     int n = A->size();
     int subi = 0, subj = 0;
     std::vector<std::vector<double>> subA(n - 1, std::vector<double>(n - 1));
-    for (int i = 0; i < n; i++)
+    for(int i = 0; i < n; i++)
     {
-        for (int j = 0; j < n; j++)
+        for(int j = 0; j < n; j++)
         {
-            if (i != row && j != col)
+            if(i != row && j != col)
             {
                 subA[subi][subj] = (*A)[i][j];
                 subj++;
-                if (subj == n - 1)
+                if(subj == n - 1)
                 {
                     subj = 0;
                     subi++;
@@ -208,18 +196,17 @@ std::vector<std::vector<double>> MatrixOperations::getCofactor(
 }
 
 std::vector<std::vector<double>> MatrixOperations::getAdjoint(
-    const std::vector<std::vector<double>> *A)
+    const std::vector<std::vector<double>> * A)
 {
     int n = A->size();
 
-    if (n == 1)
-        return std::vector<std::vector<double>>(1, std::vector<double>(1, 1));
+    if(n == 1) return std::vector<std::vector<double>>(1, std::vector<double>(1, 1));
 
     int sign = 1;
     std::vector<std::vector<double>> adj(n, std::vector<double>(n));
 
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < n; j++)
         {
             sign = ((i + j) % 2 == 0) ? 1 : -1;
             std::vector<std::vector<double>> cof = getCofactor(A, i, j);
@@ -230,12 +217,16 @@ std::vector<std::vector<double>> MatrixOperations::getAdjoint(
 }
 
 std::vector<std::vector<double>> MatrixOperations::getInverse(
-    const std::vector<std::vector<double>> *A)
+    const std::vector<std::vector<double>> * A)
 {
     double det = getDeterminant(A);
-    if (det == 0)
+    if(det == 0)
     {
-        throw std::domain_error(red+std::string("ERROR [MatrixOperations::getInverse]: Singular matrix, can't find its inverse")+reset);
+        throw std::domain_error(
+            red +
+            std::string(
+                "ERROR [MatrixOperations::getInverse]: Singular matrix, can't find its inverse") +
+            reset);
     }
 
     std::vector<std::vector<double>> adj = getAdjoint(A);
@@ -243,15 +234,14 @@ std::vector<std::vector<double>> MatrixOperations::getInverse(
     int n = A->size();
     std::vector<std::vector<double>> inverse(n, std::vector<double>(n));
 
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < n; j++)
             inverse[i][j] = adj[i][j] / det;
 
     return inverse;
 }
 
-std::vector<double> MatrixOperations::getCrossProduct(std::vector<double> a,
-                                                      std::vector<double> b)
+std::vector<double> MatrixOperations::getCrossProduct(std::vector<double> a, std::vector<double> b)
 {
     std::vector<double> c(3);
 
@@ -262,17 +252,18 @@ std::vector<double> MatrixOperations::getCrossProduct(std::vector<double> a,
     return c;
 }
 
-std::vector<double> MatrixOperations::getSum(std::vector<double> a,
-                                             std::vector<double> b)
+std::vector<double> MatrixOperations::getSum(std::vector<double> a, std::vector<double> b)
 {
     std::vector<double> c;
-    if (a.size() != b.size())
+    if(a.size() != b.size())
     {
-        throw std::domain_error(red+std::string("ERROR [MatrixOperations::getSum]: Vectors sizes don't match")+reset);
+        throw std::domain_error(
+            red + std::string("ERROR [MatrixOperations::getSum]: Vectors sizes don't match") +
+            reset);
         return std::vector<double>(1, 0);
     }
 
-    for (int i = 0; i < a.size(); i++)
+    for(int i = 0; i < a.size(); i++)
     {
         c.push_back(a[i] + b[i]);
     }
@@ -280,17 +271,19 @@ std::vector<double> MatrixOperations::getSum(std::vector<double> a,
     return c;
 }
 
-std::vector<double> MatrixOperations::getDifference(std::vector<double> a,
-                                                    std::vector<double> b)
+std::vector<double> MatrixOperations::getDifference(std::vector<double> a, std::vector<double> b)
 {
     std::vector<double> c;
-    if (a.size() != b.size())
+    if(a.size() != b.size())
     {
-        throw std::domain_error(red+std::string("ERROR [MatrixOperations::getDifference]: Vectors sizes don't match")+reset);
+        throw std::domain_error(
+            red +
+            std::string("ERROR [MatrixOperations::getDifference]: Vectors sizes don't match") +
+            reset);
         return std::vector<double>(1, 0);
     }
 
-    for (int i = 0; i < a.size(); i++)
+    for(int i = 0; i < a.size(); i++)
     {
         c.push_back(a[i] - b[i]);
     }
@@ -302,7 +295,7 @@ double MatrixOperations::getNorm(std::vector<double> a)
 {
     double sum = 0;
 
-    for (int i = 0; i < a.size(); i++)
+    for(int i = 0; i < a.size(); i++)
         sum += pow(a[i], 2);
 
     return sqrt(sum);

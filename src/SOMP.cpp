@@ -49,8 +49,7 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model)
     FileManager::readMatrixFile("dummy_obstacles_map.txt", obstacles_map);
 }
 
-MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model,
-                             Config config)
+MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config)
 {
     robot_ss_model = _robot_ss_model;
 
@@ -75,9 +74,7 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model,
     FileManager::readMatrixFile("dummy_obstacles_map.txt", obstacles_map);
 }
 
-MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model,
-                             Config config,
-                             MapInfo map_info)
+MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config, MapInfo map_info)
 {
     robot_ss_model = _robot_ss_model;
 
@@ -107,7 +104,10 @@ bool MotionPlanner::setTimeHorizon(double new_time_horizon)
         time_horizon = new_time_horizon;
     else
     {
-        std::cout<<magenta<<"WARNING [MotionPlanner::setTimeHorizon]: The new requested time horizon is not valid, the previous one is maintained"<<reset<<std::endl;
+        std::cout << magenta
+                  << "WARNING [MotionPlanner::setTimeHorizon]: The new requested time horizon is "
+                     "not valid, the previous one is maintained"
+                  << reset << std::endl;
         return false;
     }
     return true;
@@ -119,7 +119,10 @@ bool MotionPlanner::setTimeStep(double new_time_step)
         time_step = new_time_step;
     else
     {
-        std::cout<<magenta<<"WARNING [MotionPlanner::setTimeStep]: The new requested time step is not valid, the previous one is maintained"<<reset<<std::endl;
+        std::cout << magenta
+                  << "WARNING [MotionPlanner::setTimeStep]: The new requested time step is not "
+                     "valid, the previous one is maintained"
+                  << reset << std::endl;
         return false;
     }
     return true;

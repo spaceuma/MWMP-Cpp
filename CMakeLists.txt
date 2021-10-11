@@ -23,7 +23,7 @@ add_library(SOMP SHARED
             ${SOMP_SRC}
             ${FILE_MANAGER})
 
-MESSAGE(STATUS "Files included:
+MESSAGE(STATUS "Included files:
         --SOMP_SRC: ${SOMP_SRC}
         --FILE_MANAGER: ${FILE_MANAGER}")
 

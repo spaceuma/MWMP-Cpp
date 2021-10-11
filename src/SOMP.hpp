@@ -174,17 +174,47 @@ private:
     // Motion Plan Results //
     //*********************//
 
-    // Resulting state vector. Size: number_states x time_steps
+    // Resulting state vector. Size: number_states x number_time_steps
     std::vector<std::vector<double>> planned_state;
 
-    // Resulting state vector. Size: number_inputs x time_steps
+    // Resulting state vector. Size: number_inputs x number_time_steps
     std::vector<std::vector<double>> planned_control;
 
     //**********************//
     // Supporting variables //
     //**********************//
 
+    // Flag to check if there is already a planned motion
     bool is_motion_planned = false;
+
+    // Number of time steps, default 200 (160/0.8)
+    uint number_time_steps = 200;
+
+    // State space model properties
+    uint number_states;
+    uint number_inputs;
+    uint number_si_constraints;
+    uint number_ps_constraints;
+
+    //**********************//
+    // Supporting functions //
+    //**********************//
+
+    // Get the complete time-horizon state, ss linearized matrixes and cost matrixes
+    bool updateHorizon(std::vector<std::vector<double>> & x,
+                       const std::vector<std::vector<double>> & u,
+                       std::vector<std::vector<std::vector<double>>> & Ah,
+                       std::vector<std::vector<std::vector<double>>> & Bh,
+                       std::vector<std::vector<std::vector<double>>> & Qh,
+                       std::vector<std::vector<std::vector<double>>> & Rh,
+                       std::vector<std::vector<std::vector<double>>> & Kh);
+
+    // Get the complete time-horizon state, ss linearized matrixes and cost matrixes
+    bool updateHorizonConstraints(std::vector<std::vector<std::vector<double>>> & Ch,
+                                  std::vector<std::vector<std::vector<double>>> & Dh,
+                                  std::vector<std::vector<double>> & rh,
+                                  std::vector<std::vector<std::vector<double>>> & Gh,
+                                  std::vector<std::vector<double>> & hh);
 
 public:
     //*******************//
@@ -209,10 +239,10 @@ public:
      *
      * USAGE:
      *
-     * "std::vector<std::vector<double>> x, x0" are the initial
+     * "std::vector<double> x, x0" are the initial
      * and goal states respectively. Size number_states x number_time_steps.
      *
-     * "std::vector<std::vector<double>> u, u0" are the initial and goal
+     * "std::vector<double> u, u0" are the initial and goal
      * control inputs respectively (u0 is usually filled with zeros).
      * Size number_inputs x number_time_steps.
      *
@@ -225,6 +255,8 @@ public:
      *
      ******************************************************************************************/
 
+    // TODO x0, u0 should be an std::vector<std::vector<double>>, as it is the reference for
+    // the whole time horizon
     int generateUnconstrainedMotionPlan(std::vector<double> x,
                                         std::vector<double> x0,
                                         std::vector<double> u,

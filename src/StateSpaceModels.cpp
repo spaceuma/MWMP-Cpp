@@ -174,10 +174,18 @@ double MobileManipulator::getThresholdGoalOrientation()
     return orientation_threshold;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(std::vector<double> x,
-                                                                         double time_step)
+bool MobileManipulator::getLinearizedMatrixA(std::vector<double> x,
+                                             double time_step,
+                                             std::vector<std::vector<double>> & A)
 {
-    std::vector<std::vector<double>> A(number_states, std::vector<double>(number_states, 0));
+    if(A.size() != number_states || A[0].size() != number_states)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getLinearizedMatrixA]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     double robot_yaw = x[yaw_index];
 
@@ -247,13 +255,15 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(std::ve
     }
 
     // Arm joints torques
-    std::vector<std::vector<double>> B = getArmInertiaMatrix(arm_positions);
+    std::vector<std::vector<double>> I(number_arm_joints,
+                                       std::vector<double>(number_arm_joints, 0));
+    if(!getArmInertiaMatrix(arm_positions, I)) { return false; }
     for(uint i = 0; i < number_arm_joints; i++)
     {
         for(uint j = 0; j < number_arm_joints; j++)
         {
             A[arm_position_indexes[i] + number_arm_joints * 3]
-             [arm_position_indexes[0] + number_arm_joints * 2 + j] = B[i][j];
+             [arm_position_indexes[0] + number_arm_joints * 2 + j] = I[i][j];
         }
     }
 
@@ -272,14 +282,22 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(std::ve
              getWheelInertia() + robot_weight / number_wheels * pow(wheels_radius, 2);
     }
 
-    return A;
+    return true;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixB(std::vector<double> x,
-                                                                         std::vector<double> u,
-                                                                         double time_step)
+bool MobileManipulator::getLinearizedMatrixB(std::vector<double> x,
+                                             std::vector<double> u,
+                                             double time_step,
+                                             std::vector<std::vector<double>> & B)
 {
-    std::vector<std::vector<double>> B(number_states, std::vector<double>(number_states, 0));
+    if(B.size() != number_states || B[0].size() != number_inputs)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getLinearizedMatrixB]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     std::vector<double> arm_positions;
     for(uint i = 0; i < number_arm_joints; i++)
@@ -294,8 +312,8 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixB(std::ve
     }
 
     // WTEEz
-    std::vector<std::vector<double>> J = getArmJacobianMatrix(arm_positions);
-
+    std::vector<std::vector<double>> J(6, std::vector<double>(number_arm_joints, 0));
+    if(!getArmJacobianMatrix(arm_positions, J)) { return false; }
     for(uint i = 0; i < number_arm_joints; i++)
     {
         B[world_ee_pose_indexes[2]][arm_actuators_indexes[i]] = -time_step * J[1][i];
@@ -340,7 +358,9 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixB(std::ve
     }
 
     // Arm joints torques
-    std::vector<std::vector<double>> C = getArmCoriolisMatrix(arm_positions, arm_actuators);
+    std::vector<std::vector<double>> C(number_arm_joints,
+                                       std::vector<double>(number_arm_joints, 0));
+    if(!getArmCoriolisMatrix(arm_positions, arm_actuators, C)) { return false; }
     for(uint i = 0; i < number_arm_joints; i++)
     {
         for(uint j = 0; j < number_arm_joints; j++)
@@ -362,7 +382,7 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixB(std::ve
             1 / time_step;
     }
 
-    return B;
+    return true;
 }
 
 uint MobileManipulator::getNumberStateInputConstraints()
@@ -370,18 +390,33 @@ uint MobileManipulator::getNumberStateInputConstraints()
     return number_si_constraints;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getConstraintsMatrixC()
+bool MobileManipulator::getConstraintsMatrixC(std::vector<std::vector<double>> & C)
 {
-    std::vector<std::vector<double>> C(number_si_constraints,
-                                       std::vector<double>(number_states, 0));
+    if(C.size() != number_si_constraints || C[0].size() != number_states)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getConstraintsMatrixC]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
-    return C;
+    C = std::vector<std::vector<double>>(number_si_constraints,
+                                         std::vector<double>(number_states, 0));
+
+    return true;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getConstraintsMatrixD()
+bool MobileManipulator::getConstraintsMatrixD(std::vector<std::vector<double>> & D)
 {
-    std::vector<std::vector<double>> D(number_si_constraints,
-                                       std::vector<double>(number_inputs, 0));
+    if(D.size() != number_si_constraints || D[0].size() != number_inputs)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getConstraintsMatrixD]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     for(uint i = 0; i < number_si_constraints; i += 2)
     {
@@ -389,12 +424,19 @@ std::vector<std::vector<double>> MobileManipulator::getConstraintsMatrixD()
         D[i + 1][input_constrained_indexes[i / 2]] = 1;
     }
 
-    return D;
+    return true;
 }
 
-std::vector<double> MobileManipulator::getConstraintsMatrixR()
+bool MobileManipulator::getConstraintsMatrixR(std::vector<double> & r)
 {
-    std::vector<double> r(number_si_constraints, 0);
+    if(r.size() != number_si_constraints)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getConstraintsMatrixR]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     for(uint i = 0; i < number_si_constraints; i += 2)
     {
@@ -402,7 +444,7 @@ std::vector<double> MobileManipulator::getConstraintsMatrixR()
         r[i + 1] = input_limits[i + 1];
     }
 
-    return r;
+    return true;
 }
 
 uint MobileManipulator::getNumberPureStateConstraints()
@@ -410,10 +452,16 @@ uint MobileManipulator::getNumberPureStateConstraints()
     return number_ps_constraints;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getConstraintsMatrixG()
+bool MobileManipulator::getConstraintsMatrixG(std::vector<std::vector<double>> & G)
 {
-    std::vector<std::vector<double>> G(number_ps_constraints,
-                                       std::vector<double>(number_states, 0));
+    if(G.size() != number_ps_constraints || G[0].size() != number_states)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getConstraintsMatrixG]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     for(uint i = 0; i < number_ps_constraints; i += 2)
     {
@@ -421,12 +469,19 @@ std::vector<std::vector<double>> MobileManipulator::getConstraintsMatrixG()
         G[i + 1][input_constrained_indexes[i / 2]] = 1;
     }
 
-    return G;
+    return true;
 }
 
-std::vector<double> MobileManipulator::getConstraintsMatrixH()
+bool MobileManipulator::getConstraintsMatrixH(std::vector<double> & h)
 {
-    std::vector<double> h(number_ps_constraints, 0);
+    if(h.size() != number_ps_constraints)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getConstraintsMatrixH]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     for(uint i = 0; i < number_ps_constraints; i += 2)
     {
@@ -434,12 +489,20 @@ std::vector<double> MobileManipulator::getConstraintsMatrixH()
         h[i + 1] = state_limits[i + number_ps_constraints];
     }
 
-    return h;
+    return true;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getStateCostMatrix(double percentage_horizon)
+bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
+                                           std::vector<std::vector<double>> & Q)
 {
-    std::vector<std::vector<double>> Q(number_states, std::vector<double>(number_states, 0));
+    if(Q.size() != number_states || Q[0].size() != number_states)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getStateCostMatrix]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     for(uint i = 0; i < whole_states_indexes.size(); i++)
     {
@@ -464,31 +527,55 @@ std::vector<std::vector<double>> MobileManipulator::getStateCostMatrix(double pe
         }
     }
 
-    return Q;
+    return true;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getInputCostMatrix()
+bool MobileManipulator::getInputCostMatrix(std::vector<std::vector<double>> & R)
 {
-    std::vector<std::vector<double>> R(number_inputs, std::vector<double>(number_inputs, 0));
+    if(R.size() != number_inputs || R[0].size() != number_inputs)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getInputCostMatrix]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     for(uint i = 0; i < whole_inputs_indexes.size(); i++)
     {
         R[whole_inputs_indexes[i]][whole_inputs_indexes[i]] = whole_inputs_cost[i];
     }
 
-    return R;
+    return true;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getStateInputCostMatrix()
+bool MobileManipulator::getStateInputCostMatrix(std::vector<std::vector<double>> & K)
 {
-    std::vector<std::vector<double>> K(number_states, std::vector<double>(number_inputs, 0));
+    if(K.size() != number_states || K[0].size() != number_inputs)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getStateInputCostMatrix]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
-    return K;
+    K = std::vector<std::vector<double>>(number_states, std::vector<double>(number_inputs, 0));
+
+    return true;
 }
 
-std::vector<double> MobileManipulator::getArmGravityMatrix(std::vector<double> arm_positions)
+bool MobileManipulator::getArmGravityMatrix(std::vector<double> arm_positions,
+                                            std::vector<double> & G)
 {
-    std::vector<double> G(number_arm_joints, 0);
+    if(G.size() != number_arm_joints)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getArmGravityMatrix]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     if(robot_name == "exoter")
     {
@@ -515,19 +602,25 @@ std::vector<double> MobileManipulator::getArmGravityMatrix(std::vector<double> a
 
         G[4] = 0;
     }
-    return G;
+    return true;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getArmInertiaMatrix(
-    std::vector<double> arm_positions)
+bool MobileManipulator::getArmInertiaMatrix(std::vector<double> arm_positions,
+                                            std::vector<std::vector<double>> & I)
 {
-    std::vector<std::vector<double>> B(number_arm_joints,
-                                       std::vector<double>(number_arm_joints, 0));
+    if(I.size() != number_arm_joints || I[0].size() != number_arm_joints)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getArmInertiaMatrix]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     if(robot_name == "exoter")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
-        B[0][0] =
+        I[0][0] =
             0.029 * cos(2.0 * arm_positions[1] + arm_positions[2]) +
             0.00147 * sin(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + arm_positions[3]) +
             0.0318 * cos(2.0 * arm_positions[1]) +
@@ -539,45 +632,51 @@ std::vector<std::vector<double>> MobileManipulator::getArmInertiaMatrix(
                 cos(2.0 * arm_positions[1] + 2.0 * arm_positions[2] + 2.0 * arm_positions[3]) +
             0.047;
 
-        B[0][4] = 4.0e-5 * cos(arm_positions[1] + arm_positions[2] + arm_positions[3]);
+        I[0][4] = 4.0e-5 * cos(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        B[1][1] = 0.00343 * sin(arm_positions[2] + arm_positions[3]) +
+        I[1][1] = 0.00343 * sin(arm_positions[2] + arm_positions[3]) +
                   0.058 * cos(arm_positions[2]) + 0.00293 * sin(arm_positions[3]) + 0.0821;
 
-        B[1][2] = 0.00171 * sin(arm_positions[2] + arm_positions[3]) +
+        I[1][2] = 0.00171 * sin(arm_positions[2] + arm_positions[3]) +
                   0.029 * cos(arm_positions[2]) + 0.00293 * sin(arm_positions[3]) + 0.0182;
 
-        B[1][3] = 0.00286 * sin(arm_positions[2] + arm_positions[3]) +
+        I[1][3] = 0.00286 * sin(arm_positions[2] + arm_positions[3]) +
                   0.00195 * sin(arm_positions[3]) + 0.00105;
 
-        B[2][1] = 0.00171 * sin(arm_positions[2] + arm_positions[3]) +
+        I[2][1] = 0.00171 * sin(arm_positions[2] + arm_positions[3]) +
                   0.029 * cos(arm_positions[2]) + 0.00293 * sin(arm_positions[3]) + 0.0182;
 
-        B[2][2] = 0.00293 * sin(arm_positions[3]) + 0.0182;
+        I[2][2] = 0.00293 * sin(arm_positions[3]) + 0.0182;
 
-        B[2][3] = 0.00195 * sin(arm_positions[3]) + 0.00105;
+        I[2][3] = 0.00195 * sin(arm_positions[3]) + 0.00105;
 
-        B[3][1] = 0.00286 * sin(arm_positions[2] + arm_positions[3]) +
+        I[3][1] = 0.00286 * sin(arm_positions[2] + arm_positions[3]) +
                   0.00195 * sin(arm_positions[3]) + 0.00105;
 
-        B[3][2] = 0.00195 * sin(arm_positions[3]) + 0.00105;
+        I[3][2] = 0.00195 * sin(arm_positions[3]) + 0.00105;
 
-        B[3][3] = 0.0012;
+        I[3][3] = 0.0012;
 
-        B[4][0] = 4.0e-5 * cos(arm_positions[1] + arm_positions[2] + arm_positions[3]);
+        I[4][0] = 4.0e-5 * cos(arm_positions[1] + arm_positions[2] + arm_positions[3]);
 
-        B[4][4] = 4.0e-5;
+        I[4][4] = 4.0e-5;
     }
 
-    return B;
+    return true;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getArmCoriolisMatrix(
-    std::vector<double> arm_positions,
-    std::vector<double> arm_speeds)
+bool MobileManipulator::getArmCoriolisMatrix(std::vector<double> arm_positions,
+                                             std::vector<double> arm_speeds,
+                                             std::vector<std::vector<double>> & C)
 {
-    std::vector<std::vector<double>> C(number_arm_joints,
-                                       std::vector<double>(number_arm_joints, 0));
+    if(C.size() != number_arm_joints || C[0].size() != number_arm_joints)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getArmCoriolisMatrix]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     if(robot_name == "exoter")
     {
@@ -716,24 +815,39 @@ std::vector<std::vector<double>> MobileManipulator::getArmCoriolisMatrix(
             -4.0e-5 * arm_speeds[0] * sin(arm_positions[1] + arm_positions[2] + arm_positions[3]);
     }
 
-    return C;
+    return true;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getArmJacobianMatrix(
-    std::vector<double> arm_positions)
+bool MobileManipulator::getArmJacobianMatrix(std::vector<double> arm_positions,
+                                             std::vector<std::vector<double>> & J)
 {
-    std::vector<std::vector<double>> J(6, std::vector<double>(number_arm_joints, 0));
+    if(J.size() != 6 || J[0].size() != number_arm_joints)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getArmJacobianMatrix]: The passed-by-reference "
+                     "matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
+
     if(robot_name == "exoter")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
 
-        std::vector<std::vector<double>> TB0 = getDirectKinematicsTransform(arm_positions, 0);
-        std::vector<std::vector<double>> TB1 = getDirectKinematicsTransform(arm_positions, 1);
-        std::vector<std::vector<double>> TB2 = getDirectKinematicsTransform(arm_positions, 2);
-        std::vector<std::vector<double>> TB3 = getDirectKinematicsTransform(arm_positions, 3);
-        std::vector<std::vector<double>> TB4 = getDirectKinematicsTransform(arm_positions, 4);
-        std::vector<std::vector<double>> TB5 = getDirectKinematicsTransform(arm_positions, 5);
+        std::vector<std::vector<double>> TB0(4, std::vector<double>(4, 0));
+        std::vector<std::vector<double>> TB1(4, std::vector<double>(4, 0));
+        std::vector<std::vector<double>> TB2(4, std::vector<double>(4, 0));
+        std::vector<std::vector<double>> TB3(4, std::vector<double>(4, 0));
+        std::vector<std::vector<double>> TB4(4, std::vector<double>(4, 0));
+        std::vector<std::vector<double>> TB5(4, std::vector<double>(4, 0));
 
+        if(!getDirectKinematicsTransform(arm_positions, 0, TB0) ||
+           !getDirectKinematicsTransform(arm_positions, 1, TB1) ||
+           !getDirectKinematicsTransform(arm_positions, 2, TB2) ||
+           !getDirectKinematicsTransform(arm_positions, 3, TB3) ||
+           !getDirectKinematicsTransform(arm_positions, 4, TB4) ||
+           !getDirectKinematicsTransform(arm_positions, 5, TB5))
+        { return false; }
         for(uint i = 0; i < TB0.size(); i++)
         {
             for(uint j = 0; j < TB0[0].size(); j++)
@@ -764,6 +878,7 @@ std::vector<std::vector<double>> MobileManipulator::getArmJacobianMatrix(
         p.push_back(std::vector<double>{TB5[0][3], TB5[1][3], TB5[2][3]});
 
         std::vector<std::vector<double>> Jp, Jo;
+
         for(uint i = 1; i < p.size(); i++)
         {
             Jp.push_back(getCrossProduct(z[i - 1], getDifference(p[p.size() - 1], p[i - 1])));
@@ -790,27 +905,42 @@ std::vector<std::vector<double>> MobileManipulator::getArmJacobianMatrix(
         }
     }
 
-    return J;
+    return true;
 }
 
-std::vector<std::vector<double>> MobileManipulator::getDirectKinematicsTransform(
-    std::vector<double> arm_positions,
-    uint joint_index)
+bool MobileManipulator::getDirectKinematicsTransform(std::vector<double> arm_positions,
+                                                     uint joint_index,
+                                                     std::vector<std::vector<double>> & T)
 {
+    if(T.size() != 4 || T[0].size() != 4)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getDirectKinematicsTransform]: The "
+                     "passed-by-reference matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
+
     if(robot_name == "exoter")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
         if(joint_index > number_arm_joints)
         {
             throw std::domain_error(
-                red+std::string("ERROR [MobileManipulator::getDirectKinematicsTransform]: "
-                "Provided index is greater than the number of joints ")+reset);
+                red +
+                std::string("ERROR [MobileManipulator::getDirectKinematicsTransform]: "
+                            "Provided index is greater than the number of joints ") +
+                reset);
         }
 
         std::vector<std::vector<double>> TB0(4, std::vector<double>(4, 0));
 
         TB0 = getTraslation({0, 0, 0});
-        if(joint_index == 0) { return TB0; }
+        if(joint_index == 0)
+        {
+            T = TB0;
+            return true;
+        }
 
         std::vector<std::vector<double>> TB1(4, std::vector<double>(4, 0));
 
@@ -819,7 +949,11 @@ std::vector<std::vector<double>> MobileManipulator::getDirectKinematicsTransform
                 dot(getZrot(arm_positions[0]), dot(getTraslation({0, 0, 0}), getXrot(-pi / 2))));
 
         TB1 = dot(TB0, T01);
-        if(joint_index == 1) { return TB1; }
+        if(joint_index == 1)
+        {
+            T = TB1;
+            return true;
+        }
 
         std::vector<std::vector<double>> TB2(4, std::vector<double>(4, 0));
 
@@ -829,7 +963,11 @@ std::vector<std::vector<double>> MobileManipulator::getDirectKinematicsTransform
 
         TB2 = dot(TB1, T12);
 
-        if(joint_index == 2) { return TB2; }
+        if(joint_index == 2)
+        {
+            T = TB2;
+            return true;
+        }
 
         std::vector<std::vector<double>> TB3(4, std::vector<double>(4, 0));
 
@@ -838,7 +976,11 @@ std::vector<std::vector<double>> MobileManipulator::getDirectKinematicsTransform
             dot(getZrot(arm_positions[2]), dot(getTraslation({arm_lengths[2], 0, 0}), getXrot(0))));
 
         TB3 = dot(TB2, T23);
-        if(joint_index == 3) { return TB3; }
+        if(joint_index == 3)
+        {
+            T = TB3;
+            return true;
+        }
 
         std::vector<std::vector<double>> TB4(4, std::vector<double>(4, 0));
 
@@ -847,7 +989,11 @@ std::vector<std::vector<double>> MobileManipulator::getDirectKinematicsTransform
                 dot(getZrot(arm_positions[3]), dot(getTraslation({0, 0, 0}), getXrot(pi / 2))));
 
         TB4 = dot(TB3, T34);
-        if(joint_index == 4) { return TB4; }
+        if(joint_index == 4)
+        {
+            T = TB4;
+            return true;
+        }
 
         std::vector<std::vector<double>> TB5(4, std::vector<double>(4, 0));
 
@@ -856,10 +1002,11 @@ std::vector<std::vector<double>> MobileManipulator::getDirectKinematicsTransform
                 dot(getZrot(arm_positions[4]), dot(getTraslation({0, 0, 0}), getXrot(0))));
 
         TB5 = dot(TB4, T45);
-        return TB5;
+        T = TB5;
+        return true;
     }
 
-    return std::vector<std::vector<double>>(4, std::vector<double>(4, 0));
+    return true;
 }
 
 double MobileManipulator::getWheelInertia()
@@ -868,11 +1015,19 @@ double MobileManipulator::getWheelInertia()
     return I;
 }
 
-std::vector<double> MobileManipulator::forwardIntegrateModel(std::vector<double> x,
-                                                             std::vector<double> u,
-                                                             double time_step)
+bool MobileManipulator::forwardIntegrateModel(std::vector<double> x,
+                                              std::vector<double> u,
+                                              double time_step,
+                                              std::vector<double> & xf)
 {
-    std::vector<double> xf = x;
+    if(xf.size() != number_states || x.size() != number_states || u.size() != number_inputs)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::forwardIntegrateModel]: The arguments doesn't "
+                     "match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
 
     std::vector<double> world_ee_pose;
     for(uint i = 0; i < 3; i++)
@@ -931,7 +1086,8 @@ std::vector<double> MobileManipulator::forwardIntegrateModel(std::vector<double>
         x[wheels_speed_indexes[0] + wheels_speed_indexes.size()],
         x[wheels_speed_indexes[1] + wheels_speed_indexes.size()]};
 
-    std::vector<std::vector<double>> J = getArmJacobianMatrix(arm_positions);
+    std::vector<std::vector<double>> J(6, std::vector<double>(number_arm_joints, 0));
+    if(!getArmJacobianMatrix(arm_positions, J)) { return false; }
 
     // W2EE
     xf[world_ee_pose_indexes[0]] =
@@ -979,14 +1135,19 @@ std::vector<double> MobileManipulator::forwardIntegrateModel(std::vector<double>
     }
 
     // Arm joints torques
-    std::vector<double> G = getArmGravityMatrix(arm_positions);
-    std::vector<std::vector<double>> B = getArmInertiaMatrix(arm_positions);
-    std::vector<std::vector<double>> C = getArmCoriolisMatrix(arm_positions, arm_speeds);
+    std::vector<double> G(number_arm_joints, 0);
+    std::vector<std::vector<double>> I(number_arm_joints,
+                                       std::vector<double>(number_arm_joints, 0));
+    std::vector<std::vector<double>> C(number_arm_joints,
+                                       std::vector<double>(number_arm_joints, 0));
+    if(!getArmGravityMatrix(arm_positions, G) || !getArmInertiaMatrix(arm_positions, I) ||
+       !getArmCoriolisMatrix(arm_positions, arm_speeds, C))
+    { return false; }
 
     for(uint i = 0; i < number_arm_joints; i++)
     {
         xf[arm_position_indexes[i] + number_arm_joints * 3] =
-            dot(B[i], arm_accelerations) + dot(C[i], arm_speeds) + G[i];
+            dot(I[i], arm_accelerations) + dot(C[i], arm_speeds) + G[i];
     }
 
     // Wheels speeds
@@ -1009,5 +1170,5 @@ std::vector<double> MobileManipulator::forwardIntegrateModel(std::vector<double>
             (getWheelInertia() + robot_weight / number_wheels * pow(wheels_radius, 2)) +
         rolling_resistance * robot_weight * gravity * wheels_radius / number_wheels;
 
-    return xf;
+    return true;
 }

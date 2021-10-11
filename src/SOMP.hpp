@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "StateSpaceModels.hpp"
+#include "FileManager.hpp"
 
 #define pi 3.14159265359
 
@@ -66,26 +67,37 @@ namespace SOMP
  *     - Step of the linear search procedure, "double line_search_step".
  *       Default: 0.30.
  *     - Yes/no about check distance to goal, "bool check_distance".
- *     - If checking distance to goal, indexes of state vector where
- *       to check for the distance, "std::vector<uint> dist_indexes".
- *     - If checking distance to goal, acceptable distance to goal
- *       to consider convergence is reached, "double dist_threshold".
- *       Default: 0.005.
  *     - Yes/no about check final orientation, "bool check_orientation".
- *     - If checking final orientation, indexes of state vector where
- *       to check for the orientation, "std::vector<uint> orientation_indexes".
- *     - If checking final orientation, acceptable euclidean distance to
- *       the final orientation to consider convergence is reached,
- *       "double orientation_threshold". Default: 0.005.
  *
  * "SSModel state_space_model" should be an instance of the state space model to be used.
  *
  * "MapInfo map_info" is a struct only needed if checking safety, should contain:
  *     - Map resolution "double map_resolution".
- *     - Digital elevation map "std::vector<std::vector<uint>> dem".
+ *     - Obstacles map "std::vector<std::vector<uint>> obstacles_map".
  *     - Repulsive cost from obstacles "double obstacles_cost".
  *
  *********************************************************************************************/
+
+struct Config
+{
+    double time_horizon;
+    double time_step;
+
+    uint max_iterations;
+    double control_threshold;
+    double line_search_step;
+
+    bool check_distance;
+
+    bool check_orientation;
+};
+
+struct MapInfo
+{
+    double map_resolution;
+    std::vector<std::vector<uint>> obstacles_map;
+    double obstacles_cost;
+};
 
 class MotionPlanner
 {
@@ -94,10 +106,59 @@ private:
     // Dependency classes //
     //********************//
 
+    // State space model of the robot
+    StateSpaceModels::MobileManipulator * robot_ss_model;
+
     //*************************//
     // Configurable Parameters //
     //*************************//
-    bool checkSafety;
+
+    // Horizon for the planning task, default 160 seconds
+    double time_horizon = 160;
+
+    // Discretization step for the time horizon, default 0.8 seconds
+    double time_step = 0.8;
+
+    // Max number of iterations of the motion planner, default 200 iterations
+    uint max_iterations = 200;
+
+    // Max control actuation step percentage to consider the planner
+    // has converged, default 1e-3
+    double control_threshold = 1e-3;
+
+    // Step of the line search procedure, bigger steps reduce computational cost
+    // but also reduce convergence ratio, default 0.30
+    double line_search_step = 0.30;
+
+    // Check distance to goal to ensure successfull motion plans, default true
+    bool check_distance = true;
+
+    // Parameters that depend on the model, defining the index in the state vector
+    // where to check for the distance to the goal, and which is the minimum to
+    // consider convergence is reached
+    std::vector<uint> distance_indexes;
+    double distance_threshold;
+
+    // Check goal orientation to ensure successfull motion plans, default true
+    bool check_orientation = true;
+
+    // Parameters that depend on the model, defining the index in the state vector
+    // where to check for the orientation goal, and which is the minimum to
+    // consider convergence is reached
+    std::vector<uint> orientation_indexes;
+    double orientation_threshold;
+
+    // Characteristics of the scenario
+    // Decide whether to check obstacle collisions or not, default false
+    bool check_safety = false;
+
+    // Map resolution in meters, default 0.05m
+    double map_resolution = 0.05;
+
+    // Boolean map with obstacles as 0 and safe areas as 1, default 5x5m non obstacle map
+    std::vector<std::vector<uint>> obstacles_map;
+
+    // TODO what to do with obstacles_cost?
 
     //*******//
     // Flags //
@@ -115,7 +176,10 @@ public:
     //*******************//
     // Class Constructor //
     //*******************//
-    MotionPlannerSLQ();
+    MotionPlanner(StateSpaceModels::MobileManipulator * _robot_ss_model);
+    MotionPlanner(StateSpaceModels::MobileManipulator * _robot_ss_model, Config config);
+    MotionPlanner(StateSpaceModels::MobileManipulator * _robot_ss_model, Config config,
+                  MapInfo map_info);
 
     //***********************//
     // Configuring Functions //
@@ -126,7 +190,7 @@ public:
     //********************//
     // Planning Functions //
     //********************//
-    /*********************************************************************************************
+    /******************************************************************************************
      *
      * USAGE:
      *
@@ -137,14 +201,14 @@ public:
      * control inputs respectively (u0 is usually filled with zeros).
      * Size number_inputs x number_time_steps.
      *
-     * If convergence is reached, "int status" will be "1", if not:
+     * If convergence is reached, this functions will return "1", if not:
      *     " 0" --> something unexpected happened.
      *     "-1" --> the goal is still far away.
      *     "-2" --> the algorithm is still hardly updating the control.
      *     "-3" --> the generated state is not safe.
      *     "-4" --> something unexpected happened.
      *
-     *********************************************************************************************/
+     ******************************************************************************************/
 
     int generateUnconstrainedMotionPlan(std::vector<std::vector<double>> x,
                                         std::vector<std::vector<double>> x0,

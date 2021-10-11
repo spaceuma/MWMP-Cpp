@@ -60,7 +60,13 @@ private:
     //******************//
     // Model properties //
     //******************//
+    
+    // Indexes of the distance goal states. Size: 3
+    std::vector<uint> goal_distance_indexes;
 
+    // Indexes of the orientation goal states. Size: 3
+    std::vector<uint> goal_orientation_indexes;
+    
     // Indexes of the pose of the arm end effector from the world reference frame
     // Size: 3
     std::vector<uint> world_ee_pose_indexes;
@@ -171,6 +177,12 @@ private:
     // Model configuration parameters //
     //********************************//
 
+    // Distance to goal threshold to consider convergence is reached
+    double distance_threshold;
+
+    // Goal orientation threshold to consider convergence is reached
+    double orientation_threshold;
+
     // Percentage of the time horizon where to start reducing the robot speed progressively
     double horizon_speed_reduction;
 
@@ -237,75 +249,102 @@ public:
     // Get Data //
     //**********//
 
+    // Returns the indexes where to check for distance to the goal.
+    std::vector<uint> getIndexesGoalDistance();
+
+    // Returns the threshold distance to the goal.
+    double getThresholdGoalDistance();
+
+    // Returns the indexes where to check for goal orientation.
+    std::vector<uint> getIndexesGoalOrientation();
+
+    // Returns the threshold orientation to the goal.
+    double getThresholdGoalOrientation();
+
     // Returns the linearized state space model matrix A.
     // Size of A: number_states x number_states
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getLinearizedMatrixA(std::vector<double> x, double time_step);
 
     // Returns the linearized state space model matrix B.
     // Size of B: number_states x number_inputs
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getLinearizedMatrixB(std::vector<double> x,
                                                           std::vector<double> u,
                                                           double time_step);
 
     // Returns the number of state input constraints.
-    int getNumberStateInputConstraints();
+    uint getNumberStateInputConstraints();
 
     // Returns the state input constraint matrix C.
     // Size of C: number_si_constraints x number_states
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getConstraintsMatrixC();
 
     // Returns the state input constraint matrix D.
     // Size of D: number_si_constraints x number_inputs
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getConstraintsMatrixD();
 
     // Returns the state input constraint matrix r.
     // Size of r: number_si_constraints
+    // TODO Change to pass-by-reference
     std::vector<double> getConstraintsMatrixR();
 
     // Returns the number of pure state constraints.
-    int getNumberPureStateConstraints();
+    uint getNumberPureStateConstraints();
 
     // Returns the pure state constraint matrix G.
     // Size of G: number_ps_constraints x number_states
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getConstraintsMatrixG();
 
     // Returns the pure state constraint matrix h.
     // Size of G: number_ps_constraints
+    // TODO Change to pass-by-reference
     std::vector<double> getConstraintsMatrixH();
 
     // Returns the pure state cost matrix Q, in function of the time step provided
     // e.g. If percentage_horizon is 100, the goal state cost matrix will be returned
     // Size of Q: number_states x number_states
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getStateCostMatrix(double percentage_horizon);
 
     // Returns the pure input cost matrix R.
     // Size of R: number_inputs x number_inputs
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getInputCostMatrix();
 
     // Returns the state input cost matrix K.
     // Size of K: number_states x number_inputs
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getStateInputCostMatrix();
 
     // Returns the gravity matrix given the arm state.
     // Size of G: number_arm_joints
+    // TODO Change to pass-by-reference
     std::vector<double> getArmGravityMatrix(std::vector<double> arm_positions);
 
     // Returns the inertia matrix given the arm state.
     // Size of B: number_arm_joints x number_arm_joints
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getArmInertiaMatrix(std::vector<double> arm_positions);
 
     // Returns the coriolis matrix given the arm state.
     // Size of C: number_arm_joints x number_arm_joints
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getArmCoriolisMatrix(std::vector<double> arm_positions,
                                                           std::vector<double> arm_speeds);
 
     // Returns the jacobian matrix given the arm state.
     // Size of J: 6DoF x number_arm_joints
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getArmJacobianMatrix(std::vector<double> arm_positions);
 
     // Returns the base-to-joint_index transform matrix given the arm state,
     // using direct kinematics
     // Size of TBEE: 4 x 4
+    // TODO Change to pass-by-reference
     std::vector<std::vector<double>> getDirectKinematicsTransform(std::vector<double> arm_positions,
                                                                   uint joint_index);
 
@@ -314,6 +353,7 @@ public:
 
     // Returns the updated state after applying the control input u into the previous state x
     // over a time interval time_step.
+    // TODO Change to pass-by-reference
     std::vector<double> forwardIntegrateModel(std::vector<double> x,
                                               std::vector<double> u,
                                               double time_step);

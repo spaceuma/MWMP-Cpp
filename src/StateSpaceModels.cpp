@@ -42,6 +42,9 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         // Model properties //
         //******************//
 
+        goal_distance_indexes = {0, 1, 2};
+        goal_orientation_indexes = {15, 7, 19};
+
         world_ee_pose_indexes = {0, 1, 2};
         base_ee_pose_indexes = {3, 4, 5, 6, 7, 8};
 
@@ -115,6 +118,9 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         //********************************//
         // Model configuration parameters //
         //********************************//
+        distance_threshold = 0.015;
+        orientation_threshold = 0.15;
+
         horizon_speed_reduction = 90;
 
         risk_distance = 0.30;
@@ -146,6 +152,26 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         number_si_constraints = 10;
         number_ps_constraints = 14;
     }
+}
+
+std::vector<uint> MobileManipulator::getIndexesGoalDistance()
+{
+    return goal_distance_indexes;
+}
+
+double MobileManipulator::getThresholdGoalDistance()
+{
+    return distance_threshold;
+}
+
+std::vector<uint> MobileManipulator::getIndexesGoalOrientation()
+{
+    return goal_orientation_indexes;
+}
+
+double MobileManipulator::getThresholdGoalOrientation()
+{
+    return orientation_threshold;
 }
 
 std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixA(std::vector<double> x,
@@ -339,7 +365,7 @@ std::vector<std::vector<double>> MobileManipulator::getLinearizedMatrixB(std::ve
     return B;
 }
 
-int MobileManipulator::getNumberStateInputConstraints()
+uint MobileManipulator::getNumberStateInputConstraints()
 {
     return number_si_constraints;
 }
@@ -379,7 +405,7 @@ std::vector<double> MobileManipulator::getConstraintsMatrixR()
     return r;
 }
 
-int MobileManipulator::getNumberPureStateConstraints()
+uint MobileManipulator::getNumberPureStateConstraints()
 {
     return number_ps_constraints;
 }

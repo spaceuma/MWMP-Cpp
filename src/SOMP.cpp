@@ -100,3 +100,27 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model,
     map_resolution = map_info.map_resolution;
     obstacles_map = map_info.obstacles_map;
 }
+
+bool MotionPlanner::setTimeHorizon(double new_time_horizon)
+{
+    if(new_time_horizon > 0 && new_time_horizon > time_step)
+        time_horizon = new_time_horizon;
+    else
+    {
+        std::cout<<magenta<<"WARNING [MotionPlanner::setTimeHorizon]: The new requested time horizon is not valid, the previous one is maintained"<<reset<<std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool MotionPlanner::setTimeStep(double new_time_step)
+{
+    if(new_time_step > 0 && new_time_step < time_horizon)
+        time_step = new_time_step;
+    else
+    {
+        std::cout<<magenta<<"WARNING [MotionPlanner::setTimeStep]: The new requested time step is not valid, the previous one is maintained"<<reset<<std::endl;
+        return false;
+    }
+    return true;
+}

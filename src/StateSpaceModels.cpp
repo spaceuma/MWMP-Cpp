@@ -803,8 +803,8 @@ std::vector<std::vector<double>> MobileManipulator::getDirectKinematicsTransform
         if(joint_index > number_arm_joints)
         {
             throw std::domain_error(
-                "\033[1;31mERROR [MobileManipulator::getDirectKinematicsTransform]: "
-                "Provided index is greater than the number of joints \033[0m\n");
+                red+std::string("ERROR [MobileManipulator::getDirectKinematicsTransform]: "
+                "Provided index is greater than the number of joints ")+reset);
         }
 
         std::vector<std::vector<double>> TB0(4, std::vector<double>(4, 0));

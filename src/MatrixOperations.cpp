@@ -84,7 +84,7 @@ double MatrixOperations::dot(std::vector<double> a,
 
     if (n != m)
     {
-        throw std::domain_error( "\033[1;31mERROR [MatrixOperations::dot]: Vectors do not have the same size\033[0m\n");
+        throw std::domain_error(red+std::string("ERROR [MatrixOperations::dot]: Vectors do not have the same size")+reset);
     }
 
     for (int i = 0; i < n; i++)
@@ -235,7 +235,7 @@ std::vector<std::vector<double>> MatrixOperations::getInverse(
     double det = getDeterminant(A);
     if (det == 0)
     {
-        throw std::domain_error( "\033[1;31mERROR [MatrixOperations::getInverse]: Singular matrix, can't find its inverse\033[0m\n");
+        throw std::domain_error(red+std::string("ERROR [MatrixOperations::getInverse]: Singular matrix, can't find its inverse")+reset);
     }
 
     std::vector<std::vector<double>> adj = getAdjoint(A);
@@ -268,8 +268,7 @@ std::vector<double> MatrixOperations::getSum(std::vector<double> a,
     std::vector<double> c;
     if (a.size() != b.size())
     {
-        throw std::domain_error( "\033[1;31mERROR [MatrixOperations::getSum]: Vectors do not have the same size\033[0m\n");
-                     "sizes don't match\033[0m\n";
+        throw std::domain_error(red+std::string("ERROR [MatrixOperations::getSum]: Vectors sizes don't match")+reset);
         return std::vector<double>(1, 0);
     }
 
@@ -287,8 +286,7 @@ std::vector<double> MatrixOperations::getDifference(std::vector<double> a,
     std::vector<double> c;
     if (a.size() != b.size())
     {
-        throw std::domain_error( "\033[1;31mERROR [MatrixOperations::getDifference]: Vectors do not have the same size\033[0m\n");
-                     "Vector sizes don't match\033[0m\n";
+        throw std::domain_error(red+std::string("ERROR [MatrixOperations::getDifference]: Vectors sizes don't match")+reset);
         return std::vector<double>(1, 0);
     }
 

@@ -259,6 +259,12 @@ public:
     // Get Data //
     //**********//
 
+    // Returns the number of states in the state vector.
+    uint getNumberStates();
+
+    // Returns the number of inputs in the state vector.
+    uint getNumberInputs();
+
     // Returns the indexes where to check for distance to the goal.
     std::vector<uint> getIndexesGoalDistance();
 

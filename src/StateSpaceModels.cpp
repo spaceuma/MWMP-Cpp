@@ -152,6 +152,24 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         number_si_constraints = 10;
         number_ps_constraints = 14;
     }
+    else
+    {
+        throw std::domain_error(
+            red +
+            std::string("ERROR [MobileManipulator::MobileManipulator]: The provided robot name "
+                        "doesn't match any of the available robot models") +
+            reset);
+    }
+}
+
+uint MobileManipulator::getNumberStates()
+{
+    return number_states;
+}
+
+uint MobileManipulator::getNumberInputs()
+{
+    return number_inputs;
 }
 
 std::vector<uint> MobileManipulator::getIndexesGoalDistance()

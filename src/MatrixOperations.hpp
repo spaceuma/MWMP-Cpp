@@ -48,40 +48,112 @@
 
 namespace MatrixOperations
 {
-std::vector<std::vector<double>> dot(std::vector<std::vector<double>> A,
-                                     std::vector<std::vector<double>> B);
+//***********************************//
+// Matrixes and vectors dot products //
+//***********************************//
+std::vector<std::vector<double>> dot(const std::vector<std::vector<double>> & A,
+                                     const std::vector<std::vector<double>> & B);
 
-std::vector<double> dot(std::vector<std::vector<double>> A, std::vector<double> b);
+bool dot(const std::vector<std::vector<double>> & A,
+         const std::vector<std::vector<double>> & B,
+         std::vector<std::vector<double>> & C);
 
-std::vector<double> dot(double n, std::vector<double> a);
+std::vector<double> dot(const std::vector<std::vector<double>> & A, const std::vector<double> & b);
 
-double dot(std::vector<double> a, std::vector<double> b);
+bool dot(const std::vector<std::vector<double>> & A,
+         const std::vector<double> & b,
+         std::vector<double> & c);
 
-std::vector<std::vector<double>> getTraslation(std::vector<double> position);
+double dot(const std::vector<double> & a, const std::vector<double> & b);
 
+std::vector<double> dot(double n, const std::vector<double> & a);
+
+bool dot(double n, const std::vector<double> & a, std::vector<double> & c);
+
+//**********************************//
+// Traslation transformation matrix //
+//**********************************//
+std::vector<std::vector<double>> getTraslation(const std::vector<double> & position);
+
+bool getTraslation(const std::vector<double> & position, std::vector<std::vector<double>> & T);
+
+//**********************************//
+// Rotation transformation matrixes //
+//**********************************//
 std::vector<std::vector<double>> getXrot(double angle);
+
+bool getXrot(double angle, std::vector<std::vector<double>> & T);
 
 std::vector<std::vector<double>> getYrot(double angle);
 
+bool getYrot(double angle, std::vector<std::vector<double>> & T);
+
 std::vector<std::vector<double>> getZrot(double angle);
 
-double getDeterminant(const std::vector<std::vector<double>> * A);
+bool getZrot(double angle, std::vector<std::vector<double>> & T);
 
-std::vector<std::vector<double>> getCofactor(const std::vector<std::vector<double>> * A,
+//****************************************************//
+// Matrix essential operations (determinant, inverse) //
+//****************************************************//
+double getDeterminant(const std::vector<std::vector<double>> & A);
+
+std::vector<std::vector<double>> getCofactor(const std::vector<std::vector<double>> & A,
                                              int row,
                                              int col);
 
-std::vector<std::vector<double>> getAdjoint(const std::vector<std::vector<double>> * A);
+bool getCofactor(const std::vector<std::vector<double>> & A,
+                 int row,
+                 int col,
+                 std::vector<std::vector<double>> & subA);
 
-std::vector<std::vector<double>> getInverse(const std::vector<std::vector<double>> * A);
+std::vector<std::vector<double>> getAdjoint(const std::vector<std::vector<double>> & A);
 
-std::vector<double> getCrossProduct(std::vector<double> a, std::vector<double> b);
+bool getAdjoint(const std::vector<std::vector<double>> & A, std::vector<std::vector<double>> & adj);
 
-std::vector<double> getSum(std::vector<double> a, std::vector<double> b);
+std::vector<std::vector<double>> getInverse(const std::vector<std::vector<double>> & A);
 
-std::vector<double> getDifference(std::vector<double> a, std::vector<double> b);
+bool getInverse(const std::vector<std::vector<double>> & A,
+                std::vector<std::vector<double>> & inverse);
 
-double getNorm(std::vector<double> a);
+//*****************************//
+// Cross product of 3D vectors //
+//*****************************//
+std::vector<double> getCrossProduct(const std::vector<double> & a, const std::vector<double> & b);
+
+bool getCrossProduct(const std::vector<double> & a,
+                     const std::vector<double> & b,
+                     std::vector<double> & c);
+
+//************************//
+// General sum of vectors //
+//************************//
+std::vector<double> getSum(const std::vector<double> & a, const std::vector<double> & b);
+
+bool getSum(const std::vector<double> & a, const std::vector<double> & b, std::vector<double> & c);
+
+//*******************************//
+// General difference of vectors //
+//*******************************//
+std::vector<double> getDifference(const std::vector<double> & a, const std::vector<double> & b);
+
+bool getDifference(const std::vector<double> & a,
+                   const std::vector<double> & b,
+                   std::vector<double> & c);
+
+//********************************//
+// General difference of matrixes //
+//********************************//
+std::vector<std::vector<double>> getDifference(const std::vector<std::vector<double>> & a,
+                                               const std::vector<std::vector<double>> & b);
+
+bool getDifference(const std::vector<std::vector<double>> & a,
+                   const std::vector<std::vector<double>> & b,
+                   std::vector<std::vector<double>> & c);
+
+//**************************//
+// Vector magnitude or norm //
+//**************************//
+double getNorm(const std::vector<double> & a);
+
 }    // namespace MatrixOperations
 #endif
-// namespace MatrixOperations

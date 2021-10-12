@@ -1070,8 +1070,10 @@ bool MobileManipulator::getObstaclesCost(
         if(iy < 0 + 2) iy = 0 + 2;
     }
 
-    obstacles_cost[robot_pose_indexes[0]] = gradient_obstacles_map_X[iy][ix];
-    obstacles_cost[robot_pose_indexes[1]] = gradient_obstacles_map_Y[iy][ix];
+    obstacles_cost[robot_pose_indexes[0]] =
+        obstacles_repulsive_cost * gradient_obstacles_map_X[iy][ix];
+    obstacles_cost[robot_pose_indexes[1]] =
+        obstacles_repulsive_cost * gradient_obstacles_map_Y[iy][ix];
 
     return true;
 }

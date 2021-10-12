@@ -1,3 +1,5 @@
+set(OpenCV_DIR /usr/lib/x86_64-linux-gnu/cmake/opencv4)
+find_package (OpenCV REQUIRED)
 cmake_minimum_required(VERSION 3.9)
 
 # set the project name and version
@@ -8,6 +10,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 include_directories(src)
+include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 file(GLOB SOMP_SRC
      "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
@@ -35,4 +38,4 @@ target_include_directories(SOMP PUBLIC
                            "${PROJECT_SOURCE_DIR}/utils"
                            "${PROJECT_SOURCE_DIR}/utils/FileManager"
                            )
-#target_link_libraries(SOMP PUBLIC MatrixOperations)
+target_link_libraries(SOMP PUBLIC ${OpenCV_LIBS})

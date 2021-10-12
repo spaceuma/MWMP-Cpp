@@ -279,14 +279,14 @@ public:
 
     // Returns the linearized state space model matrix A.
     // Size of A: number_states x number_states
-    bool getLinearizedMatrixA(std::vector<double> x,
+    bool getLinearizedMatrixA(const std::vector<double> & x,
                               double time_step,
                               std::vector<std::vector<double>> & A);
 
     // Returns the linearized state space model matrix B.
     // Size of B: number_states x number_inputs
-    bool getLinearizedMatrixB(std::vector<double> x,
-                              std::vector<double> u,
+    bool getLinearizedMatrixB(const std::vector<double> & x,
+                              const std::vector<double> & u,
                               double time_step,
                               std::vector<std::vector<double>> & B);
 
@@ -335,26 +335,36 @@ public:
 
     // Returns the inertia matrix given the arm state.
     // Size of I: number_arm_joints x number_arm_joints
-    bool getArmInertiaMatrix(std::vector<double> arm_positions,
+    bool getArmInertiaMatrix(const std::vector<double> & arm_positions,
                              std::vector<std::vector<double>> & I);
 
     // Returns the coriolis matrix given the arm state.
     // Size of C: number_arm_joints x number_arm_joints
-    bool getArmCoriolisMatrix(std::vector<double> arm_positions,
-                              std::vector<double> arm_speeds,
+    bool getArmCoriolisMatrix(const std::vector<double> & arm_positions,
+                              const std::vector<double> & arm_speeds,
                               std::vector<std::vector<double>> & C);
 
     // Returns the jacobian matrix given the arm state.
     // Size of J: 6DoF x number_arm_joints
-    bool getArmJacobianMatrix(std::vector<double> arm_positions,
+    bool getArmJacobianMatrix(const std::vector<double> & arm_positions,
                               std::vector<std::vector<double>> & J);
 
     // Returns the base-to-joint_index transform matrix given the arm state,
     // using direct kinematics
     // Size of TBEE: 4 x 4
-    bool getDirectKinematicsTransform(std::vector<double> arm_positions,
+    bool getDirectKinematicsTransform(const std::vector<double> & arm_positions,
                                       uint joint_index,
                                       std::vector<std::vector<double>> & T);
+
+    // Returns the cost due to obstacles obstacles_cost given a certain
+    // robot pose and the characteristics of the map of the scenario
+    // (resolution and gradient of the obstacles map in X and Y directions)
+    // Size of obstacles_cost: number_states
+    bool getObstaclesCost(const std::vector<double> & robot_pose,
+                          double map_resolution,
+                          const std::vector<std::vector<double>> & gradient_obstacles_map_X,
+                          const std::vector<std::vector<double>> & gradient_obstacles_map_Y,
+                          std::vector<double> & obstacles_cost);
 
     // Returns the wheel inertia
     double getWheelInertia();

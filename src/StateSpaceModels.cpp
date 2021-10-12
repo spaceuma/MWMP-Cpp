@@ -192,7 +192,7 @@ double MobileManipulator::getThresholdGoalOrientation()
     return orientation_threshold;
 }
 
-bool MobileManipulator::getLinearizedMatrixA(std::vector<double> x,
+bool MobileManipulator::getLinearizedMatrixA(const std::vector<double> & x,
                                              double time_step,
                                              std::vector<std::vector<double>> & A)
 {
@@ -303,8 +303,8 @@ bool MobileManipulator::getLinearizedMatrixA(std::vector<double> x,
     return true;
 }
 
-bool MobileManipulator::getLinearizedMatrixB(std::vector<double> x,
-                                             std::vector<double> u,
+bool MobileManipulator::getLinearizedMatrixB(const std::vector<double> & x,
+                                             const std::vector<double> & u,
                                              double time_step,
                                              std::vector<std::vector<double>> & B)
 {
@@ -623,7 +623,7 @@ bool MobileManipulator::getArmGravityMatrix(std::vector<double> arm_positions,
     return true;
 }
 
-bool MobileManipulator::getArmInertiaMatrix(std::vector<double> arm_positions,
+bool MobileManipulator::getArmInertiaMatrix(const std::vector<double> & arm_positions,
                                             std::vector<std::vector<double>> & I)
 {
     if(I.size() != number_arm_joints || I[0].size() != number_arm_joints)
@@ -683,8 +683,8 @@ bool MobileManipulator::getArmInertiaMatrix(std::vector<double> arm_positions,
     return true;
 }
 
-bool MobileManipulator::getArmCoriolisMatrix(std::vector<double> arm_positions,
-                                             std::vector<double> arm_speeds,
+bool MobileManipulator::getArmCoriolisMatrix(const std::vector<double> & arm_positions,
+                                             const std::vector<double> & arm_speeds,
                                              std::vector<std::vector<double>> & C)
 {
     if(C.size() != number_arm_joints || C[0].size() != number_arm_joints)
@@ -836,7 +836,7 @@ bool MobileManipulator::getArmCoriolisMatrix(std::vector<double> arm_positions,
     return true;
 }
 
-bool MobileManipulator::getArmJacobianMatrix(std::vector<double> arm_positions,
+bool MobileManipulator::getArmJacobianMatrix(const std::vector<double> & arm_positions,
                                              std::vector<std::vector<double>> & J)
 {
     if(J.size() != 6 || J[0].size() != number_arm_joints)
@@ -926,7 +926,7 @@ bool MobileManipulator::getArmJacobianMatrix(std::vector<double> arm_positions,
     return true;
 }
 
-bool MobileManipulator::getDirectKinematicsTransform(std::vector<double> arm_positions,
+bool MobileManipulator::getDirectKinematicsTransform(const std::vector<double> & arm_positions,
                                                      uint joint_index,
                                                      std::vector<std::vector<double>> & T)
 {
@@ -1023,6 +1023,55 @@ bool MobileManipulator::getDirectKinematicsTransform(std::vector<double> arm_pos
         T = TB5;
         return true;
     }
+
+    return true;
+}
+
+bool MobileManipulator::getObstaclesCost(
+    const std::vector<double> & robot_pose,
+    double map_resolution,
+    const std::vector<std::vector<double>> & gradient_obstacles_map_X,
+    const std::vector<std::vector<double>> & gradient_obstacles_map_Y,
+    std::vector<double> & obstacles_cost)
+{
+    if(obstacles_cost.size() != number_states)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getObstaclesCost]: The passed-by-reference vector "
+                     "doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
+
+    uint m = gradient_obstacles_map_X[0].size();
+    uint n = gradient_obstacles_map_X.size();
+
+    if(m != gradient_obstacles_map_Y[0].size() || n != gradient_obstacles_map_Y.size())
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getObstaclesCost]: The gradient matrixes doesn't "
+                     "have the same size"
+                  << reset << std::endl;
+        return false;
+    }
+
+    uint ix = (uint)robot_pose[0] / map_resolution;
+    uint iy = (uint)robot_pose[1] / map_resolution;
+
+    if(ix > m - 3 || ix < 0 + 2 || iy > n - 3 || iy < 0 + 2)
+    {
+        std::cout << magenta
+                  << "WARNING [MobileManipulator::getObstaclesCost]: The robot is out of the map"
+                  << reset << std::endl;
+
+        if(ix > m - 3) ix = m - 3;
+        if(ix < 0 + 2) ix = 0 + 2;
+        if(iy > n - 3) iy = n - 3;
+        if(iy < 0 + 2) iy = 0 + 2;
+    }
+
+    obstacles_cost[robot_pose_indexes[0]] = gradient_obstacles_map_X[iy][ix];
+    obstacles_cost[robot_pose_indexes[1]] = gradient_obstacles_map_Y[iy][ix];
 
     return true;
 }

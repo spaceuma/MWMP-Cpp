@@ -351,10 +351,16 @@ public:
 
     // Returns the base-to-joint_index transform matrix given the arm state,
     // using direct kinematics
-    // Size of TBEE: 4 x 4
+    // Size of T: 4 x 4
     bool getDirectKinematicsTransform(const std::vector<double> & arm_positions,
                                       uint joint_index,
                                       std::vector<std::vector<double>> & T);
+
+    // Returns the base-to-all-joints transform matrixex given the arm state,
+    // using direct kinematics
+    // Size of T: number_arm_joints x 4 x 4
+    bool getDirectKinematicsTransform(const std::vector<double> & arm_positions,
+                                      std::vector<std::vector<std::vector<double>>> & T);
 
     // Returns the cost due to obstacles obstacles_cost given a certain
     // robot pose and the characteristics of the map of the scenario

@@ -331,7 +331,15 @@ bool MobileManipulator::getLinearizedMatrixB(const std::vector<double> & x,
 
     // WTEEz
     std::vector<std::vector<double>> J(6, std::vector<double>(number_arm_joints, 0));
-    if(!getArmJacobianMatrix(arm_positions, J)) { return false; }
+    if(!getArmJacobianMatrix(arm_positions, J))
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::forwardIntegrateModel]: Failure while computing "
+                     "jacobian matrix"
+                  << reset << std::endl;
+        return false;
+    }
+
     for(uint i = 0; i < number_arm_joints; i++)
     {
         B[world_ee_pose_indexes[2]][arm_actuators_indexes[i]] = -time_step * J[1][i];
@@ -851,55 +859,64 @@ bool MobileManipulator::getArmJacobianMatrix(const std::vector<double> & arm_pos
     if(robot_name == "exoter")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
+        std::vector<std::vector<std::vector<double>>> TB(
+            number_arm_joints + 1, std::vector<std::vector<double>>(4, std::vector<double>(4, 0)));
 
-        std::vector<std::vector<double>> TB0(4, std::vector<double>(4, 0));
-        std::vector<std::vector<double>> TB1(4, std::vector<double>(4, 0));
-        std::vector<std::vector<double>> TB2(4, std::vector<double>(4, 0));
-        std::vector<std::vector<double>> TB3(4, std::vector<double>(4, 0));
-        std::vector<std::vector<double>> TB4(4, std::vector<double>(4, 0));
-        std::vector<std::vector<double>> TB5(4, std::vector<double>(4, 0));
-
-        if(!getDirectKinematicsTransform(arm_positions, 0, TB0) ||
-           !getDirectKinematicsTransform(arm_positions, 1, TB1) ||
-           !getDirectKinematicsTransform(arm_positions, 2, TB2) ||
-           !getDirectKinematicsTransform(arm_positions, 3, TB3) ||
-           !getDirectKinematicsTransform(arm_positions, 4, TB4) ||
-           !getDirectKinematicsTransform(arm_positions, 5, TB5))
-        { return false; }
-        for(uint i = 0; i < TB0.size(); i++)
+        if(!getDirectKinematicsTransform(arm_positions, TB))
         {
-            for(uint j = 0; j < TB0[0].size(); j++)
+            std::cout << red
+                      << "ERROR [MobileManipulator::getArmJacobianMatrix]: Failure while "
+                         "computing direct kinematics"
+                      << reset << std::endl;
+            return false;
+        }
+
+        for(uint i = 0; i < TB[0].size(); i++)
+        {
+            for(uint j = 0; j < TB[0][0].size(); j++)
             {
-                if(abs(TB0[i][j]) < 1e-6) TB0[i][j] = 0;
-                if(abs(TB1[i][j]) < 1e-6) TB1[i][j] = 0;
-                if(abs(TB2[i][j]) < 1e-6) TB2[i][j] = 0;
-                if(abs(TB3[i][j]) < 1e-6) TB3[i][j] = 0;
-                if(abs(TB4[i][j]) < 1e-6) TB4[i][j] = 0;
-                if(abs(TB5[i][j]) < 1e-6) TB5[i][j] = 0;
+                if(abs(TB[0][i][j]) < 1e-6) TB[0][i][j] = 0;
+                if(abs(TB[1][i][j]) < 1e-6) TB[1][i][j] = 0;
+                if(abs(TB[2][i][j]) < 1e-6) TB[2][i][j] = 0;
+                if(abs(TB[3][i][j]) < 1e-6) TB[3][i][j] = 0;
+                if(abs(TB[4][i][j]) < 1e-6) TB[4][i][j] = 0;
+                if(abs(TB[5][i][j]) < 1e-6) TB[5][i][j] = 0;
             }
         }
 
         std::vector<std::vector<double>> z;
-        z.push_back(std::vector<double>{TB0[0][2], TB0[1][2], TB0[2][2]});
-        z.push_back(std::vector<double>{TB1[0][2], TB1[1][2], TB1[2][2]});
-        z.push_back(std::vector<double>{TB2[0][2], TB2[1][2], TB2[2][2]});
-        z.push_back(std::vector<double>{TB3[0][2], TB3[1][2], TB3[2][2]});
-        z.push_back(std::vector<double>{TB4[0][2], TB4[1][2], TB4[2][2]});
-        z.push_back(std::vector<double>{TB5[0][2], TB5[1][2], TB5[2][2]});
+        z.push_back(std::vector<double>{TB[0][0][2], TB[0][1][2], TB[0][2][2]});
+        z.push_back(std::vector<double>{TB[1][0][2], TB[1][1][2], TB[1][2][2]});
+        z.push_back(std::vector<double>{TB[2][0][2], TB[2][1][2], TB[2][2][2]});
+        z.push_back(std::vector<double>{TB[3][0][2], TB[3][1][2], TB[3][2][2]});
+        z.push_back(std::vector<double>{TB[4][0][2], TB[4][1][2], TB[4][2][2]});
+        z.push_back(std::vector<double>{TB[5][0][2], TB[5][1][2], TB[5][2][2]});
 
         std::vector<std::vector<double>> p;
-        p.push_back(std::vector<double>{TB0[0][3], TB0[1][3], TB0[2][3]});
-        p.push_back(std::vector<double>{TB1[0][3], TB1[1][3], TB1[2][3]});
-        p.push_back(std::vector<double>{TB2[0][3], TB2[1][3], TB2[2][3]});
-        p.push_back(std::vector<double>{TB3[0][3], TB3[1][3], TB3[2][3]});
-        p.push_back(std::vector<double>{TB4[0][3], TB4[1][3], TB4[2][3]});
-        p.push_back(std::vector<double>{TB5[0][3], TB5[1][3], TB5[2][3]});
+        p.push_back(std::vector<double>{TB[0][0][3], TB[0][1][3], TB[0][2][3]});
+        p.push_back(std::vector<double>{TB[1][0][3], TB[1][1][3], TB[1][2][3]});
+        p.push_back(std::vector<double>{TB[2][0][3], TB[2][1][3], TB[2][2][3]});
+        p.push_back(std::vector<double>{TB[3][0][3], TB[3][1][3], TB[3][2][3]});
+        p.push_back(std::vector<double>{TB[4][0][3], TB[4][1][3], TB[4][2][3]});
+        p.push_back(std::vector<double>{TB[5][0][3], TB[5][1][3], TB[5][2][3]});
 
         std::vector<std::vector<double>> Jp, Jo;
 
         for(uint i = 1; i < p.size(); i++)
         {
-            Jp.push_back(getCrossProduct(z[i - 1], getDifference(p[p.size() - 1], p[i - 1])));
+            std::vector<double> diff(p[0].size(), 0);
+            std::vector<double> cross_product(3, 0);
+            if(!getDifference(p[p.size() - 1], p[i - 1], diff) ||
+               !getCrossProduct(z[i - 1], diff, cross_product))
+            {
+                std::cout << red
+                          << "ERROR [MobileManipulator::getArmJacobianMatrix]: Failure while "
+                             "computing position jacobian"
+                          << reset << std::endl;
+                return false;
+            }
+
+            Jp.push_back(cross_product);
             // Jo.push_back(z[i - 1]);
         }
 
@@ -944,16 +961,24 @@ bool MobileManipulator::getDirectKinematicsTransform(const std::vector<double> &
         // TODO This should be obtained from a URDF file, not hardcoded
         if(joint_index > number_arm_joints)
         {
-            throw std::domain_error(
-                red +
-                std::string("ERROR [MobileManipulator::getDirectKinematicsTransform]: "
-                            "Provided index is greater than the number of joints ") +
-                reset);
+            std::cout << red
+                      << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Provided index "
+                         "is greater than the number of joints"
+                      << reset << std::endl;
+            return false;
         }
 
         std::vector<std::vector<double>> TB0(4, std::vector<double>(4, 0));
 
-        TB0 = getTraslation({0, 0, 0});
+        if(!getTraslation({0, 0, 0}, TB0))
+        {
+            std::cout << red
+                      << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
+                         "computing a traslation matrix"
+                      << reset << std::endl;
+            return false;
+        }
+
         if(joint_index == 0)
         {
             T = TB0;
@@ -1021,7 +1046,117 @@ bool MobileManipulator::getDirectKinematicsTransform(const std::vector<double> &
 
         TB5 = dot(TB4, T45);
         T = TB5;
-        return true;
+    }
+
+    return true;
+}
+
+bool MobileManipulator::getDirectKinematicsTransform(
+    const std::vector<double> & arm_positions,
+    std::vector<std::vector<std::vector<double>>> & T)
+{
+    if(T.size() != number_arm_joints + 1 || T[0].size() != 4 || T[0][0].size() != 4)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getDirectKinematicsTransform]: The "
+                     "passed-by-reference matrix doesn't match the expected size"
+                  << reset << std::endl;
+        return false;
+    }
+
+    if(robot_name == "exoter")
+    {
+        // TODO This should be obtained from a URDF file, not hardcoded
+
+        if(!getTraslation({0, 0, 0}, T[0]))
+        {
+            std::cout << red
+                      << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
+                         "computing direct kinematics TB0"
+                      << reset << std::endl;
+            return false;
+        }
+
+        std::vector<std::vector<double>> z_traslation(4, std::vector<double>(4, 0));
+        std::vector<std::vector<double>> z_rotation(4, std::vector<double>(4, 0));
+        std::vector<std::vector<double>> x_traslation(4, std::vector<double>(4, 0));
+        std::vector<std::vector<double>> x_rotation(4, std::vector<double>(4, 0));
+
+        std::vector<std::vector<double>> T_aux1(4, std::vector<double>(4, 0));
+        std::vector<std::vector<double>> T_aux2(4, std::vector<double>(4, 0));
+        std::vector<std::vector<double>> T_aux3(4, std::vector<double>(4, 0));
+
+        // Computing TB1 sequentially (TB0*z_tras*z_rot*x_tras*x_rot)
+        if(!getTraslation({0, 0, arm_lengths[0]}, z_traslation) ||
+           !getZrot(arm_positions[0], z_rotation) || !getTraslation({0, 0, 0}, x_traslation) ||
+           !getXrot(-pi / 2, x_rotation) ||
+
+           !dot(z_traslation, z_rotation, T_aux1) || !dot(T_aux1, x_traslation, T_aux2) ||
+           !dot(T_aux2, x_rotation, T_aux3) || !dot(T[0], T_aux3, T[1]))
+        {
+            std::cout << red
+                      << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
+                         "computing direct kinematics TB1"
+                      << reset << std::endl;
+            return false;
+        }
+
+        // Computing TB2 sequentially (TB1*z_tras*z_rot*x_tras*x_rot)
+        if(!getTraslation({0, 0, 0}, z_traslation) || !getZrot(arm_positions[1], z_rotation) ||
+           !getTraslation({arm_lengths[1], 0, 0}, x_traslation) || !getXrot(0, x_rotation) ||
+
+           !dot(z_traslation, z_rotation, T_aux1) || !dot(T_aux1, x_traslation, T_aux2) ||
+           !dot(T_aux2, x_rotation, T_aux3) || !dot(T[1], T_aux3, T[2]))
+        {
+            std::cout << red
+                      << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
+                         "computing direct kinematics TB2"
+                      << reset << std::endl;
+            return false;
+        }
+
+        // Computing TB3 sequentially (TB2*z_tras*z_rot*x_tras*x_rot)
+        if(!getTraslation({0, 0, 0}, z_traslation) || !getZrot(arm_positions[2], z_rotation) ||
+           !getTraslation({arm_lengths[2], 0, 0}, x_traslation) || !getXrot(0, x_rotation) ||
+
+           !dot(z_traslation, z_rotation, T_aux1) || !dot(T_aux1, x_traslation, T_aux2) ||
+           !dot(T_aux2, x_rotation, T_aux3) || !dot(T[2], T_aux3, T[3]))
+        {
+            std::cout << red
+                      << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
+                         "computing direct kinematics TB3"
+                      << reset << std::endl;
+            return false;
+        }
+
+        // Computing TB4 sequentially (TB3*z_tras*z_rot*x_tras*x_rot)
+        if(!getTraslation({0, 0, 0}, z_traslation) || !getZrot(arm_positions[3], z_rotation) ||
+           !getTraslation({0, 0, 0}, x_traslation) || !getXrot(pi / 2, x_rotation) ||
+
+           !dot(z_traslation, z_rotation, T_aux1) || !dot(T_aux1, x_traslation, T_aux2) ||
+           !dot(T_aux2, x_rotation, T_aux3) || !dot(T[3], T_aux3, T[4]))
+        {
+            std::cout << red
+                      << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
+                         "computing direct kinematics TB4"
+                      << reset << std::endl;
+            return false;
+        }
+
+        // Computing TB5 sequentially (TB4*z_tras*z_rot*x_tras*x_rot)
+        if(!getTraslation({0, 0, arm_lengths[3] + arm_lengths[4]}, z_traslation) ||
+           !getZrot(arm_positions[4], z_rotation) || !getTraslation({0, 0, 0}, x_traslation) ||
+           !getXrot(0, x_rotation) ||
+
+           !dot(z_traslation, z_rotation, T_aux1) || !dot(T_aux1, x_traslation, T_aux2) ||
+           !dot(T_aux2, x_rotation, T_aux3) || !dot(T[4], T_aux3, T[5]))
+        {
+            std::cout << red
+                      << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
+                         "computing direct kinematics TB5"
+                      << reset << std::endl;
+            return false;
+        }
     }
 
     return true;
@@ -1156,7 +1291,14 @@ bool MobileManipulator::forwardIntegrateModel(std::vector<double> x,
         x[wheels_speed_indexes[1] + wheels_speed_indexes.size()]};
 
     std::vector<std::vector<double>> J(6, std::vector<double>(number_arm_joints, 0));
-    if(!getArmJacobianMatrix(arm_positions, J)) { return false; }
+    if(!getArmJacobianMatrix(arm_positions, J))
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::forwardIntegrateModel]: Failure while computing "
+                     "jacobian matrix"
+                  << reset << std::endl;
+        return false;
+    }
 
     // W2EE
     xf[world_ee_pose_indexes[0]] =

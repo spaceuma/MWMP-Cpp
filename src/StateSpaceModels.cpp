@@ -192,6 +192,11 @@ double MobileManipulator::getThresholdGoalOrientation()
     return orientation_threshold;
 }
 
+std::vector<uint> MobileManipulator::getIndexesRobotPose()
+{
+    return robot_pose_indexes;
+}
+
 double MobileManipulator::getRiskDistance()
 {
     return risk_distance;

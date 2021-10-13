@@ -277,6 +277,9 @@ public:
     // Returns the threshold orientation to the goal.
     double getThresholdGoalOrientation();
 
+    // Returns the indexes where to check for the robot pose.
+    std::vector<uint> getIndexesRobotPose();
+
     // Returns the risk distance to obstacles of the robot.
     double getRiskDistance();
 

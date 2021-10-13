@@ -32,12 +32,14 @@
 #define __MOTION_PLANNER_SOMP__
 
 #include <exception>
+#include <opencv2/opencv.hpp>
 #include <vector>
 
 #include "FileManager.hpp"
 #include "StateSpaceModels.hpp"
 
 #define pi 3.14159265359
+#define inf 1000000007
 
 #define reset "\033[0m"
 #define black "\033[1;30m"
@@ -71,7 +73,7 @@ namespace SOMP
  * "Config config" is a struct containing:
  *     - Planner horizon time "double time_horizon". Default: 160s.
  *     - Time step "double time_step". Default: 0.8s.
- *     - Maximum number of iterations "int max_iterations". Default: 200.
+ *     - Maximum number of iterations "uint max_iterations". Default: 200.
  *     - Acceptable control actuation step percentage to consider
  *       convergence is reached, "double control_threshold". Default: 1e-3.
  *     - Step of the linear search procedure, "double line_search_step".
@@ -162,13 +164,24 @@ private:
     // Decide whether to check obstacle collisions or not, default false
     bool check_safety = false;
 
+    // Parameters that depend on the model, defining the index in the state vector
+    // where to check for the pose of the robot to confirm safety
+    std::vector<uint> pose_indexes;
+
     // Map resolution in meters, default 0.05m
     double map_resolution = 0.05;
 
     // Boolean map with obstacles as 0 and safe areas as 1, default 5x5m non obstacle map
     std::vector<std::vector<uint>> obstacles_map;
 
-    // TODO what to do with obstacles_cost?
+    // Auxiliar maps that ensure safety of the rover
+    std::vector<std::vector<uint>> dilated_obstacles_map;
+    std::vector<std::vector<uint>> safety_obstacles_map;
+
+    // Gradient of the obstacles map in X and Y directions, used for computing the cost
+    // of the robot pose with respect to nearby obstacles
+    std::vector<std::vector<double>> gradient_obstacles_map_x;
+    std::vector<std::vector<double>> gradient_obstacles_map_y;
 
     //*********************//
     // Motion Plan Results //
@@ -216,6 +229,25 @@ private:
                                   std::vector<std::vector<std::vector<double>>> & Gh,
                                   std::vector<std::vector<double>> & hh);
 
+    // Get the gradient of the obstacles map
+    bool computeObstaclesGradient(const std::vector<std::vector<uint>> & obst_map);
+
+    // Dilate a binary obstacles map to ensure safety
+    bool dilateObstaclesMap(const std::vector<std::vector<uint>> & obst_map,
+                            double dilatation_distance,
+                            std::vector<std::vector<uint>> & dilated_map);
+
+    // Compute the line search procedure, trying to find the best way to apply
+    // the computed state and control steps (xh and uh),if convergence is not
+    // reached yet, decreasing the intensity of the actuation step
+    bool computeLineSearch(std::vector<std::vector<double>> & x,
+                           const std::vector<std::vector<double>> & x0,
+                           std::vector<std::vector<double>> & u,
+                           const std::vector<std::vector<double>> & u0,
+                           const std::vector<std::vector<double>> & uh,
+                           const std::vector<std::vector<std::vector<double>>> & Qh,
+                           const std::vector<std::vector<std::vector<double>>> & Rh);
+
 public:
     //*******************//
     // Class Constructor //
@@ -239,12 +271,20 @@ public:
      *
      * USAGE:
      *
-     * "std::vector<double> x, x0" are the initial
-     * and goal states respectively. Size number_states x number_time_steps.
+     * "std::vector<double> x" are the initial
+     *  states. Size number_states.
      *
-     * "std::vector<double> u, u0" are the initial and goal
-     * control inputs respectively (u0 is usually filled with zeros).
-     * Size number_inputs x number_time_steps.
+     * "std::vector<std::vector<double>> x0" are the reference
+     *  states for the whole time horizon (usually filled with zeros except
+     *  the last index which represents the goal).
+     *  Size number_time_steps x number_states.
+     *
+     * "std::vector<double> u" are the initial control inputs.
+     * Size number_inputs.
+     *
+     * "std::vector<std::vector<double>> u0" are the reference
+     *  control inputs for the whole time horizon (usually filled with zeros).
+     *  Size number_time_steps x number_inputs.
      *
      * If convergence is reached, this functions will return "1", if not:
      *     " 0" --> something unexpected happened.
@@ -255,22 +295,22 @@ public:
      *
      ******************************************************************************************/
 
-    // TODO x0, u0 should be an std::vector<std::vector<double>>, as it is the reference for
-    // the whole time horizon
     int generateUnconstrainedMotionPlan(std::vector<double> x,
-                                        std::vector<double> x0,
+                                        std::vector<std::vector<double>> x0,
                                         std::vector<double> u,
-                                        std::vector<double> u0);
+                                        std::vector<std::vector<double>> u0,
+                                        uint max_iter);
 
     int generateConstrainedMotionPlan(std::vector<double> x,
-                                      std::vector<double> x0,
+                                      std::vector<std::vector<double>> x0,
                                       std::vector<double> u,
-                                      std::vector<double> u0);
+                                      std::vector<std::vector<double>> u0,
+                                      uint max_iter);
 
     int generateSteppedMotionPlan(std::vector<double> x,
-                                  std::vector<double> x0,
+                                  std::vector<std::vector<double>> x0,
                                   std::vector<double> u,
-                                  std::vector<double> u0);
+                                  std::vector<std::vector<double>> u0);
     //**********//
     // Get Data //
     //**********//

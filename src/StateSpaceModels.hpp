@@ -277,6 +277,12 @@ public:
     // Returns the threshold orientation to the goal.
     double getThresholdGoalOrientation();
 
+    // Returns the risk distance to obstacles of the robot.
+    double getRiskDistance();
+
+    // Returns the safety distance to obstacles of the robot.
+    double getSafetyDistance();
+
     // Returns the linearized state space model matrix A.
     // Size of A: number_states x number_states
     bool getLinearizedMatrixA(const std::vector<double> & x,

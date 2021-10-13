@@ -179,6 +179,42 @@ bool MatrixOperations::dot(double n, const std::vector<double> & a, std::vector<
     return true;
 }
 
+std::vector<std::vector<double>> MatrixOperations::dot(double n,
+                                                       const std::vector<std::vector<double>> & A)
+{
+    // This function performs scalar product
+    int m = A.size();
+    int ns = A[0].size();
+    std::vector<std::vector<double>> C(m, std::vector<double>(ns, 0));
+
+    for(int i = 0; i < m; i++)
+        for(int j = 0; i < ns; j++)
+            C[i][j] = n * A[i][j];
+
+    return C;
+}
+
+bool MatrixOperations::dot(double n,
+                           const std::vector<std::vector<double>> & A,
+                           std::vector<std::vector<double>> & C)
+{
+    // This function performs scalar product
+    int m = A.size();
+    int ns = A[0].size();
+    if(C.size() != m || C[0].size() != ns)
+    {
+        std::cout << red << "ERROR [MatrixOperations::dot]: Wrong output matrix size" << reset
+                  << std::endl;
+        return false;
+    }
+
+    for(int i = 0; i < m; i++)
+        for(int j = 0; i < ns; j++)
+            C[i][j] = n * A[i][j];
+
+    return true;
+}
+
 std::vector<std::vector<double>> MatrixOperations::getTraslation(
     const std::vector<double> & position)
 {
@@ -354,6 +390,33 @@ bool MatrixOperations::getZrot(double angle, std::vector<std::vector<double>> & 
     T[3][1] = 0;
     T[3][2] = 0;
     T[3][3] = 1;
+
+    return true;
+}
+
+std::vector<std::vector<double>> MatrixOperations::getIdentity(int size)
+{
+    std::vector<std::vector<double>> I(size, std::vector<double>(size, 0));
+
+    for(int i = 0; i < size; i++)
+        I[i][i] = 1;
+
+    return I;
+}
+
+bool MatrixOperations::getIdentity(std::vector<std::vector<double>> & I)
+{
+    int size = I.size();
+
+    if(I[0].size() != size)
+    {
+        std::cout << red << "ERROR [MatrixOperations::getIdentity]: Provided matrix is not square"
+                  << reset << std::endl;
+        return false;
+    }
+
+    for(int i = 0; i < size; i++)
+        I[i][i] = 1;
 
     return true;
 }
@@ -539,17 +602,17 @@ std::vector<std::vector<double>> MatrixOperations::getInverse(
             reset);
     }
 
-    std::vector<std::vector<double>> inverse(m, std::vector<double>(m));
+    std::vector<std::vector<double>> invA(m, std::vector<double>(m));
 
     for(int i = 0; i < m; i++)
         for(int j = 0; j < m; j++)
-            inverse[i][j] = adj[i][j] / det;
+            invA[i][j] = adj[i][j] / det;
 
-    return inverse;
+    return invA;
 }
 
 bool MatrixOperations::getInverse(const std::vector<std::vector<double>> & A,
-                                  std::vector<std::vector<double>> & inverse)
+                                  std::vector<std::vector<double>> & invA)
 {
     double det = getDeterminant(A);
     if(det == 0)
@@ -562,7 +625,7 @@ bool MatrixOperations::getInverse(const std::vector<std::vector<double>> & A,
 
     int m = A.size();
 
-    if(inverse.size() != m || inverse[0].size() != m)
+    if(invA.size() != m || invA[0].size() != m)
     {
         std::cout << red << "ERROR [MatrixOperations::getInverse]: Wrong output matrix size"
                   << reset << std::endl;
@@ -580,7 +643,7 @@ bool MatrixOperations::getInverse(const std::vector<std::vector<double>> & A,
 
     for(int i = 0; i < m; i++)
         for(int j = 0; j < m; j++)
-            inverse[i][j] = adj[i][j] / det;
+            invA[i][j] = adj[i][j] / det;
 
     return true;
 }
@@ -663,6 +726,57 @@ bool MatrixOperations::getSum(const std::vector<double> & a,
     return true;
 }
 
+std::vector<std::vector<double>> MatrixOperations::getSum(
+    const std::vector<std::vector<double>> & A,
+    const std::vector<std::vector<double>> & B)
+{
+    int m = A.size();
+    int n = A[0].size();
+
+    std::vector<std::vector<double>> C(m, std::vector<double>(n, 0));
+
+    if(m != B.size() || n != B[0].size())
+    {
+        throw std::domain_error(
+            red + std::string("ERROR [MatrixOperations::getSum]: Matrixes sizes don't match") +
+            reset);
+    }
+
+    for(int i = 0; i < m; i++)
+        for(int j = 0; j < n; j++)
+            C[i][j] = A[i][j] + B[i][j];
+
+    return C;
+}
+
+bool MatrixOperations::getSum(const std::vector<std::vector<double>> & A,
+                              const std::vector<std::vector<double>> & B,
+                              std::vector<std::vector<double>> & C)
+{
+    int m = A.size();
+    int n = A[0].size();
+
+    if(C.size() != m || C[0].size() != n)
+    {
+        std::cout << red << "ERROR [MatrixOperations::getSum]: Wrong output matrix size" << reset
+                  << std::endl;
+        return false;
+    }
+
+    if(m != B.size() || n != B[0].size())
+    {
+        std::cout << red << "ERROR [MatrixOperations::getSum]: Matrixes sizes don't match" << reset
+                  << std::endl;
+        return false;
+    }
+
+    for(int i = 0; i < m; i++)
+        for(int j = 0; j < n; j++)
+            C[i][j] = A[i][j] + B[i][j];
+
+    return true;
+}
+
 std::vector<double> MatrixOperations::getDifference(const std::vector<double> & a,
                                                     const std::vector<double> & b)
 {
@@ -713,12 +827,12 @@ bool MatrixOperations::getDifference(const std::vector<double> & a,
 }
 
 std::vector<std::vector<double>> MatrixOperations::getDifference(
-    const std::vector<std::vector<double>> & a,
-    const std::vector<std::vector<double>> & b)
+    const std::vector<std::vector<double>> & A,
+    const std::vector<std::vector<double>> & B)
 {
-    int m = a.size();
-    int n = a[0].size();
-    if(m != b.size() || n != b[0].size())
+    int m = A.size();
+    int n = B[0].size();
+    if(m != B.size() || n != B[0].size())
     {
         throw std::domain_error(
             red +
@@ -727,34 +841,34 @@ std::vector<std::vector<double>> MatrixOperations::getDifference(
         return std::vector<std::vector<double>>(1, std::vector<double>(1, 0));
     }
 
-    std::vector<std::vector<double>> c(m, std::vector<double>(n, 0));
+    std::vector<std::vector<double>> C(m, std::vector<double>(n, 0));
 
     for(int i = 0; i < m; i++)
     {
         for(int j = 0; j < n; j++)
         {
-            c[i][j] = a[i][j] - b[i][j];
+            C[i][j] = A[i][j] - B[i][j];
         }
     }
 
-    return c;
+    return C;
 }
 
-bool MatrixOperations::getDifference(const std::vector<std::vector<double>> & a,
-                                     const std::vector<std::vector<double>> & b,
-                                     std::vector<std::vector<double>> & c)
+bool MatrixOperations::getDifference(const std::vector<std::vector<double>> & A,
+                                     const std::vector<std::vector<double>> & B,
+                                     std::vector<std::vector<double>> & C)
 {
-    int m = a.size();
-    int n = a[0].size();
+    int m = A.size();
+    int n = A[0].size();
 
-    if(c.size() != m || c[0].size() != n)
+    if(C.size() != m || C[0].size() != n)
     {
         std::cout << red << "ERROR [MatrixOperations::getDifference]: Wrong output matrix size"
                   << reset << std::endl;
         return false;
     }
 
-    if(m != b.size() || n != b[0].size())
+    if(m != B.size() || n != B[0].size())
     {
         std::cout << red << "ERROR [MatrixOperations::getDifference]: Matrixes sizes don't match"
                   << reset << std::endl;
@@ -765,7 +879,7 @@ bool MatrixOperations::getDifference(const std::vector<std::vector<double>> & a,
     {
         for(int j = 0; j < n; j++)
         {
-            c[i][j] = a[i][j] - b[i][j];
+            C[i][j] = A[i][j] - B[i][j];
         }
     }
 
@@ -780,4 +894,39 @@ double MatrixOperations::getNorm(const std::vector<double> & a)
         sum += pow(a[i], 2);
 
     return sqrt(sum);
+}
+
+std::vector<std::vector<double>> MatrixOperations::getTranspose(
+    const std::vector<std::vector<double>> & A)
+{
+    int m = A.size();
+    int n = A[0].size();
+
+    std::vector<std::vector<double>> At(n, std::vector<double>(m, 0));
+
+    for(int i = 0; i < m; i++)
+        for(int j = 0; j < n; j++)
+            At[j][i] = A[i][j];
+
+    return At;
+}
+
+bool MatrixOperations::getTranspose(const std::vector<std::vector<double>> & A,
+                                    std::vector<std::vector<double>> & At)
+{
+    int m = A.size();
+    int n = A[0].size();
+
+    if(At.size() != n || At[0].size() != m)
+    {
+        std::cout << red << "ERROR [MatrixOperations::getTranspose]: Wrong output vector size"
+                  << reset << std::endl;
+        return false;
+    }
+
+    for(int i = 0; i < m; i++)
+        for(int j = 0; j < n; j++)
+            At[j][i] = A[i][j];
+
+    return true;
 }

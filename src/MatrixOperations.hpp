@@ -70,6 +70,12 @@ std::vector<double> dot(double n, const std::vector<double> & a);
 
 bool dot(double n, const std::vector<double> & a, std::vector<double> & c);
 
+std::vector<std::vector<double>> dot(double n, const std::vector<std::vector<double>> & A);
+
+bool dot(double n,
+         const std::vector<std::vector<double>> & A,
+         std::vector<std::vector<double>> & C);
+
 //**********************************//
 // Traslation transformation matrix //
 //**********************************//
@@ -92,6 +98,13 @@ std::vector<std::vector<double>> getZrot(double angle);
 
 bool getZrot(double angle, std::vector<std::vector<double>> & T);
 
+//*********************//
+// Get identity matrix //
+//*********************//
+std::vector<std::vector<double>> getIdentity(int size);
+
+bool getIdentity(std::vector<std::vector<double>> & I);
+
 //****************************************************//
 // Matrix essential operations (determinant, inverse) //
 //****************************************************//
@@ -113,7 +126,7 @@ bool getAdjoint(const std::vector<std::vector<double>> & A, std::vector<std::vec
 std::vector<std::vector<double>> getInverse(const std::vector<std::vector<double>> & A);
 
 bool getInverse(const std::vector<std::vector<double>> & A,
-                std::vector<std::vector<double>> & inverse);
+                std::vector<std::vector<double>> & invA);
 
 //*****************************//
 // Cross product of 3D vectors //
@@ -131,6 +144,16 @@ std::vector<double> getSum(const std::vector<double> & a, const std::vector<doub
 
 bool getSum(const std::vector<double> & a, const std::vector<double> & b, std::vector<double> & c);
 
+//*************************//
+// General sum of matrixes //
+//*************************//
+std::vector<std::vector<double>> getSum(const std::vector<std::vector<double>> & A,
+                                        const std::vector<std::vector<double>> & B);
+
+bool getSum(const std::vector<std::vector<double>> & A,
+            const std::vector<std::vector<double>> & B,
+            std::vector<std::vector<double>> & C);
+
 //*******************************//
 // General difference of vectors //
 //*******************************//
@@ -143,17 +166,25 @@ bool getDifference(const std::vector<double> & a,
 //********************************//
 // General difference of matrixes //
 //********************************//
-std::vector<std::vector<double>> getDifference(const std::vector<std::vector<double>> & a,
-                                               const std::vector<std::vector<double>> & b);
+std::vector<std::vector<double>> getDifference(const std::vector<std::vector<double>> & A,
+                                               const std::vector<std::vector<double>> & B);
 
-bool getDifference(const std::vector<std::vector<double>> & a,
-                   const std::vector<std::vector<double>> & b,
-                   std::vector<std::vector<double>> & c);
+bool getDifference(const std::vector<std::vector<double>> & A,
+                   const std::vector<std::vector<double>> & B,
+                   std::vector<std::vector<double>> & C);
 
 //**************************//
 // Vector magnitude or norm //
 //**************************//
 double getNorm(const std::vector<double> & a);
+
+//******************//
+// Matrix transpose //
+//******************//
+std::vector<std::vector<double>> getTranspose(const std::vector<std::vector<double>> & A);
+
+bool getTranspose(const std::vector<std::vector<double>> & A,
+                  std::vector<std::vector<double>> & At);
 
 }    // namespace MatrixOperations
 #endif

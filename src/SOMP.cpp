@@ -48,7 +48,7 @@ bool MotionPlanner::updateHorizon(std::vector<std::vector<double>> & x,
         std::cout
             << red
             << "ERROR [MotionPlanner::updateHorizon]: Unable to linearize the state space model"
-            << reset << std::endl;
+            << nocolor << std::endl;
         return false;
     }
 
@@ -59,7 +59,7 @@ bool MotionPlanner::updateHorizon(std::vector<std::vector<double>> & x,
             std::cout
                 << red
                 << "ERROR [MotionPlanner::updateHorizon]: Unable to forward integrate the model"
-                << reset << std::endl;
+                << nocolor << std::endl;
             return false;
         }
 
@@ -69,7 +69,7 @@ bool MotionPlanner::updateHorizon(std::vector<std::vector<double>> & x,
             std::cout
                 << red
                 << "ERROR [MotionPlanner::updateHorizon]: Unable to linearize the state space model"
-                << reset << std::endl;
+                << nocolor << std::endl;
             return false;
         }
 
@@ -81,7 +81,7 @@ bool MotionPlanner::updateHorizon(std::vector<std::vector<double>> & x,
             std::cout
                 << red
                 << "ERROR [MotionPlanner::updateHorizon]: Unable to compute the quadratized costs"
-                << reset << std::endl;
+                << nocolor << std::endl;
             return false;
         }
     }
@@ -104,7 +104,7 @@ bool MotionPlanner::updateHorizonConstraints(std::vector<std::vector<std::vector
             std::cout << red
                       << "ERROR [MotionPlanner::updateHorizonConstraints]: Unable to compute the "
                          "state input constraints"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return false;
         }
         if(!robot_ss_model->getConstraintsMatrixG(Gh[i]) ||
@@ -113,7 +113,7 @@ bool MotionPlanner::updateHorizonConstraints(std::vector<std::vector<std::vector
             std::cout << red
                       << "ERROR [MotionPlanner::updateHorizonConstraints]: Unable to compute the "
                          "pure state constraints"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return false;
         }
     }
@@ -282,7 +282,7 @@ bool MotionPlanner::dilateObstaclesMap(const std::vector<std::vector<uint>> & ob
     {
         std::cout << red
                   << "ERROR [MotionPlanner::dilateObstaclesMap]: Wrong size of the output matrix"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -338,7 +338,7 @@ bool MotionPlanner::computeLineSearch(std::vector<std::vector<double>> & x,
                 std::cout << red
                           << "ERROR [MotionPlanner::computeLineSearch]: Unable to forward "
                              "integrate the model"
-                          << reset << std::endl;
+                          << nocolor << std::endl;
                 return false;
             }
 
@@ -413,7 +413,7 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config)
         throw std::domain_error(red +
                                 std::string("ERROR [MotionPlanner::MotionPlanner]: The provided "
                                             "line search step is not inside the interval (0,1)") +
-                                reset);
+                                nocolor);
     }
 
     check_distance = config.check_distance;
@@ -453,7 +453,7 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
         throw std::domain_error(red +
                                 std::string("ERROR [MotionPlanner::MotionPlanner]: The provided "
                                             "line search step is not inside the interval (0,1)") +
-                                reset);
+                                nocolor);
     }
 
     check_distance = config.check_distance;
@@ -481,7 +481,7 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
         throw std::domain_error(red +
                                 std::string("ERROR [MotionPlanner::MotionPlanner]: Failure while "
                                             "processing the input obstacles map") +
-                                reset);
+                                nocolor);
     }
 
     number_states = robot_ss_model->getNumberStates();
@@ -499,7 +499,7 @@ bool MotionPlanner::setTimeHorizon(double new_time_horizon)
         std::cout << magenta
                   << "WARNING [MotionPlanner::setTimeHorizon]: The new requested time horizon is "
                      "not valid, the previous one is maintained"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
     return true;
@@ -514,7 +514,7 @@ bool MotionPlanner::setTimeStep(double new_time_step)
         std::cout << magenta
                   << "WARNING [MotionPlanner::setTimeStep]: The new requested time step is not "
                      "valid, the previous one is maintained"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
     return true;
@@ -569,7 +569,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(std::vector<double> x_ini,
             std::cout << red
                       << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: Unable to update "
                          "the system state, linear matrixes and costs"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return 0;
         }
 
@@ -736,7 +736,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(std::vector<double> x_ini,
             std::cout << green
                       << "[MotionPlanner::generateUnconstrainedMotionPlan]: The motion planner "
                          "found a solution!"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             if(check_distance)
                 std::cout << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
                              "goalposition: "
@@ -781,7 +781,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(std::vector<double> x_ini,
                     break;
             }
 
-            std::cout << reset << std::endl;
+            std::cout << nocolor << std::endl;
             return convergence_status;
         }
     }
@@ -841,7 +841,7 @@ int MotionPlanner::generateConstrainedMotionPlan(std::vector<double> x,
         std::cout << red
                   << "ERROR [MotionPlanner::generateConstrainedMotionPlan]: Unable to initialize "
                      "the constraints"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return 0;
     }
 
@@ -862,7 +862,7 @@ bool MotionPlanner::getPlannedState(std::vector<std::vector<double>> & x)
     {
         std::cout << red
                   << "ERROR [MotionPlanner::getPlannedState]: No motion plan has yet been generated"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
     else
@@ -878,7 +878,7 @@ bool MotionPlanner::getPlannedControl(std::vector<std::vector<double>> & u)
         std::cout
             << red
             << "ERROR [MotionPlanner::getPlannedControl]: No motion plan has yet been generated"
-            << reset << std::endl;
+            << nocolor << std::endl;
         return false;
     }
     else

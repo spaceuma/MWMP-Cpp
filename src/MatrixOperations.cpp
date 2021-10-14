@@ -66,13 +66,13 @@ bool MatrixOperations::dot(const std::vector<std::vector<double>> & A,
     if(B.size() != m || B[0].size() != n)
     {
         std::cout << red << "ERROR [MatrixOperations::dot]: Input matrixes sizes don't match"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
     if(C.size() != m || C[0].size() != n)
     {
-        std::cout << red << "ERROR [MatrixOperations::dot]: Wrong output matrix size" << reset
+        std::cout << red << "ERROR [MatrixOperations::dot]: Wrong output matrix size" << nocolor
                   << std::endl;
         return false;
     }
@@ -115,7 +115,7 @@ bool MatrixOperations::dot(const std::vector<std::vector<double>> & A,
 
     if(c.size() != m || c.size() != n)
     {
-        std::cout << red << "ERROR [MatrixOperations::dot]: Wrong output vector size" << reset
+        std::cout << red << "ERROR [MatrixOperations::dot]: Wrong output vector size" << nocolor
                   << std::endl;
         return false;
     }
@@ -140,7 +140,7 @@ double MatrixOperations::dot(const std::vector<double> & a, const std::vector<do
     {
         throw std::domain_error(
             red + std::string("ERROR [MatrixOperations::dot]: Vectors do not have the same size") +
-            reset);
+            nocolor);
     }
 
     for(int i = 0; i < n; i++)
@@ -168,7 +168,7 @@ bool MatrixOperations::dot(double n, const std::vector<double> & a, std::vector<
 
     if(c.size() != m)
     {
-        std::cout << red << "ERROR [MatrixOperations::dot]: Wrong output vector size" << reset
+        std::cout << red << "ERROR [MatrixOperations::dot]: Wrong output vector size" << nocolor
                   << std::endl;
         return false;
     }
@@ -203,7 +203,7 @@ bool MatrixOperations::dot(double n,
     int ns = A[0].size();
     if(C.size() != m || C[0].size() != ns)
     {
-        std::cout << red << "ERROR [MatrixOperations::dot]: Wrong output matrix size" << reset
+        std::cout << red << "ERROR [MatrixOperations::dot]: Wrong output matrix size" << nocolor
                   << std::endl;
         return false;
     }
@@ -229,7 +229,7 @@ bool MatrixOperations::getTraslation(const std::vector<double> & position,
     if(T.size() != 4 || T[0].size() != 4)
     {
         std::cout << red << "ERROR [MatrixOperations::getTraslation]: Wrong output matrix size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -269,7 +269,7 @@ bool MatrixOperations::getXrot(double angle, std::vector<std::vector<double>> & 
 {
     if(T.size() != 4 || T[0].size() != 4)
     {
-        std::cout << red << "ERROR [MatrixOperations::getXrot]: Wrong output matrix size" << reset
+        std::cout << red << "ERROR [MatrixOperations::getXrot]: Wrong output matrix size" << nocolor
                   << std::endl;
         return false;
     }
@@ -316,7 +316,7 @@ bool MatrixOperations::getYrot(double angle, std::vector<std::vector<double>> & 
 {
     if(T.size() != 4 || T[0].size() != 4)
     {
-        std::cout << red << "ERROR [MatrixOperations::getYrot]: Wrong output matrix size" << reset
+        std::cout << red << "ERROR [MatrixOperations::getYrot]: Wrong output matrix size" << nocolor
                   << std::endl;
         return false;
     }
@@ -363,7 +363,7 @@ bool MatrixOperations::getZrot(double angle, std::vector<std::vector<double>> & 
 {
     if(T.size() != 4 || T[0].size() != 4)
     {
-        std::cout << red << "ERROR [MatrixOperations::getZrot]: Wrong output matrix size" << reset
+        std::cout << red << "ERROR [MatrixOperations::getZrot]: Wrong output matrix size" << nocolor
                   << std::endl;
         return false;
     }
@@ -411,7 +411,7 @@ bool MatrixOperations::getIdentity(std::vector<std::vector<double>> & I)
     if(I[0].size() != size)
     {
         std::cout << red << "ERROR [MatrixOperations::getIdentity]: Provided matrix is not square"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -439,7 +439,7 @@ double MatrixOperations::getDeterminant(const std::vector<std::vector<double>> &
                 throw std::domain_error(red +
                                         std::string("ERROR [MatrixOperations::getDeterminant]: "
                                                     "Failure while extracting the cofactor") +
-                                        reset);
+                                        nocolor);
             }
             d = d + (pow(-1, c) * A[0][c] * getDeterminant(subA));
         }
@@ -486,7 +486,7 @@ bool MatrixOperations::getCofactor(const std::vector<std::vector<double>> & A,
     if(subA.size() != m - 1 || subA[0].size() != m - 1)
     {
         std::cout << red << "ERROR [MatrixOperations::getCofactor]: Wrong output matrix size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -531,7 +531,7 @@ std::vector<std::vector<double>> MatrixOperations::getAdjoint(
                 throw std::domain_error(red +
                                         std::string("ERROR [MatrixOperations::getAdjoint]: Failure "
                                                     "while extracting the cofactor") +
-                                        reset);
+                                        nocolor);
             }
             adj[j][i] = sign * getDeterminant(cof);
         }
@@ -547,7 +547,7 @@ bool MatrixOperations::getAdjoint(const std::vector<std::vector<double>> & A,
     if(adj.size() != m || adj.size() != m)
     {
         std::cout << red << "ERROR [MatrixOperations::getAdjoint]: Wrong output matrix size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -569,7 +569,7 @@ bool MatrixOperations::getAdjoint(const std::vector<std::vector<double>> & A,
                 throw std::domain_error(red +
                                         std::string("ERROR [MatrixOperations::getAdjoint]: Failure "
                                                     "while extracting the cofactor") +
-                                        reset);
+                                        nocolor);
             }
             adj[j][i] = sign * getDeterminant(cof);
         }
@@ -587,7 +587,7 @@ std::vector<std::vector<double>> MatrixOperations::getInverse(
             red +
             std::string(
                 "ERROR [MatrixOperations::getInverse]: Singular matrix, can't find its inverse") +
-            reset);
+            nocolor);
     }
 
     int m = A.size();
@@ -599,7 +599,7 @@ std::vector<std::vector<double>> MatrixOperations::getInverse(
             red +
             std::string(
                 "ERROR [MatrixOperations::getInverse]: Failure while extracting the adjoint") +
-            reset);
+            nocolor);
     }
 
     std::vector<std::vector<double>> invA(m, std::vector<double>(m));
@@ -619,7 +619,7 @@ bool MatrixOperations::getInverse(const std::vector<std::vector<double>> & A,
     {
         std::cout << red
                   << "ERROR [MatrixOperations::getInverse]: Singular matrix, can't find its inverse"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -628,7 +628,7 @@ bool MatrixOperations::getInverse(const std::vector<std::vector<double>> & A,
     if(invA.size() != m || invA[0].size() != m)
     {
         std::cout << red << "ERROR [MatrixOperations::getInverse]: Wrong output matrix size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -637,7 +637,7 @@ bool MatrixOperations::getInverse(const std::vector<std::vector<double>> & A,
     {
         std::cout << red
                   << "ERROR [MatrixOperations::getInverse]: Failure while extracting the adjoint"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -667,7 +667,7 @@ bool MatrixOperations::getCrossProduct(const std::vector<double> & a,
     if(c.size() != 3)
     {
         std::cout << red << "ERROR [MatrixOperations::getCrossProduct]: Wrong output vector size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -686,7 +686,7 @@ std::vector<double> MatrixOperations::getSum(const std::vector<double> & a,
     {
         throw std::domain_error(
             red + std::string("ERROR [MatrixOperations::getSum]: Vectors sizes don't match") +
-            reset);
+            nocolor);
         return std::vector<double>(1, 0);
     }
 
@@ -706,14 +706,14 @@ bool MatrixOperations::getSum(const std::vector<double> & a,
 
     if(c.size() != m)
     {
-        std::cout << red << "ERROR [MatrixOperations::getSum]: Wrong output vector size" << reset
+        std::cout << red << "ERROR [MatrixOperations::getSum]: Wrong output vector size" << nocolor
                   << std::endl;
         return false;
     }
 
     if(b.size() != m)
     {
-        std::cout << red << "ERROR [MatrixOperations::getSum]: Vectors sizes don't match" << reset
+        std::cout << red << "ERROR [MatrixOperations::getSum]: Vectors sizes don't match" << nocolor
                   << std::endl;
         return false;
     }
@@ -739,7 +739,7 @@ std::vector<std::vector<double>> MatrixOperations::getSum(
     {
         throw std::domain_error(
             red + std::string("ERROR [MatrixOperations::getSum]: Matrixes sizes don't match") +
-            reset);
+            nocolor);
     }
 
     for(int i = 0; i < m; i++)
@@ -758,15 +758,15 @@ bool MatrixOperations::getSum(const std::vector<std::vector<double>> & A,
 
     if(C.size() != m || C[0].size() != n)
     {
-        std::cout << red << "ERROR [MatrixOperations::getSum]: Wrong output matrix size" << reset
+        std::cout << red << "ERROR [MatrixOperations::getSum]: Wrong output matrix size" << nocolor
                   << std::endl;
         return false;
     }
 
     if(m != B.size() || n != B[0].size())
     {
-        std::cout << red << "ERROR [MatrixOperations::getSum]: Matrixes sizes don't match" << reset
-                  << std::endl;
+        std::cout << red << "ERROR [MatrixOperations::getSum]: Matrixes sizes don't match"
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -786,7 +786,7 @@ std::vector<double> MatrixOperations::getDifference(const std::vector<double> & 
         throw std::domain_error(
             red +
             std::string("ERROR [MatrixOperations::getDifference]: Vectors sizes don't match") +
-            reset);
+            nocolor);
         return std::vector<double>(1, 0);
     }
 
@@ -807,14 +807,14 @@ bool MatrixOperations::getDifference(const std::vector<double> & a,
     if(c.size() != m)
     {
         std::cout << red << "ERROR [MatrixOperations::getDifference]: Wrong output vector size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
     if(b.size() != m)
     {
         std::cout << red << "ERROR [MatrixOperations::getDifference]: Vectors sizes don't  match"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -837,7 +837,7 @@ std::vector<std::vector<double>> MatrixOperations::getDifference(
         throw std::domain_error(
             red +
             std::string("ERROR [MatrixOperations::getDifference]: Matrixes sizes don't match") +
-            reset);
+            nocolor);
         return std::vector<std::vector<double>>(1, std::vector<double>(1, 0));
     }
 
@@ -864,14 +864,14 @@ bool MatrixOperations::getDifference(const std::vector<std::vector<double>> & A,
     if(C.size() != m || C[0].size() != n)
     {
         std::cout << red << "ERROR [MatrixOperations::getDifference]: Wrong output matrix size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
     if(m != B.size() || n != B[0].size())
     {
         std::cout << red << "ERROR [MatrixOperations::getDifference]: Matrixes sizes don't match"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -920,7 +920,7 @@ bool MatrixOperations::getTranspose(const std::vector<std::vector<double>> & A,
     if(At.size() != n || At[0].size() != m)
     {
         std::cout << red << "ERROR [MatrixOperations::getTranspose]: Wrong output vector size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 

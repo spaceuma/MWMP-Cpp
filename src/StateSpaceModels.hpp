@@ -39,7 +39,7 @@
 
 #define pi 3.14159265359
 
-#define reset "\033[0m"
+#define nocolor "\033[0m"
 #define black "\033[1;30m"
 #define red "\033[1;31m"
 #define green "\033[1;32m"

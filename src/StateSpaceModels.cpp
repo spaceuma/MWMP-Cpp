@@ -158,7 +158,7 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
             red +
             std::string("ERROR [MobileManipulator::MobileManipulator]: The provided robot name "
                         "doesn't match any of the available robot models") +
-            reset);
+            nocolor);
     }
 }
 
@@ -216,7 +216,7 @@ bool MobileManipulator::getLinearizedMatrixA(const std::vector<double> & x,
         std::cout << red
                   << "ERROR [MobileManipulator::getLinearizedMatrixA]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -328,7 +328,7 @@ bool MobileManipulator::getLinearizedMatrixB(const std::vector<double> & x,
         std::cout << red
                   << "ERROR [MobileManipulator::getLinearizedMatrixB]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -351,7 +351,7 @@ bool MobileManipulator::getLinearizedMatrixB(const std::vector<double> & x,
         std::cout << red
                   << "ERROR [MobileManipulator::forwardIntegrateModel]: Failure while computing "
                      "jacobian matrix"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -438,7 +438,7 @@ bool MobileManipulator::getConstraintsMatrixC(std::vector<std::vector<double>> &
         std::cout << red
                   << "ERROR [MobileManipulator::getConstraintsMatrixC]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -455,7 +455,7 @@ bool MobileManipulator::getConstraintsMatrixD(std::vector<std::vector<double>> &
         std::cout << red
                   << "ERROR [MobileManipulator::getConstraintsMatrixD]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -475,7 +475,7 @@ bool MobileManipulator::getConstraintsMatrixR(std::vector<double> & r)
         std::cout << red
                   << "ERROR [MobileManipulator::getConstraintsMatrixR]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -500,7 +500,7 @@ bool MobileManipulator::getConstraintsMatrixG(std::vector<std::vector<double>> &
         std::cout << red
                   << "ERROR [MobileManipulator::getConstraintsMatrixG]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -520,7 +520,7 @@ bool MobileManipulator::getConstraintsMatrixH(std::vector<double> & h)
         std::cout << red
                   << "ERROR [MobileManipulator::getConstraintsMatrixH]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -541,7 +541,7 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
         std::cout << red
                   << "ERROR [MobileManipulator::getStateCostMatrix]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -578,7 +578,7 @@ bool MobileManipulator::getInputCostMatrix(std::vector<std::vector<double>> & R)
         std::cout << red
                   << "ERROR [MobileManipulator::getInputCostMatrix]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -597,7 +597,7 @@ bool MobileManipulator::getStateInputCostMatrix(std::vector<std::vector<double>>
         std::cout << red
                   << "ERROR [MobileManipulator::getStateInputCostMatrix]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -614,7 +614,7 @@ bool MobileManipulator::getArmGravityMatrix(std::vector<double> arm_positions,
         std::cout << red
                   << "ERROR [MobileManipulator::getArmGravityMatrix]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -654,7 +654,7 @@ bool MobileManipulator::getArmInertiaMatrix(const std::vector<double> & arm_posi
         std::cout << red
                   << "ERROR [MobileManipulator::getArmInertiaMatrix]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -715,7 +715,7 @@ bool MobileManipulator::getArmCoriolisMatrix(const std::vector<double> & arm_pos
         std::cout << red
                   << "ERROR [MobileManipulator::getArmCoriolisMatrix]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -867,7 +867,7 @@ bool MobileManipulator::getArmJacobianMatrix(const std::vector<double> & arm_pos
         std::cout << red
                   << "ERROR [MobileManipulator::getArmJacobianMatrix]: The passed-by-reference "
                      "matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -882,7 +882,7 @@ bool MobileManipulator::getArmJacobianMatrix(const std::vector<double> & arm_pos
             std::cout << red
                       << "ERROR [MobileManipulator::getArmJacobianMatrix]: Failure while "
                          "computing direct kinematics"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return false;
         }
 
@@ -927,7 +927,7 @@ bool MobileManipulator::getArmJacobianMatrix(const std::vector<double> & arm_pos
                 std::cout << red
                           << "ERROR [MobileManipulator::getArmJacobianMatrix]: Failure while "
                              "computing position jacobian"
-                          << reset << std::endl;
+                          << nocolor << std::endl;
                 return false;
             }
 
@@ -967,7 +967,7 @@ bool MobileManipulator::getDirectKinematicsTransform(const std::vector<double> &
         std::cout << red
                   << "ERROR [MobileManipulator::getDirectKinematicsTransform]: The "
                      "passed-by-reference matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -979,7 +979,7 @@ bool MobileManipulator::getDirectKinematicsTransform(const std::vector<double> &
             std::cout << red
                       << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Provided index "
                          "is greater than the number of joints"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return false;
         }
 
@@ -990,7 +990,7 @@ bool MobileManipulator::getDirectKinematicsTransform(const std::vector<double> &
             std::cout << red
                       << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
                          "computing a traslation matrix"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return false;
         }
 
@@ -1075,7 +1075,7 @@ bool MobileManipulator::getDirectKinematicsTransform(
         std::cout << red
                   << "ERROR [MobileManipulator::getDirectKinematicsTransform]: The "
                      "passed-by-reference matrix doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -1088,7 +1088,7 @@ bool MobileManipulator::getDirectKinematicsTransform(
             std::cout << red
                       << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
                          "computing direct kinematics TB0"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return false;
         }
 
@@ -1112,7 +1112,7 @@ bool MobileManipulator::getDirectKinematicsTransform(
             std::cout << red
                       << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
                          "computing direct kinematics TB1"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return false;
         }
 
@@ -1126,7 +1126,7 @@ bool MobileManipulator::getDirectKinematicsTransform(
             std::cout << red
                       << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
                          "computing direct kinematics TB2"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return false;
         }
 
@@ -1140,7 +1140,7 @@ bool MobileManipulator::getDirectKinematicsTransform(
             std::cout << red
                       << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
                          "computing direct kinematics TB3"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return false;
         }
 
@@ -1154,7 +1154,7 @@ bool MobileManipulator::getDirectKinematicsTransform(
             std::cout << red
                       << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
                          "computing direct kinematics TB4"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return false;
         }
 
@@ -1169,7 +1169,7 @@ bool MobileManipulator::getDirectKinematicsTransform(
             std::cout << red
                       << "ERROR [MobileManipulator::getDirectKinematicsTransform]: Failure while "
                          "computing direct kinematics TB5"
-                      << reset << std::endl;
+                      << nocolor << std::endl;
             return false;
         }
     }
@@ -1189,7 +1189,7 @@ bool MobileManipulator::getObstaclesCost(
         std::cout << red
                   << "ERROR [MobileManipulator::getObstaclesCost]: The passed-by-reference vector "
                      "doesn't match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -1201,7 +1201,7 @@ bool MobileManipulator::getObstaclesCost(
         std::cout << red
                   << "ERROR [MobileManipulator::getObstaclesCost]: The gradient matrixes doesn't "
                      "have the same size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -1213,7 +1213,7 @@ bool MobileManipulator::getObstaclesCost(
     {
         std::cout << magenta
                   << "WARNING [MobileManipulator::getObstaclesCost]: The robot is out of the map"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
 
         if(ix > m - 3) ix = m - 3;
         if(ix < 0 + 2) ix = 0 + 2;
@@ -1245,7 +1245,7 @@ bool MobileManipulator::forwardIntegrateModel(std::vector<double> x,
         std::cout << red
                   << "ERROR [MobileManipulator::forwardIntegrateModel]: The arguments doesn't "
                      "match the expected size"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -1312,7 +1312,7 @@ bool MobileManipulator::forwardIntegrateModel(std::vector<double> x,
         std::cout << red
                   << "ERROR [MobileManipulator::forwardIntegrateModel]: Failure while computing "
                      "jacobian matrix"
-                  << reset << std::endl;
+                  << nocolor << std::endl;
         return false;
     }
 

@@ -49,9 +49,9 @@ void readMatrixFile(std::string matrix_file,
 
 void readMatrixFile(std::string matrix_file, std::vector<std::vector<uint>> & matrix);
 
-void writeVectorFile(std::vector<double> vector, std::string vector_file);
+void writeVectorFile(std::string vector_file, std::vector<double> vector);
 
-void writeVectorFile(std::vector<double> * vector, std::string vector_file);
+void writeVectorFile(std::string vector_file, std::vector<double> * vector);
 
 void writeMatrixFile(std::string matrix_file, std::vector<std::vector<double>> & matrix);
 
@@ -59,6 +59,7 @@ void writeMatrixFile(std::string matrix_file, std::vector<std::vector<int>> & ma
 
 void writeMatrixFile(std::string matrix_file, std::vector<std::vector<int8_t>> & matrix);
 
-void writeVolumeFile(std::string volume_file, std::vector<std::vector<std::vector<double>>> * volume);
-}
+void writeVolumeFile(std::string volume_file,
+                     std::vector<std::vector<std::vector<double>>> * volume);
+}    // namespace FileManager
 #endif

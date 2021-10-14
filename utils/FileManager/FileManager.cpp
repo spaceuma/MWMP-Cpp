@@ -32,7 +32,7 @@
 
 using namespace FileManager;
 
-void readVectorFile(std::string vector_file, std::vector<double> & vector)
+void FileManager::readVectorFile(std::string vector_file, std::vector<double> & vector)
 {
     std::ifstream file(vector_file.c_str(), std::ios::in);
 
@@ -51,14 +51,12 @@ void readVectorFile(std::string vector_file, std::vector<double> & vector)
     }
     else
     {
-        throw std::domain_error(
-            "\033[1;31mERROR [FileManager::readVectorFile]: "
-            "Can't open the file, check the path provided \033[0m\n");
+        throw std::domain_error("\033[1;31mERROR [FileManager::readVectorFile]: "
+                                "Can't open the file, check the path provided \033[0m\n");
     }
 }
 
-
-void readMatrixFile(std::string matrix_file, std::vector<std::vector<double>> & matrix)
+void FileManager::readMatrixFile(std::string matrix_file, std::vector<std::vector<double>> & matrix)
 {
     std::string line;
     std::ifstream file(matrix_file.c_str(), std::ios::in);
@@ -91,15 +89,14 @@ void readMatrixFile(std::string matrix_file, std::vector<std::vector<double>> & 
     }
     else
     {
-        throw std::domain_error(
-            "\033[1;31mERROR [FileManager::readMatrixFile]: "
-            "Can't open the file, check the path provided \033[0m\n");
+        throw std::domain_error("\033[1;31mERROR [FileManager::readMatrixFile]: "
+                                "Can't open the file, check the path provided \033[0m\n");
     }
 }
 
-void readMatrixFile(std::string matrix_file,
-                    std::vector<std::vector<double>> & matrix,
-                    char delimiter)
+void FileManager::readMatrixFile(std::string matrix_file,
+                                 std::vector<std::vector<double>> & matrix,
+                                 char delimiter)
 {
     std::string line;
     std::ifstream file(matrix_file.c_str(), std::ios::in);
@@ -132,13 +129,12 @@ void readMatrixFile(std::string matrix_file,
     }
     else
     {
-        throw std::domain_error(
-            "\033[1;31mERROR [FileManager::readMatrixFile]: "
-            "Can't open the file, check the path provided \033[0m\n");
+        throw std::domain_error("\033[1;31mERROR [FileManager::readMatrixFile]: "
+                                "Can't open the file, check the path provided \033[0m\n");
     }
 }
 
-void readMatrixFile(std::string matrix_file, std::vector<std::vector<uint>> & matrix)
+void FileManager::readMatrixFile(std::string matrix_file, std::vector<std::vector<uint>> & matrix)
 {
     std::string line;
     std::ifstream file(matrix_file.c_str(), std::ios::in);
@@ -171,14 +167,12 @@ void readMatrixFile(std::string matrix_file, std::vector<std::vector<uint>> & ma
     }
     else
     {
-        throw std::domain_error(
-            "\033[1;31mERROR [FileManager::readMatrixFile]: "
-            "Can't open the file, check the path provided \033[0m\n");
+        throw std::domain_error("\033[1;31mERROR [FileManager::readMatrixFile]: "
+                                "Can't open the file, check the path provided \033[0m\n");
     }
 }
 
-
-void writeVectorFile(std::string vector_file, std::vector<double> vector)
+void FileManager::writeVectorFile(std::string vector_file, std::vector<double> vector)
 {
     std::ofstream target_file;
     target_file.open(vector_file);
@@ -189,7 +183,7 @@ void writeVectorFile(std::string vector_file, std::vector<double> vector)
     target_file.close();
 }
 
-void writeVectorFile(std::string vector_file, std::vector<double> * vector)
+void FileManager::writeVectorFile(std::string vector_file, std::vector<double> * vector)
 {
     std::ofstream target_file;
     target_file.open(vector_file);
@@ -200,7 +194,8 @@ void writeVectorFile(std::string vector_file, std::vector<double> * vector)
     target_file.close();
 }
 
-void writeMatrixFile(std::string matrix_file, std::vector<std::vector<double>> & matrix)
+void FileManager::writeMatrixFile(std::string matrix_file,
+                                  std::vector<std::vector<double>> & matrix)
 {
     std::ofstream target_file;
 
@@ -216,7 +211,7 @@ void writeMatrixFile(std::string matrix_file, std::vector<std::vector<double>> &
     target_file.close();
 }
 
-void writeMatrixFile(std::string matrix_file, std::vector<std::vector<int>> & matrix)
+void FileManager::writeMatrixFile(std::string matrix_file, std::vector<std::vector<int>> & matrix)
 {
     std::ofstream target_file;
 
@@ -232,7 +227,8 @@ void writeMatrixFile(std::string matrix_file, std::vector<std::vector<int>> & ma
     target_file.close();
 }
 
-void writeMatrixFile(std::string matrix_file, std::vector<std::vector<int8_t>> & matrix)
+void FileManager::writeMatrixFile(std::string matrix_file,
+                                  std::vector<std::vector<int8_t>> & matrix)
 {
     std::ofstream target_file;
 
@@ -248,13 +244,14 @@ void writeMatrixFile(std::string matrix_file, std::vector<std::vector<int8_t>> &
     target_file.close();
 }
 
-void writeVolumeFile(std::string volume_file, std::vector<std::vector<std::vector<double>>> * volume)
+void FileManager::writeVolumeFile(std::string volume_file,
+                                  std::vector<std::vector<std::vector<double>>> * volume)
 {
     std::ofstream target_file;
     target_file.open(volume_file);
 
-    target_file << (*volume).size() << " " << (*volume)[0].size() << " "
-             << (*volume)[0][0].size() << "\n";
+    target_file << (*volume).size() << " " << (*volume)[0].size() << " " << (*volume)[0][0].size()
+                << "\n";
     for(int j = 0; j < volume->size(); j++)
     {
         for(int i = 0; i < (*volume)[0].size(); i++)

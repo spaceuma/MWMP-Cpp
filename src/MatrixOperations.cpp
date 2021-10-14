@@ -188,7 +188,7 @@ std::vector<std::vector<double>> MatrixOperations::dot(double n,
     std::vector<std::vector<double>> C(m, std::vector<double>(ns, 0));
 
     for(int i = 0; i < m; i++)
-        for(int j = 0; i < ns; j++)
+        for(int j = 0; j < ns; j++)
             C[i][j] = n * A[i][j];
 
     return C;
@@ -209,7 +209,7 @@ bool MatrixOperations::dot(double n,
     }
 
     for(int i = 0; i < m; i++)
-        for(int j = 0; i < ns; j++)
+        for(int j = 0; j < ns; j++)
             C[i][j] = n * A[i][j];
 
     return true;
@@ -428,20 +428,21 @@ double MatrixOperations::getDeterminant(const std::vector<std::vector<double>> &
     if(m == 2) { return A[0][0] * A[1][1] - A[1][0] * A[0][1]; }
     else
     {
-        double d;
-        int c, i, j, subi, subj;
+        double d = 0;
+        int sign = 1;
         std::vector<std::vector<double>> subA(m - 1, std::vector<double>(m - 1, 0));
 
-        for(c = 0; c < m; c++)
+        for(int i = 0; i < m; i++)
         {
-            if(!getCofactor(A, 0, c, subA))
+            if(!getCofactor(A, 0, i, subA))
             {
                 throw std::domain_error(red +
                                         std::string("ERROR [MatrixOperations::getDeterminant]: "
                                                     "Failure while extracting the cofactor") +
                                         nocolor);
             }
-            d = d + (pow(-1, c) * A[0][c] * getDeterminant(subA));
+            d += sign * A[0][i] * getDeterminant(subA);
+            sign = -sign;
         }
         if(abs(d) < 0.0000001) d = 0;
         return d;

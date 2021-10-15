@@ -32,8 +32,6 @@
 #include <iostream>
 #include <math.h>
 
-#define pi 3.14159265359
-
 using namespace MatrixOperations;
 
 std::vector<std::vector<double>> MatrixOperations::dot(const std::vector<std::vector<double>> & A,
@@ -223,6 +221,31 @@ std::vector<std::vector<double>> MatrixOperations::getTraslation(
     return T;
 }
 
+Eigen::Matrix<double, 4, 4> MatrixOperations::getTraslationTransform(
+    const std::vector<double> & position)
+{
+    Eigen::Matrix<double, 4, 4> T;
+
+    T(0, 0) = 1;
+    T(0, 1) = 0;
+    T(0, 2) = 0;
+    T(0, 3) = position[0];
+    T(1, 0) = 0;
+    T(1, 1) = 1;
+    T(1, 2) = 0;
+    T(1, 3) = position[1];
+    T(2, 0) = 0;
+    T(2, 1) = 0;
+    T(2, 2) = 1;
+    T(2, 3) = position[2];
+    T(3, 0) = 0;
+    T(3, 1) = 0;
+    T(3, 2) = 0;
+    T(3, 3) = 1;
+
+    return T;
+}
+
 bool MatrixOperations::getTraslation(const std::vector<double> & position,
                                      std::vector<std::vector<double>> & T)
 {
@@ -253,7 +276,7 @@ bool MatrixOperations::getTraslation(const std::vector<double> & position,
     return true;
 }
 
-std::vector<std::vector<double>> MatrixOperations::getXrot(double angle)
+std::vector<std::vector<double>> MatrixOperations::getXRot(double angle)
 {
     double s = sin(angle);
     double c = cos(angle);
@@ -265,11 +288,41 @@ std::vector<std::vector<double>> MatrixOperations::getXrot(double angle)
     return T;
 }
 
-bool MatrixOperations::getXrot(double angle, std::vector<std::vector<double>> & T)
+Eigen::Matrix<double, 4, 4> MatrixOperations::getXRotTransform(double angle)
+{
+    double s = sin(angle);
+    double c = cos(angle);
+
+    if(abs(s) < 0.000000001) s = 0;
+    if(abs(c) < 0.000000001) c = 0;
+
+    Eigen::Matrix<double, 4, 4> T;
+
+    T(0, 0) = 1;
+    T(0, 1) = 0;
+    T(0, 2) = 0;
+    T(0, 3) = 0;
+    T(1, 0) = 0;
+    T(1, 1) = c;
+    T(1, 2) = -s;
+    T(1, 3) = 0;
+    T(2, 0) = 0;
+    T(2, 1) = s;
+    T(2, 2) = c;
+    T(2, 3) = 0;
+    T(3, 0) = 0;
+    T(3, 1) = 0;
+    T(3, 2) = 0;
+    T(3, 3) = 1;
+
+    return T;
+}
+
+bool MatrixOperations::getXRot(double angle, std::vector<std::vector<double>> & T)
 {
     if(T.size() != 4 || T[0].size() != 4)
     {
-        std::cout << red << "ERROR [MatrixOperations::getXrot]: Wrong output matrix size" << nocolor
+        std::cout << red << "ERROR [MatrixOperations::getXRot]: Wrong output matrix size" << nocolor
                   << std::endl;
         return false;
     }
@@ -300,7 +353,7 @@ bool MatrixOperations::getXrot(double angle, std::vector<std::vector<double>> & 
     return true;
 }
 
-std::vector<std::vector<double>> MatrixOperations::getYrot(double angle)
+std::vector<std::vector<double>> MatrixOperations::getYRot(double angle)
 {
     double s = sin(angle);
     double c = cos(angle);
@@ -312,11 +365,41 @@ std::vector<std::vector<double>> MatrixOperations::getYrot(double angle)
     return T;
 }
 
-bool MatrixOperations::getYrot(double angle, std::vector<std::vector<double>> & T)
+Eigen::Matrix<double, 4, 4> MatrixOperations::getYRotTransform(double angle)
+{
+    double s = sin(angle);
+    double c = cos(angle);
+
+    if(abs(s) < 0.000000001) s = 0;
+    if(abs(c) < 0.000000001) c = 0;
+
+    Eigen::Matrix<double, 4, 4> T;
+
+    T(0, 0) = c;
+    T(0, 1) = 0;
+    T(0, 2) = s;
+    T(0, 3) = 0;
+    T(1, 0) = 0;
+    T(1, 1) = 1;
+    T(1, 2) = 0;
+    T(1, 3) = 0;
+    T(2, 0) = -s;
+    T(2, 1) = 0;
+    T(2, 2) = c;
+    T(2, 3) = 0;
+    T(3, 0) = 0;
+    T(3, 1) = 0;
+    T(3, 2) = 0;
+    T(3, 3) = 1;
+
+    return T;
+}
+
+bool MatrixOperations::getYRot(double angle, std::vector<std::vector<double>> & T)
 {
     if(T.size() != 4 || T[0].size() != 4)
     {
-        std::cout << red << "ERROR [MatrixOperations::getYrot]: Wrong output matrix size" << nocolor
+        std::cout << red << "ERROR [MatrixOperations::getYRot]: Wrong output matrix size" << nocolor
                   << std::endl;
         return false;
     }
@@ -347,7 +430,7 @@ bool MatrixOperations::getYrot(double angle, std::vector<std::vector<double>> & 
     return true;
 }
 
-std::vector<std::vector<double>> MatrixOperations::getZrot(double angle)
+std::vector<std::vector<double>> MatrixOperations::getZRot(double angle)
 {
     double s = sin(angle);
     double c = cos(angle);
@@ -359,11 +442,41 @@ std::vector<std::vector<double>> MatrixOperations::getZrot(double angle)
     return T;
 }
 
-bool MatrixOperations::getZrot(double angle, std::vector<std::vector<double>> & T)
+Eigen::Matrix<double, 4, 4> MatrixOperations::getZRotTransform(double angle)
+{
+    double s = sin(angle);
+    double c = cos(angle);
+
+    if(abs(s) < 0.000000001) s = 0;
+    if(abs(c) < 0.000000001) c = 0;
+
+    Eigen::Matrix<double, 4, 4> T;
+
+    T(0, 0) = c;
+    T(0, 1) = -s;
+    T(0, 2) = 0;
+    T(0, 3) = 0;
+    T(1, 0) = s;
+    T(1, 1) = c;
+    T(1, 2) = 0;
+    T(1, 3) = 0;
+    T(2, 0) = 0;
+    T(2, 1) = 0;
+    T(2, 2) = 1;
+    T(2, 3) = 0;
+    T(3, 0) = 0;
+    T(3, 1) = 0;
+    T(3, 2) = 0;
+    T(3, 3) = 1;
+
+    return T;
+}
+
+bool MatrixOperations::getZRot(double angle, std::vector<std::vector<double>> & T)
 {
     if(T.size() != 4 || T[0].size() != 4)
     {
-        std::cout << red << "ERROR [MatrixOperations::getZrot]: Wrong output matrix size" << nocolor
+        std::cout << red << "ERROR [MatrixOperations::getZRot]: Wrong output matrix size" << nocolor
                   << std::endl;
         return false;
     }
@@ -423,6 +536,7 @@ bool MatrixOperations::getIdentity(std::vector<std::vector<double>> & I)
 
 double MatrixOperations::getDeterminant(const std::vector<std::vector<double>> & A)
 {
+    // WARNING: computationally very expensive
     int m = A.size();
 
     if(m == 2) { return A[0][0] * A[1][1] - A[1][0] * A[0][1]; }
@@ -581,6 +695,7 @@ bool MatrixOperations::getAdjoint(const std::vector<std::vector<double>> & A,
 std::vector<std::vector<double>> MatrixOperations::getInverse(
     const std::vector<std::vector<double>> & A)
 {
+    // WARNING: computationally very expensive
     double det = getDeterminant(A);
     if(det == 0)
     {
@@ -615,6 +730,7 @@ std::vector<std::vector<double>> MatrixOperations::getInverse(
 bool MatrixOperations::getInverse(const std::vector<std::vector<double>> & A,
                                   std::vector<std::vector<double>> & invA)
 {
+    // WARNING: computationally very expensive
     double det = getDeterminant(A);
     if(det == 0)
     {

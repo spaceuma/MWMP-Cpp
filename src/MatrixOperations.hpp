@@ -31,10 +31,9 @@
 #ifndef __MATRIX_OPERATIONS__
 #define __MATRIX_OPERATIONS__
 
+#include <Eigen/Dense>
 #include <exception>
 #include <vector>
-
-#define pi 3.14159265359
 
 #define nocolor "\033[0m"
 #define black "\033[1;30m"
@@ -81,22 +80,30 @@ bool dot(double n,
 //**********************************//
 std::vector<std::vector<double>> getTraslation(const std::vector<double> & position);
 
+Eigen::Matrix<double, 4, 4> getTraslationTransform(const std::vector<double> & position);
+
 bool getTraslation(const std::vector<double> & position, std::vector<std::vector<double>> & T);
 
 //**********************************//
 // Rotation transformation matrixes //
 //**********************************//
-std::vector<std::vector<double>> getXrot(double angle);
+std::vector<std::vector<double>> getXRot(double angle);
 
-bool getXrot(double angle, std::vector<std::vector<double>> & T);
+Eigen::Matrix<double, 4, 4> getXRotTransform(double angle);
 
-std::vector<std::vector<double>> getYrot(double angle);
+bool getXRot(double angle, std::vector<std::vector<double>> & T);
 
-bool getYrot(double angle, std::vector<std::vector<double>> & T);
+std::vector<std::vector<double>> getYRot(double angle);
 
-std::vector<std::vector<double>> getZrot(double angle);
+Eigen::Matrix<double, 4, 4> getYRotTransform(double angle);
 
-bool getZrot(double angle, std::vector<std::vector<double>> & T);
+bool getYRot(double angle, std::vector<std::vector<double>> & T);
+
+std::vector<std::vector<double>> getZRot(double angle);
+
+Eigen::Matrix<double, 4, 4> getZRotTransform(double angle);
+
+bool getZRot(double angle, std::vector<std::vector<double>> & T);
 
 //*********************//
 // Get identity matrix //

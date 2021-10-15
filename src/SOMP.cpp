@@ -34,13 +34,13 @@ using namespace SOMP;
 using namespace StateSpaceModels;
 using namespace MatrixOperations;
 
-bool MotionPlanner::updateHorizon(std::vector<std::vector<double>> & x,
-                                  const std::vector<std::vector<double>> & u,
-                                  std::vector<std::vector<std::vector<double>>> & Ah,
-                                  std::vector<std::vector<std::vector<double>>> & Bh,
-                                  std::vector<std::vector<std::vector<double>>> & Qh,
-                                  std::vector<std::vector<std::vector<double>>> & Rh,
-                                  std::vector<std::vector<std::vector<double>>> & Kh)
+bool MotionPlanner::updateHorizon(std::vector<Eigen::VectorXd> & x,
+                                  const std::vector<Eigen::VectorXd> & u,
+                                  std::vector<Eigen::MatrixXd> & Ah,
+                                  std::vector<Eigen::MatrixXd> & Bh,
+                                  std::vector<Eigen::MatrixXd> & Qh,
+                                  std::vector<Eigen::MatrixXd> & Rh,
+                                  std::vector<Eigen::MatrixXd> & Kh)
 {
     if(!robot_ss_model->getLinearizedMatrixA(x[0], time_step, Ah[0]) ||
        !robot_ss_model->getLinearizedMatrixB(x[0], u[0], time_step, Bh[0]))
@@ -89,11 +89,11 @@ bool MotionPlanner::updateHorizon(std::vector<std::vector<double>> & x,
     return true;
 }
 
-bool MotionPlanner::updateHorizonConstraints(std::vector<std::vector<std::vector<double>>> & Ch,
-                                             std::vector<std::vector<std::vector<double>>> & Dh,
-                                             std::vector<std::vector<double>> & rh,
-                                             std::vector<std::vector<std::vector<double>>> & Gh,
-                                             std::vector<std::vector<double>> & hh)
+bool MotionPlanner::updateHorizonConstraints(std::vector<Eigen::MatrixXd> & Ch,
+                                             std::vector<Eigen::MatrixXd> & Dh,
+                                             std::vector<Eigen::VectorXd> & rh,
+                                             std::vector<Eigen::MatrixXd> & Gh,
+                                             std::vector<Eigen::VectorXd> & hh)
 {
     for(uint i = 0; i < number_time_steps; i++)
     {
@@ -308,30 +308,32 @@ bool MotionPlanner::dilateObstaclesMap(const std::vector<std::vector<uint>> & ob
     return true;
 }
 
-bool MotionPlanner::computeLineSearch(std::vector<std::vector<double>> & x,
-                                      const std::vector<std::vector<double>> & x0,
-                                      std::vector<std::vector<double>> & u,
-                                      const std::vector<std::vector<double>> & u0,
-                                      const std::vector<std::vector<double>> & uh,
-                                      const std::vector<std::vector<std::vector<double>>> & Qh,
-                                      const std::vector<std::vector<std::vector<double>>> & Rh)
+bool MotionPlanner::computeLineSearch(std::vector<Eigen::VectorXd> & x,
+                                      const std::vector<Eigen::VectorXd> & x0,
+                                      std::vector<Eigen::VectorXd> & u,
+                                      const std::vector<Eigen::VectorXd> & u0,
+                                      const std::vector<Eigen::VectorXd> & uh,
+                                      const std::vector<Eigen::MatrixXd> & Qh,
+                                      const std::vector<Eigen::MatrixXd> & Rh)
 {
     double min_cost = inf;
-    std::vector<std::vector<double>> current_cost(1, std::vector<double>(1, 0));
+    Eigen::VectorXd current_cost(1);
+    current_cost << 0;
 
-    std::vector<std::vector<double>> x_temp = x;
-    std::vector<std::vector<double>> uk = u;
-    std::vector<std::vector<double>> u_temp = u;
+    std::vector<Eigen::VectorXd> x_temp = x;
+    std::vector<Eigen::VectorXd> uk = u;
+    std::vector<Eigen::VectorXd> u_temp = u;
 
-    std::vector<std::vector<double>> diff_states(1, std::vector<double>(number_states, 0));
-    std::vector<std::vector<double>> diff_controls(1, std::vector<double>(number_inputs, 0));
+    Eigen::VectorXd diff_states(number_states);
+    Eigen::VectorXd diff_controls(number_inputs);
 
     for(double alfa = 1; alfa > 0; alfa -= line_search_step)
     {
-        getSum(uk, dot(alfa, uh), u_temp);
+        //        getSum(uk, dot(alfa, uh), u_temp);
 
         for(uint i = 0; i < number_time_steps - 1; i++)
         {
+            u_temp[i] = uk[i] + alfa * uh[i];
             if(!robot_ss_model->forwardIntegrateModel(
                    x_temp[i], u_temp[i], time_step, x_temp[i + 1]))
             {
@@ -342,30 +344,21 @@ bool MotionPlanner::computeLineSearch(std::vector<std::vector<double>> & x,
                 return false;
             }
 
-            getDifference(x_temp[i], x0[i], diff_states[0]);
-            getDifference(u_temp[i], u0[i], diff_controls[0]);
+            diff_states = x_temp[i] - x0[i];
+            diff_controls = u_temp[i] - u0[i];
 
-            // TODO if performance is not good, divide the operations to pass-by-reference functions
-            current_cost =
-                getSum(current_cost,
-                       getSum(dot(getTranspose(diff_states), dot(Qh[i], diff_states)),
-                              dot(getTranspose(diff_controls), dot(Rh[i], diff_controls))));
+            current_cost += (diff_states.transpose() * Qh[i] * diff_states +
+                             diff_controls.transpose() * Rh[i] * diff_controls) /
+                            2;
         }
 
-        getDifference(x_temp[number_time_steps - 1], x0[number_time_steps - 1], diff_states[0]);
-        getDifference(u_temp[number_time_steps - 1], u0[number_time_steps - 1], diff_controls[0]);
+        diff_states = x_temp[number_time_steps - 1] - x0[number_time_steps - 1];
 
-        current_cost = getSum(
-            current_cost,
-            getSum(
-                dot(getTranspose(diff_states), dot(Qh[number_time_steps - 1], diff_states)),
-                dot(getTranspose(diff_controls), dot(Rh[number_time_steps - 1], diff_controls))));
+        current_cost += (diff_states.transpose() * Qh[number_time_steps - 1] * diff_states) / 2;
 
-        current_cost[0][0] /= 2;
-
-        if(current_cost[0][0] < min_cost)
+        if(current_cost(0) < min_cost)
         {
-            min_cost = current_cost[0][0];
+            min_cost = current_cost(0);
             x = x_temp;
             u = u_temp;
         }
@@ -520,45 +513,40 @@ bool MotionPlanner::setTimeStep(double new_time_step)
     return true;
 }
 
-int MotionPlanner::generateUnconstrainedMotionPlan(std::vector<double> x_ini,
-                                                   std::vector<std::vector<double>> x0,
-                                                   std::vector<double> u_ini,
-                                                   std::vector<std::vector<double>> u0,
+int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini,
+                                                   const std::vector<Eigen::VectorXd> & x0,
+                                                   const Eigen::VectorXd & u_ini,
+                                                   const std::vector<Eigen::VectorXd> & u0,
                                                    uint max_iter)
 {
     // State and input along the whole time horizon
-    std::vector<std::vector<double>> x(number_time_steps, std::vector<double>(number_states, 0));
-    std::vector<std::vector<double>> u(number_time_steps, std::vector<double>(number_inputs, 0));
+    std::vector<Eigen::VectorXd> x(number_time_steps, Eigen::VectorXd::Zero(number_states));
+    std::vector<Eigen::VectorXd> u(number_time_steps, Eigen::VectorXd::Zero(number_inputs));
 
     // The initial states and inputs are the ones provided
     x[0] = x_ini;
     u[0] = u_ini;
 
     // Initializing the dynamics matrixes and cost matrixes along the whole time horizon
-    std::vector<std::vector<std::vector<double>>> Ah(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_states, std::vector<double>(number_states, 0)));
-    std::vector<std::vector<std::vector<double>>> Bh(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_states, std::vector<double>(number_inputs, 0)));
+    std::vector<Eigen::MatrixXd> Ah(number_time_steps,
+                                    Eigen::MatrixXd::Zero(number_states, number_states));
+    std::vector<Eigen::MatrixXd> Bh(number_time_steps,
+                                    Eigen::MatrixXd::Zero(number_states, number_inputs));
 
-    std::vector<std::vector<std::vector<double>>> Qh(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_states, std::vector<double>(number_states, 0)));
-    std::vector<std::vector<std::vector<double>>> Rh(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_inputs, std::vector<double>(number_inputs, 0)));
-    std::vector<std::vector<std::vector<double>>> Kh(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_states, std::vector<double>(number_inputs, 0)));
+    std::vector<Eigen::MatrixXd> Qh(number_time_steps,
+                                    Eigen::MatrixXd::Zero(number_states, number_states));
+    std::vector<Eigen::MatrixXd> Rh(number_time_steps,
+                                    Eigen::MatrixXd::Zero(number_inputs, number_inputs));
+    std::vector<Eigen::MatrixXd> Kh(number_time_steps,
+                                    Eigen::MatrixXd::Zero(number_states, number_inputs));
 
     // Initializing variables to control the status of the algorithm
     uint number_iterations = 0;
     int convergence_status = 0;
 
     // Initializing reference trajectories
-    std::vector<std::vector<double>> xh0(number_time_steps, std::vector<double>(number_states, 0));
-    std::vector<std::vector<double>> uh0(number_time_steps, std::vector<double>(number_inputs, 0));
+    std::vector<Eigen::VectorXd> xh0(number_time_steps, Eigen::VectorXd::Zero(number_states));
+    std::vector<Eigen::VectorXd> uh0(number_time_steps, Eigen::VectorXd::Zero(number_inputs));
 
     // Starting main loop
     while(true)
@@ -574,12 +562,18 @@ int MotionPlanner::generateUnconstrainedMotionPlan(std::vector<double> x_ini,
         }
 
         // Generate reference trajectories
-        xh0 = getDifference(x0, x);
-        uh0 = getDifference(u0, u);
+        //        xh0 = getDifference(x0, x);
+        //        uh0 = getDifference(u0, u);
+        for(uint i = 0; i < number_time_steps; i++)
+        {
+            xh0[i] = x0[i] - x[i];
+            uh0[i] = u0[i] - u[i];
+        }
 
         // If checking safety, generate obstacles repulsive cost
-        std::vector<std::vector<double>> obstacles_repulsive_cost(
-            number_time_steps, std::vector<double>(number_states, 0));
+        std::vector<Eigen::VectorXd> obstacles_repulsive_cost(number_time_steps,
+                                                              Eigen::VectorXd::Zero(number_states));
+
         if(check_safety)
         {
             for(uint i = 0; i < number_time_steps; i++)
@@ -593,62 +587,46 @@ int MotionPlanner::generateUnconstrainedMotionPlan(std::vector<double> x_ini,
         }
 
         // LQR problem solution
-        std::vector<std::vector<std::vector<double>>> M(
-            number_time_steps,
-            std::vector<std::vector<double>>(number_states, std::vector<double>(number_states, 0)));
-        std::vector<std::vector<std::vector<double>>> P(
-            number_time_steps,
-            std::vector<std::vector<double>>(number_states, std::vector<double>(number_states, 0)));
-        std::vector<std::vector<double>> s(number_time_steps,
-                                           std::vector<double>(number_states, 0));
+        std::vector<Eigen::MatrixXd> M(number_time_steps,
+                                       Eigen::MatrixXd::Zero(number_states, number_states));
+        std::vector<Eigen::MatrixXd> P(number_time_steps,
+                                       Eigen::MatrixXd::Zero(number_states, number_states));
+        std::vector<Eigen::VectorXd> s(number_time_steps, Eigen::VectorXd::Zero(number_states));
 
-        // TODO if performance is not good, divide the operations to pass-by-reference functions
         P[number_time_steps - 1] = Qh[number_time_steps - 1];
-        s[number_time_steps - 1] =
-            getDifference(obstacles_repulsive_cost[number_time_steps - 1],
-                          dot(Qh[number_time_steps - 1], xh0[number_time_steps - 1]));
+        s[number_time_steps - 1] = obstacles_repulsive_cost[number_time_steps - 1] -
+                                   Qh[number_time_steps - 1] * xh0[number_time_steps - 1];
 
-        std::vector<std::vector<double>> xh(number_time_steps,
-                                            std::vector<double>(number_states, 0));
-        std::vector<std::vector<double>> uh(number_time_steps,
-                                            std::vector<double>(number_inputs, 0));
-        std::vector<std::vector<double>> v(number_time_steps,
-                                           std::vector<double>(number_states, 0));
-        std::vector<std::vector<double>> lambdah(number_time_steps,
-                                                 std::vector<double>(number_states, 0));
-
+        std::vector<Eigen::VectorXd> xh(number_time_steps, Eigen::VectorXd::Zero(number_states));
+        std::vector<Eigen::VectorXd> uh(number_time_steps, Eigen::VectorXd::Zero(number_inputs));
+        std::vector<Eigen::VectorXd> v(number_time_steps, Eigen::VectorXd::Zero(number_states));
+        std::vector<Eigen::VectorXd> lambdah(number_time_steps,
+                                             Eigen::VectorXd::Zero(number_states));
         // Solve backwards
-        // TODO if performance is not good, divide the operations to pass-by-reference functions
+        Eigen::MatrixXd I_states = Eigen::MatrixXd::Identity(number_states, number_states);
         for(uint i = number_time_steps - 2; i >= 0; i--)
         {
-            M[i] = getSum(getIdentity(number_states),
-                          dot(Bh[i], dot(getInverse(Rh[i]), dot(getTranspose(Bh[i]), P[i]))));
-            P[i] = getSum(Qh[i], dot(getTranspose(Ah[i]), dot(P[i], dot(M[i], Ah[i]))));
-            s[i] = getDifference(
-                getSum(
-                    dot(getTranspose(Ah[i]),
-                        dot(getDifference(
-                                getIdentity(number_states),
-                                dot(P[i + 1],
-                                    dot(M[i],
-                                        dot(Bh[i], dot(getInverse(Rh[i]), getTranspose(Bh[i])))))),
-                            s[i + 1])),
-                    dot(getTranspose(Ah[i]), dot(P[i + 1], dot(M[i], dot(Bh[i], uh0[i]))))),
-                getSum(dot(Qh[i], xh0[i]), obstacles_repulsive_cost[i]));
+            Eigen::MatrixXd Rh_inv = Rh[i].inverse();
+            Eigen::MatrixXd Ah_trans = Ah[i].transpose();
+            Eigen::MatrixXd Bh_trans = Bh[i].transpose();
+
+            M[i] = I_states + Bh[i] * Rh_inv * Bh_trans * P[i];
+            P[i] = Qh[i] + Ah_trans * P[i] * M[i] * Ah[i];
+            s[i] = Ah_trans * (I_states - P[i + 1] * M[i] * Bh[i] * Rh_inv * Bh_trans) * s[i + 1] +
+                   Ah_trans * P[i + 1] * M[i] * Bh[i] * uh0[i] - Qh[i] * xh0[i] +
+                   obstacles_repulsive_cost[i];
         }
 
         // Solve forwards
         for(uint i = 0; i < number_time_steps - 1; i++)
         {
-            v[i] =
-                dot(M[i],
-                    dot(Bh[i],
-                        getDifference(uh0[i],
-                                      dot(getInverse(Rh[i]), dot(getTranspose(Bh[i]), s[i + 1])))));
-            xh[i + 1] = getSum(dot(M[i], dot(Ah[i], xh[i])), v[i]);
-            lambdah[i + 1] = getSum(dot(P[i + 1], xh[i + 1]), s[i + 1]);
-            uh[i] = getDifference(uh0[i],
-                                  dot(getInverse(Rh[i]), dot(getTranspose(Bh[i]), lambdah[i + 1])));
+            Eigen::MatrixXd Rh_inv = Rh[i].inverse();
+            Eigen::MatrixXd Bh_trans = Bh[i].transpose();
+
+            v[i] = M[i] * Bh[i] * (uh0[i] - Rh_inv * Bh_trans * s[i + 1]);
+            xh[i + 1] = M[i] * Ah[i] * xh[i] + v[i];
+            lambdah[i + 1] = P[i + 1] * xh[i + 1] + s[i + 1];
+            uh[i] = uh0[i] - Rh_inv * Bh_trans * lambdah[i + 1];
         }
 
         // Checking termination conditions
@@ -662,7 +640,8 @@ int MotionPlanner::generateUnconstrainedMotionPlan(std::vector<double> x_ini,
 
         // Check if the control is not changing
         for(uint i = 0; i < number_time_steps; i++)
-            convergence_condition &= (getNorm(uh[i]) <= control_threshold * getNorm(u[i]));
+            convergence_condition &=
+                (uh[i].squaredNorm() <= control_threshold * u[i].squaredNorm());
         if(!convergence_condition) convergence_status = -2;
 
         // Check if the distance objective has been reached
@@ -670,15 +649,16 @@ int MotionPlanner::generateUnconstrainedMotionPlan(std::vector<double> x_ini,
         {
             if(check_distance && convergence_condition)
             {
-                std::vector<double> termination_state(distance_indexes.size(), 0);
-                std::vector<double> termination_goal(distance_indexes.size(), 0);
+                Eigen::VectorXd termination_state(distance_indexes.size());
+                Eigen::VectorXd termination_goal(distance_indexes.size());
+
                 for(uint i = 0; i < distance_indexes.size(); i++)
                 {
-                    termination_state[i] = x[number_time_steps - 1][distance_indexes[i]];
-                    termination_goal[i] = x0[number_time_steps - 1][distance_indexes[i]];
+                    termination_state(i) = x[number_time_steps - 1](distance_indexes[i]);
+                    termination_goal(i) = x0[number_time_steps - 1](distance_indexes[i]);
                 }
 
-                distance_to_goal = getNorm(getDifference(termination_state, termination_goal));
+                distance_to_goal = (termination_state - termination_goal).squaredNorm();
 
                 if(distance_to_goal < distance_threshold)
                 {
@@ -686,7 +666,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(std::vector<double> x_ini,
 
                     for(uint i = 0; i < number_time_steps; i++)
                         convergence_condition &=
-                            (getNorm(uh[i]) <= 20 * control_threshold * getNorm(u[i]));
+                            (uh[i].squaredNorm() <= 20 * control_threshold * u[i].squaredNorm());
                 }
 
                 if(!convergence_condition) convergence_status = -1;
@@ -695,15 +675,15 @@ int MotionPlanner::generateUnconstrainedMotionPlan(std::vector<double> x_ini,
             // Check if the orientation objective has been reached
             if(check_orientation && convergence_condition)
             {
-                std::vector<double> termination_state(orientation_indexes.size(), 0);
-                std::vector<double> termination_goal(orientation_indexes.size(), 0);
+                Eigen::VectorXd termination_state(orientation_indexes.size());
+                Eigen::VectorXd termination_goal(orientation_indexes.size());
                 for(uint i = 0; i < orientation_indexes.size(); i++)
                 {
-                    termination_state[i] = x[number_time_steps - 1][orientation_indexes[i]];
-                    termination_goal[i] = x0[number_time_steps - 1][orientation_indexes[i]];
+                    termination_state(i) = x[number_time_steps - 1](orientation_indexes[i]);
+                    termination_goal(i) = x0[number_time_steps - 1](orientation_indexes[i]);
                 }
 
-                orientation_to_goal = getNorm(getDifference(termination_state, termination_goal));
+                orientation_to_goal = (termination_state, termination_goal).squaredNorm();
 
                 convergence_condition &= (orientation_to_goal < orientation_threshold);
 
@@ -789,74 +769,24 @@ int MotionPlanner::generateUnconstrainedMotionPlan(std::vector<double> x_ini,
     return 1;
 }
 
-int MotionPlanner::generateConstrainedMotionPlan(std::vector<double> x,
-                                                 std::vector<std::vector<double>> x0,
-                                                 std::vector<double> u,
-                                                 std::vector<std::vector<double>> u0,
+int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
+                                                 const std::vector<Eigen::VectorXd> & x0,
+                                                 const Eigen::VectorXd & u_ini,
+                                                 const std::vector<Eigen::VectorXd> & u0,
                                                  uint max_iter)
 {
-    std::vector<std::vector<double>> xh(number_time_steps, std::vector<double>(number_states, 0));
-    std::vector<std::vector<double>> uh(number_time_steps, std::vector<double>(number_inputs, 0));
-
-    xh[0] = x;
-    uh[0] = u;
-
-    std::vector<std::vector<std::vector<double>>> Ah(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_states, std::vector<double>(number_states, 0)));
-    std::vector<std::vector<std::vector<double>>> Bh(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_states, std::vector<double>(number_inputs, 0)));
-
-    std::vector<std::vector<std::vector<double>>> Qh(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_states, std::vector<double>(number_states, 0)));
-    std::vector<std::vector<std::vector<double>>> Rh(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_inputs, std::vector<double>(number_inputs, 0)));
-    std::vector<std::vector<std::vector<double>>> Kh(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_states, std::vector<double>(number_inputs, 0)));
-
-    std::vector<std::vector<std::vector<double>>> Ch(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_si_constraints,
-                                         std::vector<double>(number_states, 0)));
-    std::vector<std::vector<std::vector<double>>> Dh(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_si_constraints,
-                                         std::vector<double>(number_inputs, 0)));
-    std::vector<std::vector<double>> rh(number_time_steps,
-                                        std::vector<double>(number_si_constraints, 0));
-
-    std::vector<std::vector<std::vector<double>>> Gh(
-        number_time_steps,
-        std::vector<std::vector<double>>(number_ps_constraints,
-                                         std::vector<double>(number_states, 0)));
-    std::vector<std::vector<double>> hh(number_time_steps,
-                                        std::vector<double>(number_ps_constraints, 0));
-
-    if(!updateHorizonConstraints(Ch, Dh, rh, Gh, hh))
-    {
-        std::cout << red
-                  << "ERROR [MotionPlanner::generateConstrainedMotionPlan]: Unable to initialize "
-                     "the constraints"
-                  << nocolor << std::endl;
-        return 0;
-    }
-
     return 1;
 }
 
-int MotionPlanner::generateSteppedMotionPlan(std::vector<double> x,
-                                             std::vector<std::vector<double>> x0,
-                                             std::vector<double> u,
-                                             std::vector<std::vector<double>> u0)
+int MotionPlanner::generateSteppedMotionPlan(const Eigen::VectorXd & x_ini,
+                                             const std::vector<Eigen::VectorXd> & x0,
+                                             const Eigen::VectorXd & u_ini,
+                                             const std::vector<Eigen::VectorXd> & u0)
 {
     return 1;
 }
 
-bool MotionPlanner::getPlannedState(std::vector<std::vector<double>> & x)
+bool MotionPlanner::getPlannedState(std::vector<Eigen::VectorXd> & x)
 {
     if(!is_motion_planned)
     {
@@ -871,7 +801,7 @@ bool MotionPlanner::getPlannedState(std::vector<std::vector<double>> & x)
     return true;
 }
 
-bool MotionPlanner::getPlannedControl(std::vector<std::vector<double>> & u)
+bool MotionPlanner::getPlannedControl(std::vector<Eigen::VectorXd> & u)
 {
     if(!is_motion_planned)
     {

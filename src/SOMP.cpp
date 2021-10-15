@@ -241,9 +241,8 @@ bool MotionPlanner::computeObstaclesGradient(const std::vector<std::vector<uint>
     }
 
     // Filtering the gradient
-    // TODO check if this initialization is correct
-    cv::Mat f10 = (cv::Mat_<float>(10, 10) << 0.01);
-    cv::Mat f3 = (cv::Mat_<float>(3, 3) << 0.1111);
+    cv::Mat f10(cv::Size(10, 10), CV_32FC1, cv::Scalar(0.01));
+    cv::Mat f3(cv::Size(3, 3), CV_32FC1, cv::Scalar(0.1111));
 
     cv::Mat cv_aux_x_gradient = cv::Mat::zeros(m, n, CV_64FC1);
     cv::Mat cv_aux_y_gradient = cv::Mat::zeros(m, n, CV_64FC1);

@@ -408,14 +408,14 @@ public:
     // robot pose and the characteristics of the map of the scenario
     // (resolution and gradient of the obstacles map in X and Y directions)
     // Size of obstacles_cost: number_states
-    bool getObstaclesCost(const std::vector<double> & robot_pose,
+    bool getObstaclesCost(const std::vector<double> & x,
                           double map_resolution,
                           const std::vector<std::vector<double>> & gradient_obstacles_map_X,
                           const std::vector<std::vector<double>> & gradient_obstacles_map_Y,
                           std::vector<double> & obstacles_cost);
 
     // Eigen overload
-    bool getObstaclesCost(const std::vector<double> & robot_pose,
+    bool getObstaclesCost(const Eigen::VectorXd & x,
                           double map_resolution,
                           const std::vector<std::vector<double>> & gradient_obstacles_map_X,
                           const std::vector<std::vector<double>> & gradient_obstacles_map_Y,

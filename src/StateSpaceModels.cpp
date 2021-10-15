@@ -1617,7 +1617,7 @@ bool MobileManipulator::getObstaclesCost(
 }
 
 bool MobileManipulator::getObstaclesCost(
-    const std::vector<double> & x,
+    const Eigen::VectorXd & x,
     double map_resolution,
     const std::vector<std::vector<double>> & gradient_obstacles_map_X,
     const std::vector<std::vector<double>> & gradient_obstacles_map_Y,
@@ -1644,7 +1644,7 @@ bool MobileManipulator::getObstaclesCost(
         return false;
     }
 
-    std::vector<double> robot_pose = {x[robot_pose_indexes[0]], x[robot_pose_indexes[1]]};
+    std::vector<double> robot_pose = {x(robot_pose_indexes[0]), x(robot_pose_indexes[1])};
     uint ix = (uint)robot_pose[0] / map_resolution;
     uint iy = (uint)robot_pose[1] / map_resolution;
 

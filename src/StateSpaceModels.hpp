@@ -292,12 +292,21 @@ public:
                               double time_step,
                               std::vector<std::vector<double>> & A);
 
+    // Eigen overload
+    bool getLinearizedMatrixA(const Eigen::VectorXd & x, double time_step, Eigen::MatrixXd & A);
+
     // Returns the linearized state space model matrix B.
     // Size of B: number_states x number_inputs
     bool getLinearizedMatrixB(const std::vector<double> & x,
                               const std::vector<double> & u,
                               double time_step,
                               std::vector<std::vector<double>> & B);
+
+    // Eigen overload
+    bool getLinearizedMatrixB(const Eigen::VectorXd & x,
+                              const Eigen::VectorXd & u,
+                              double time_step,
+                              Eigen::MatrixXd & B);
 
     // Returns the number of state input constraints.
     uint getNumberStateInputConstraints();
@@ -306,13 +315,22 @@ public:
     // Size of C: number_si_constraints x number_states
     bool getConstraintsMatrixC(std::vector<std::vector<double>> & C);
 
+    // Eigen overload
+    bool getConstraintsMatrixC(Eigen::MatrixXd & C);
+
     // Returns the state input constraint matrix D.
     // Size of D: number_si_constraints x number_inputs
     bool getConstraintsMatrixD(std::vector<std::vector<double>> & D);
 
+    // Eigen overload
+    bool getConstraintsMatrixD(Eigen::MatrixXd & D);
+
     // Returns the state input constraint matrix r.
     // Size of r: number_si_constraints
-    bool getConstraintsMatrixR(std::vector<double> & R);
+    bool getConstraintsMatrixR(std::vector<double> & r);
+
+    // Eigen overload
+    bool getConstraintsMatrixR(Eigen::VectorXd & r);
 
     // Returns the number of pure state constraints.
     uint getNumberPureStateConstraints();
@@ -321,22 +339,37 @@ public:
     // Size of G: number_ps_constraints x number_states
     bool getConstraintsMatrixG(std::vector<std::vector<double>> & G);
 
+    // Eigen overload
+    bool getConstraintsMatrixG(Eigen::MatrixXd & G);
+
     // Returns the pure state constraint matrix h.
     // Size of h: number_ps_constraints
     bool getConstraintsMatrixH(std::vector<double> & h);
+
+    // Eigen overload
+    bool getConstraintsMatrixH(Eigen::VectorXd & h);
 
     // Returns the pure state cost matrix Q, in function of the time step provided
     // e.g. If percentage_horizon is 100, the goal state cost matrix will be returned
     // Size of Q: number_states x number_states
     bool getStateCostMatrix(double percentage_horizon, std::vector<std::vector<double>> & Q);
 
+    // Eigen overload
+    bool getStateCostMatrix(double percentage_horizon, Eigen::MatrixXd & Q);
+
     // Returns the pure input cost matrix R.
     // Size of R: number_inputs x number_inputs
     bool getInputCostMatrix(std::vector<std::vector<double>> & R);
 
+    // Eigen overload
+    bool getInputCostMatrix(Eigen::MatrixXd & R);
+
     // Returns the state input cost matrix K.
     // Size of K: number_states x number_inputs
     bool getStateInputCostMatrix(std::vector<std::vector<double>> & K);
+
+    // Eigen overload
+    bool getStateInputCostMatrix(Eigen::MatrixXd & K);
 
     // Returns the gravity matrix given the arm state.
     // Size of G: number_arm_joints
@@ -365,7 +398,7 @@ public:
                                       uint joint_index,
                                       std::vector<std::vector<double>> & T);
 
-    // Returns the base-to-all-joints transform matrixex given the arm state,
+    // Returns the base-to-all-joints transform matrixes given the arm state,
     // using direct kinematics
     // Size of T: number_arm_joints x 4 x 4
     bool getDirectKinematicsTransform(const std::vector<double> & arm_positions,
@@ -381,6 +414,13 @@ public:
                           const std::vector<std::vector<double>> & gradient_obstacles_map_Y,
                           std::vector<double> & obstacles_cost);
 
+    // Eigen overload
+    bool getObstaclesCost(const std::vector<double> & robot_pose,
+                          double map_resolution,
+                          const std::vector<std::vector<double>> & gradient_obstacles_map_X,
+                          const std::vector<std::vector<double>> & gradient_obstacles_map_Y,
+                          Eigen::VectorXd & obstacles_cost);
+
     // Returns the wheel inertia
     double getWheelInertia();
 
@@ -390,6 +430,12 @@ public:
                                std::vector<double> u,
                                double time_step,
                                std::vector<double> & xf);
+
+    // Eigen overload
+    bool forwardIntegrateModel(const Eigen::VectorXd & x,
+                               const Eigen::VectorXd & u,
+                               double time_step,
+                               Eigen::VectorXd & xf);
 };
 }    // namespace StateSpaceModels
 

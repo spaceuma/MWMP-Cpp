@@ -31,6 +31,7 @@
 #ifndef __MM_FILE_MANAGER__
 #define __MM_FILE_MANAGER__
 
+#include <Eigen/Dense>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -41,11 +42,17 @@ namespace FileManager
 {
 void readVectorFile(std::string vector_file, std::vector<double> & vector);
 
+void readVectorFile(std::string vector_file, Eigen::VectorXd & vector);
+
 void readMatrixFile(std::string matrix_file, std::vector<std::vector<double>> & matrix);
 
 void readMatrixFile(std::string matrix_file,
                     std::vector<std::vector<double>> & matrix,
                     char delimiter);
+
+void readMatrixFile(std::string matrix_file, Eigen::MatrixXd & matrix);
+
+void readMatrixFile(std::string matrix_file, Eigen::MatrixXd & matrix, char delimiter);
 
 void readMatrixFile(std::string matrix_file, std::vector<std::vector<uint>> & matrix);
 
@@ -53,7 +60,11 @@ void writeVectorFile(std::string vector_file, std::vector<double> vector);
 
 void writeVectorFile(std::string vector_file, std::vector<double> * vector);
 
+void writeVectorFile(std::string vector_file, const Eigen::VectorXd & vector);
+
 void writeMatrixFile(std::string matrix_file, std::vector<std::vector<double>> & matrix);
+
+void writeMatrixFile(std::string matrix_file, const Eigen::MatrixXd & matrix);
 
 void writeMatrixFile(std::string matrix_file, std::vector<std::vector<int>> & matrix);
 
@@ -61,5 +72,7 @@ void writeMatrixFile(std::string matrix_file, std::vector<std::vector<int8_t>> &
 
 void writeVolumeFile(std::string volume_file,
                      std::vector<std::vector<std::vector<double>>> * volume);
+
+void writeVolumeFile(std::string volume_file, const std::vector<Eigen::MatrixXd> & volume);
 }    // namespace FileManager
 #endif

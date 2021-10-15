@@ -56,6 +56,36 @@ void FileManager::readVectorFile(std::string vector_file, std::vector<double> & 
     }
 }
 
+void FileManager::readVectorFile(std::string vector_file, Eigen::VectorXd & vector)
+{
+    std::ifstream file(vector_file.c_str(), std::ios::in);
+
+    std::vector<double> aux_vector;
+    aux_vector.clear();
+    if(file.is_open())
+    {
+        std::string cell;
+        while(std::getline(file, cell, ' '))
+        {
+            double val;
+            std::stringstream numeric_value(cell);
+            numeric_value >> val;
+            aux_vector.push_back(val);
+        }
+        file.close();
+
+        uint size = aux_vector.size();
+        vector.resize(size);
+        for(uint i = 0; i < size; i++)
+            vector(i) = aux_vector[i];
+    }
+    else
+    {
+        throw std::domain_error("\033[1;31mERROR [FileManager::readVectorFile]: "
+                                "Can't open the file, check the path provided \033[0m\n");
+    }
+}
+
 void FileManager::readMatrixFile(std::string matrix_file, std::vector<std::vector<double>> & matrix)
 {
     std::string line;
@@ -134,6 +164,92 @@ void FileManager::readMatrixFile(std::string matrix_file,
     }
 }
 
+void FileManager::readMatrixFile(std::string matrix_file, Eigen::MatrixXd & matrix)
+{
+    std::string line;
+    std::ifstream file(matrix_file.c_str(), std::ios::in);
+
+    uint n_row = 0;
+    uint n_col = 0;
+    std::vector<std::vector<double>> aux_matrix;
+    aux_matrix.clear();
+    std::vector<double> row;
+    if(file.is_open())
+    {
+        while(std::getline(file, line))
+        {
+            std::stringstream ss(line);
+            std::string cell;
+            while(std::getline(ss, cell, ' '))
+            {
+                double val;
+                std::stringstream numeric_value(cell);
+                numeric_value >> val;
+                row.push_back(val);
+                n_col++;
+            }
+            aux_matrix.push_back(row);
+            row.clear();
+            n_row++;
+        }
+        file.close();
+
+        n_col /= n_row;
+        matrix.resize(n_row, n_col);
+        for(uint i = 0; i < n_row; i++)
+            for(uint j = 0; j < n_col; j++)
+                matrix(i, j) = aux_matrix[i][j];
+    }
+    else
+    {
+        throw std::domain_error("\033[1;31mERROR [FileManager::readMatrixFile]: "
+                                "Can't open the file, check the path provided \033[0m\n");
+    }
+}
+
+void FileManager::readMatrixFile(std::string matrix_file, Eigen::MatrixXd & matrix, char delimiter)
+{
+    std::string line;
+    std::ifstream file(matrix_file.c_str(), std::ios::in);
+
+    uint n_row = 0;
+    uint n_col = 0;
+    std::vector<std::vector<double>> aux_matrix;
+    aux_matrix.clear();
+    std::vector<double> row;
+    if(file.is_open())
+    {
+        while(std::getline(file, line))
+        {
+            std::stringstream ss(line);
+            std::string cell;
+            while(std::getline(ss, cell, delimiter))
+            {
+                double val;
+                std::stringstream numeric_value(cell);
+                numeric_value >> val;
+                row.push_back(val);
+                n_col++;
+            }
+            aux_matrix.push_back(row);
+            row.clear();
+            n_row++;
+        }
+        file.close();
+
+        n_col /= n_row;
+        matrix.resize(n_row, n_col);
+        for(uint i = 0; i < n_row; i++)
+            for(uint j = 0; j < n_col; j++)
+                matrix(i, j) = aux_matrix[i][j];
+    }
+    else
+    {
+        throw std::domain_error("\033[1;31mERROR [FileManager::readMatrixFile]: "
+                                "Can't open the file, check the path provided \033[0m\n");
+    }
+}
+
 void FileManager::readMatrixFile(std::string matrix_file, std::vector<std::vector<uint>> & matrix)
 {
     std::string line;
@@ -194,6 +310,17 @@ void FileManager::writeVectorFile(std::string vector_file, std::vector<double> *
     target_file.close();
 }
 
+void FileManager::writeVectorFile(std::string vector_file, const Eigen::VectorXd & vector)
+{
+    std::ofstream target_file;
+    target_file.open(vector_file);
+    for(int i = 0; i < vector.size(); i++)
+    {
+        target_file << vector(i) << " ";
+    }
+    target_file.close();
+}
+
 void FileManager::writeMatrixFile(std::string matrix_file,
                                   std::vector<std::vector<double>> & matrix)
 {
@@ -205,6 +332,22 @@ void FileManager::writeMatrixFile(std::string matrix_file,
         for(int i = 0; i < matrix[0].size(); i++)
         {
             target_file << matrix[j][i] << " ";
+        }
+        target_file << "\n";
+    }
+    target_file.close();
+}
+
+void FileManager::writeMatrixFile(std::string matrix_file, const Eigen::MatrixXd & matrix)
+{
+    std::ofstream target_file;
+
+    target_file.open(matrix_file);
+    for(int i = 0; i < matrix.rows(); i++)
+    {
+        for(int j = 0; j < matrix.cols(); j++)
+        {
+            target_file << matrix(i, j) << " ";
         }
         target_file << "\n";
     }
@@ -259,6 +402,29 @@ void FileManager::writeVolumeFile(std::string volume_file,
             for(int k = 0; k < (*volume)[0][0].size(); k++)
             {
                 target_file << (*volume)[j][i][k] << " ";
+            }
+        }
+        target_file << "\n";
+    }
+
+    target_file.close();
+}
+
+void FileManager::writeVolumeFile(std::string volume_file,
+                                  const std::vector<Eigen::MatrixXd> & volume)
+{
+    std::ofstream target_file;
+    target_file.open(volume_file);
+
+    target_file << volume.size() << " " << volume[0].rows() << " " << volume[0].cols() << "\n";
+
+    for(int i = 0; i < volume.size(); i++)
+    {
+        for(int j = 0; j < volume[0].rows(); j++)
+        {
+            for(int k = 0; k < volume[0].cols(); k++)
+            {
+                target_file << volume[i](j, k) << " ";
             }
         }
         target_file << "\n";

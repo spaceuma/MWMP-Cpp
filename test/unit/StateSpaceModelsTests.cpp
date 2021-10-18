@@ -210,3 +210,91 @@ TEST(StateSpaceModels, constraints_matrixes_test)
 
     ASSERT_TRUE(h1.isApprox(h2));
 }
+
+TEST(StateSpaceModels, costs_matrixes_test)
+{
+    MobileManipulator * exoter_model = new MobileManipulator("exoter");
+
+    // Matrix Q
+    Eigen::MatrixXd Q1;
+    FileManager::readMatrixFile("results/Q.txt", Q1);
+
+    double ini_time = clock();
+    Eigen::MatrixXd Q2 = Eigen::MatrixXd::Zero(exoter_model->getNumberStates(), exoter_model->getNumberStates());
+    exoter_model->getStateCostMatrix(5/159*100, 160, Q2);
+    std::cout<<cyan <<"[StateSpaceModels::costs_matrixes_test] Elapsed time matrix Q: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+
+    for(uint i = 0; i < exoter_model->getNumberStates(); i++)
+        for(uint j = 0; j < exoter_model->getNumberStates(); j++)
+        {
+            Q1(i,j) = (int)(Q1(i,j)*1000+0.5);
+            Q1(i,j) /= 1000;
+            Q2(i,j) = (int)(Q2(i,j)*1000+0.5);
+            Q2(i,j) /= 1000;
+        }
+    ASSERT_TRUE(Q1.isApprox(Q2));
+
+    // Matrix R
+    Eigen::MatrixXd R1;
+    FileManager::readMatrixFile("results/R.txt", R1);
+
+    ini_time = clock();
+    Eigen::MatrixXd R2 = Eigen::MatrixXd::Zero(exoter_model->getNumberInputs(), exoter_model->getNumberInputs());
+    exoter_model->getInputCostMatrix(R2, 160);
+    std::cout<<cyan <<"[StateSpaceModels::costs_matrixes_test] Elapsed time matrix R: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+
+    for(uint i = 0; i < exoter_model->getNumberInputs(); i++)
+        for(uint j = 0; j < exoter_model->getNumberInputs(); j++)
+        {
+            R1(i,j) = (int)(R1(i,j)*10000+0.5);
+            R1(i,j) /= 10000;
+            R2(i,j) = (int)(R2(i,j)*10000+0.5);
+            R2(i,j) /= 10000;
+        }
+
+    ASSERT_TRUE(R1.isApprox(R2));
+
+    // Matrix K
+    Eigen::MatrixXd K1;
+    FileManager::readMatrixFile("results/K.txt", K1);
+
+    ini_time = clock();
+    Eigen::MatrixXd K2 = Eigen::MatrixXd::Zero(exoter_model->getNumberStates(), exoter_model->getNumberInputs());
+    exoter_model->getStateInputCostMatrix(K2);
+    std::cout<<cyan <<"[StateSpaceModels::costs_matrixes_test] Elapsed time matrix K: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+
+    ASSERT_TRUE(K1.isApprox(K2));
+}
+
+TEST(StateSpaceModels, forward_integrate_test)
+{
+    MobileManipulator * exoter_model = new MobileManipulator("exoter");
+
+    Eigen::VectorXd x;
+    FileManager::readVectorFile("inputs/x.txt", x);
+
+    Eigen::VectorXd u;
+    FileManager::readVectorFile("inputs/u.txt", u);
+
+    double time_step = 1.006289308;
+
+    Eigen::VectorXd xf1;
+    FileManager::readVectorFile("results/xf.txt", xf1);
+
+    Eigen::VectorXd xf2 = Eigen::VectorXd::Zero(exoter_model->getNumberStates());
+
+    double ini_time = clock();
+    Eigen::MatrixXd Q2 = Eigen::MatrixXd::Zero(exoter_model->getNumberStates(), exoter_model->getNumberStates());
+    exoter_model->forwardIntegrateModel(x, u, time_step, xf2);
+    std::cout<<cyan <<"[StateSpaceModels::forward_integrate_test] Elapsed time forward integration: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+
+    for(uint i = 0; i < exoter_model->getNumberStates(); i++)
+    {
+        xf1(i) = (int)(xf1(i)*1000+0.5);
+        xf1(i) /= 1000;
+        xf2(i) = (int)(xf2(i)*1000+0.5);
+        xf2(i) /= 1000;
+    }
+
+    ASSERT_TRUE(xf1.isApprox(xf2));
+}

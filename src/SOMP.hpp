@@ -129,8 +129,8 @@ private:
     // Horizon for the planning task, default 160 seconds
     double time_horizon = 160;
 
-    // Discretization step for the time horizon, default 0.8 seconds
-    double time_step = 0.8;
+    // Discretization step for the time horizon, default 1.0063 seconds
+    double time_step = 1.0063;
 
     // Max number of iterations of the motion planner, default 200 iterations
     uint max_iterations = 200;
@@ -201,8 +201,8 @@ private:
     // Flag to check if there is already a planned motion
     bool is_motion_planned = false;
 
-    // Number of time steps, default 200 (160/0.8)
-    uint number_time_steps = 200;
+    // Number of time steps, default 160 (160/1.0063)
+    uint number_time_steps = 159;
 
     // State space model properties
     uint number_states;

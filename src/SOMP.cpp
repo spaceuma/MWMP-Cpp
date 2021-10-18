@@ -127,26 +127,18 @@ bool MotionPlanner::computeObstaclesGradient(const std::vector<std::vector<uint>
     uint n = obst_map[0].size();
 
     // Obtaining the distance in X and Y axis to obstacles
-    cv::Mat cv_obst_map(m, n, CV_32SC1);
-    cv::Mat cv_x_distance = cv::Mat::zeros(m, n, CV_64FC1);
-    cv::Mat cv_y_distance = cv::Mat::zeros(m, n, CV_64FC1);
+    cv::Mat cv_obst_map(m, n, CV_8UC1);
+    cv::Mat cv_distance = cv::Mat::zeros(m, n, CV_64FC1);
 
     for(uint i = 0; i < m; i++)
     {
         for(uint j = 0; j < n; j++)
-            cv_obst_map.at<int>(i, j) = 1 - obst_map[i][j];
-
-        // Distance to closest 0
-        cv::distanceTransform(cv_obst_map.row(i), cv_x_distance.row(i), cv::DIST_L2, 3);
-        cv_x_distance.row(i) = 1 + cv_x_distance.row(i);
+            cv_obst_map.at<char>(i, j) = 1 - obst_map[i][j];
     }
 
-    for(uint j = 0; j < n; j++)
-    {
-        // Distance to closest 0
-        cv::distanceTransform(cv_obst_map.col(j), cv_y_distance.col(j), cv::DIST_L2, 3);
-        cv_y_distance.col(j) = 1 + cv_y_distance.col(j);
-    }
+    // Distance to closest 0
+    cv::distanceTransform(cv_obst_map, cv_distance, cv::DIST_L2, 3);
+    cv_distance += 1;
 
     // Computing the gradient
     cv::Mat cv_x_gradient = cv::Mat::zeros(m, n, CV_64FC1);
@@ -159,38 +151,38 @@ bool MotionPlanner::computeObstaclesGradient(const std::vector<std::vector<uint>
             if(i == 0)
             {
                 cv_x_gradient.at<double>(j, 0) =
-                    cv_x_distance.at<double>(j, 1) - cv_x_distance.at<double>(j, 0);
+                    cv_distance.at<double>(j, 1) - cv_distance.at<double>(j, 0);
             }
             else
             {
                 if(i == n - 1)
                 {
                     cv_x_gradient.at<double>(j, i) =
-                        cv_x_distance.at<double>(j, i) - cv_x_distance.at<double>(j, i - 1);
+                        cv_distance.at<double>(j, i) - cv_distance.at<double>(j, i - 1);
                 }
                 else
                 {
-                    if(cv_x_distance.at<double>(j, i + 1) == inf)
+                    if(cv_distance.at<double>(j, i + 1) == inf)
                     {
-                        if(cv_x_distance.at<double>(j, i - 1) == inf)
+                        if(cv_distance.at<double>(j, i - 1) == inf)
                         { cv_x_gradient.at<double>(j, i) = 0; }
                         else
                         {
                             cv_x_gradient.at<double>(j, i) =
-                                cv_x_distance.at<double>(j, i) - cv_x_distance.at<double>(j, i - 1);
+                                cv_distance.at<double>(j, i) - cv_distance.at<double>(j, i - 1);
                         }
                     }
                     else
                     {
-                        if(cv_x_distance.at<double>(j, i - 1) == inf)
+                        if(cv_distance.at<double>(j, i - 1) == inf)
                         {
                             cv_x_gradient.at<double>(j, i) =
-                                cv_x_distance.at<double>(j, i + 1) - cv_x_distance.at<double>(j, i);
+                                cv_distance.at<double>(j, i + 1) - cv_distance.at<double>(j, i);
                         }
                         else
                         {
-                            cv_x_gradient.at<double>(j, i) = (cv_x_distance.at<double>(j, i + 1) -
-                                                              cv_x_distance.at<double>(j, i - 1)) /
+                            cv_x_gradient.at<double>(j, i) = (cv_distance.at<double>(j, i + 1) -
+                                                              cv_distance.at<double>(j, i - 1)) /
                                                              2;
                         }
                     }
@@ -200,38 +192,38 @@ bool MotionPlanner::computeObstaclesGradient(const std::vector<std::vector<uint>
             if(j == 0)
             {
                 cv_y_gradient.at<double>(0, i) =
-                    cv_y_distance.at<double>(1, i) - cv_y_distance.at<double>(0, i);
+                    cv_distance.at<double>(1, i) - cv_distance.at<double>(0, i);
             }
             else
             {
                 if(j == m - 1)
                 {
                     cv_y_gradient.at<double>(j, i) =
-                        cv_y_distance.at<double>(j, i) - cv_y_distance.at<double>(j - 1, i);
+                        cv_distance.at<double>(j, i) - cv_distance.at<double>(j - 1, i);
                 }
                 else
                 {
-                    if(cv_y_distance.at<double>(j + 1, i) == inf)
+                    if(cv_distance.at<double>(j + 1, i) == inf)
                     {
-                        if(cv_y_distance.at<double>(j - 1, i) == inf)
+                        if(cv_distance.at<double>(j - 1, i) == inf)
                         { cv_y_gradient.at<double>(j, i) = 0; }
                         else
                         {
                             cv_y_gradient.at<double>(j, i) =
-                                cv_y_distance.at<double>(j, i) - cv_y_distance.at<double>(j, i - 1);
+                                cv_distance.at<double>(j, i) - cv_distance.at<double>(j, i - 1);
                         }
                     }
                     else
                     {
-                        if(cv_y_distance.at<double>(j - 1, i) == inf)
+                        if(cv_distance.at<double>(j - 1, i) == inf)
                         {
                             cv_y_gradient.at<double>(j, i) =
-                                cv_y_distance.at<double>(j + 1, i) - cv_y_distance.at<double>(j, i);
+                                cv_distance.at<double>(j + 1, i) - cv_distance.at<double>(j, i);
                         }
                         else
                         {
-                            cv_y_gradient.at<double>(j, i) = (cv_y_distance.at<double>(j + 1, i) -
-                                                              cv_y_distance.at<double>(j - 1, i)) /
+                            cv_y_gradient.at<double>(j, i) = (cv_distance.at<double>(j + 1, i) -
+                                                              cv_distance.at<double>(j - 1, i)) /
                                                              2;
                         }
                     }
@@ -285,14 +277,14 @@ bool MotionPlanner::dilateObstaclesMap(const std::vector<std::vector<uint>> & ob
         return false;
     }
 
-    cv::Mat cv_obst_map(m, n, CV_32SC1);
-    cv::Mat cv_dilated_map(m, n, CV_32SC1);
+    cv::Mat cv_obst_map(m, n, CV_16SC1);
+    cv::Mat cv_dilated_map(m, n, CV_16SC1);
 
     for(uint i = 0; i < m; i++)
         for(uint j = 0; j < n; j++)
-            cv_obst_map.at<int>(i, j) = obst_map[i][j];
+            cv_obst_map.at<short>(i, j) = obst_map[i][j];
 
-    int dilatation_size = (int)dilatation_distance / map_resolution;
+    int dilatation_size = (int)(dilatation_distance / map_resolution);
 
     cv::Mat sel =
         cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(dilatation_size, dilatation_size));
@@ -302,7 +294,7 @@ bool MotionPlanner::dilateObstaclesMap(const std::vector<std::vector<uint>> & ob
     // Generating the output matrixes
     for(uint i = 0; i < m; i++)
         for(uint j = 0; j < n; j++)
-            dilated_map[i][j] = cv_dilated_map.at<int>(i, j);
+            dilated_map[i][j] = cv_dilated_map.at<short>(i, j);
 
     return true;
 }
@@ -377,9 +369,6 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model)
     orientation_threshold = robot_ss_model->getThresholdGoalOrientation();
 
     check_safety = false;
-    map_resolution = 0.05;
-
-    FileManager::readMatrixFile("dummy_obstacles_map.txt", obstacles_map);
 
     number_states = robot_ss_model->getNumberStates();
     number_inputs = robot_ss_model->getNumberInputs();
@@ -417,9 +406,6 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config)
     orientation_threshold = robot_ss_model->getThresholdGoalOrientation();
 
     check_safety = false;
-    map_resolution = 0.05;
-
-    FileManager::readMatrixFile("dummy_obstacles_map.txt", obstacles_map);
 
     number_states = robot_ss_model->getNumberStates();
     number_inputs = robot_ss_model->getNumberInputs();
@@ -461,6 +447,13 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
     pose_indexes = robot_ss_model->getIndexesRobotPose();
     map_resolution = map_info.map_resolution;
     obstacles_map = map_info.obstacles_map;
+    dilated_obstacles_map = obstacles_map;
+    safety_obstacles_map = obstacles_map;
+
+    gradient_obstacles_map_x = std::vector<std::vector<double>>(
+        obstacles_map.size(), std::vector<double>(obstacles_map[0].size(), 0));
+    gradient_obstacles_map_y = std::vector<std::vector<double>>(
+        obstacles_map.size(), std::vector<double>(obstacles_map[0].size(), 0));
 
     if(!dilateObstaclesMap(
            obstacles_map, robot_ss_model->getRiskDistance(), dilated_obstacles_map) ||

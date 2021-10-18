@@ -39,7 +39,6 @@
 #include "FileManager.hpp"
 #include "StateSpaceModels.hpp"
 
-#define pi 3.14159265359
 #define inf 1000000007
 
 #define nocolor "\033[0m"
@@ -109,7 +108,6 @@ struct MapInfo
 {
     double map_resolution;
     std::vector<std::vector<uint>> obstacles_map;
-    double obstacles_cost;
 };
 
 class MotionPlanner

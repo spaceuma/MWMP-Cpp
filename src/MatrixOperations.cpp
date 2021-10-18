@@ -935,9 +935,9 @@ bool MatrixOperations::getDifference(const std::vector<double> & a,
         return false;
     }
 
-    for(int i = 0; i < a.size(); i++)
+    for(int i = 0; i < m; i++)
     {
-        c.push_back(a[i] - b[i]);
+        c[i] = (a[i] - b[i]);
     }
 
     return true;

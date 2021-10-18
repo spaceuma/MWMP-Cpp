@@ -89,22 +89,22 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
 
         nominal_speed = 0.10;
 
-        state_limits = {90 * pi / 180,
-                        -30 * pi / 180,
-                        -10 * pi / 180,
+        state_limits = {-30 * pi / 180,
+                         90 * pi / 180,
                         -190 * pi / 180,
-                        160 * pi / 180,
+                        -10 * pi / 180,
                         -160 * pi / 180,
-                        250 * pi / 180,
+                        160 * pi / 180,
                         -70 * pi / 180,
-                        160 * pi / 180,
+                        250 * pi / 180,
                         -160 * pi / 180,
-                        2.85,
+                        160 * pi / 180,
                         -2.85,
                         2.85,
-                        -2.85};
+                        -2.85,
+                        2.85};
 
-        input_limits = {0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01};
+        input_limits = {-0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01};
 
         arm_lengths = {0.0895, 0.206, 0.176, 0.0555, 0.14};
         arm_masses = {0.5, 0.8, 0.8, 0.3, 0.2};
@@ -576,15 +576,15 @@ bool MobileManipulator::getLinearizedMatrixB(const Eigen::VectorXd & x,
 
     for(uint i = 0; i < number_arm_joints; i++)
     {
-        B(world_ee_pose_indexes[2], arm_actuators_indexes[i]) = -time_step * J[1][i];
+        B(world_ee_pose_indexes[2], arm_actuators_indexes[i]) = -time_step * J[0][i];
     }
 
     // BTEE
-    for(uint i = 0; i < number_arm_joints; i++)
+    for(uint i = 0; i < base_ee_pose_indexes.size(); i++)
     {
         for(uint j = 0; j < number_arm_joints; j++)
         {
-            B(base_ee_pose_indexes[i], arm_actuators_indexes[j]) = -time_step * J[i][j];
+            B(base_ee_pose_indexes[i], arm_actuators_indexes[j]) = +time_step * J[i][j];
         }
     }
 
@@ -736,8 +736,8 @@ bool MobileManipulator::getConstraintsMatrixR(std::vector<double> & r)
 
     for(uint i = 0; i < number_si_constraints; i += 2)
     {
-        r[i] = -input_limits[i];
-        r[i + 1] = input_limits[i + 1];
+        r[i] = input_limits[i];
+        r[i + 1] = -input_limits[i + 1];
     }
 
     return true;
@@ -756,8 +756,8 @@ bool MobileManipulator::getConstraintsMatrixR(Eigen::VectorXd & r)
 
     for(uint i = 0; i < number_si_constraints; i += 2)
     {
-        r(i) = -input_limits[i];
-        r(i + 1) = input_limits[i + 1];
+        r(i) = input_limits[i];
+        r(i + 1) = -input_limits[i + 1];
     }
 
     return true;
@@ -781,8 +781,8 @@ bool MobileManipulator::getConstraintsMatrixG(std::vector<std::vector<double>> &
 
     for(uint i = 0; i < number_ps_constraints; i += 2)
     {
-        G[i][input_constrained_indexes[i / 2]] = -1;
-        G[i + 1][input_constrained_indexes[i / 2]] = 1;
+        G[i][state_constrained_indexes[i / 2]] = -1;
+        G[i + 1][state_constrained_indexes[i / 2]] = 1;
     }
 
     return true;
@@ -801,8 +801,8 @@ bool MobileManipulator::getConstraintsMatrixG(Eigen::MatrixXd & G)
 
     for(uint i = 0; i < number_ps_constraints; i += 2)
     {
-        G(i, input_constrained_indexes[i / 2]) = -1;
-        G(i + 1, input_constrained_indexes[i / 2]) = 1;
+        G(i, state_constrained_indexes[i / 2]) = -1;
+        G(i + 1, state_constrained_indexes[i / 2]) = 1;
     }
 
     return true;
@@ -821,8 +821,8 @@ bool MobileManipulator::getConstraintsMatrixH(std::vector<double> & h)
 
     for(uint i = 0; i < number_ps_constraints; i += 2)
     {
-        h[i] = -state_limits[i];
-        h[i + 1] = state_limits[i + number_ps_constraints];
+        h[i] = state_limits[i];
+        h[i + 1] = -state_limits[i + 1];
     }
 
     return true;
@@ -841,8 +841,8 @@ bool MobileManipulator::getConstraintsMatrixH(Eigen::VectorXd & h)
 
     for(uint i = 0; i < number_ps_constraints; i += 2)
     {
-        h(i) = -state_limits[i];
-        h(i + 1) = state_limits[i + number_ps_constraints];
+        h(i) = state_limits[i];
+        h(i + 1) = -state_limits[i + 1];
     }
 
     return true;
@@ -1670,7 +1670,7 @@ bool MobileManipulator::getObstaclesCost(
 
 double MobileManipulator::getWheelInertia()
 {
-    double I = 1 / 2 * wheels_weight * pow(wheels_radius, 2);
+    double I = wheels_weight * pow(wheels_radius, 2)/2;
     return I;
 }
 

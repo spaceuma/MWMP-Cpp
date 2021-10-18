@@ -30,8 +30,8 @@
 
 #include "FileManager.hpp"
 #include "StateSpaceModels.hpp"
-#include <ctime>
 #include <Eigen/Dense>
+#include <ctime>
 #include <gtest/gtest.h>
 
 #define nocolor "\033[0m"
@@ -88,15 +88,16 @@ TEST(StateSpaceModels, linearized_matrixes_test)
     double ini_time = clock();
     Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(x.size(), x.size());
     exoter_model->getLinearizedMatrixA(x, time_step, A2);
-    std::cout<<cyan <<"[StateSpaceModels::linearized_matrixes_test] Elapsed time matrix A: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+    std::cout << cyan << "[StateSpaceModels::linearized_matrixes_test] Elapsed time matrix A: "
+              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     for(uint i = 0; i < x.size(); i++)
         for(uint j = 0; j < x.size(); j++)
         {
-            A1(i,j) = (int)(A1(i,j)*10000+0.5);
-            A1(i,j) /= 10000;
-            A2(i,j) = (int)(A2(i,j)*10000+0.5);
-            A2(i,j) /= 10000;
+            A1(i, j) = (int)(A1(i, j) * 10000 + 0.5);
+            A1(i, j) /= 10000;
+            A2(i, j) = (int)(A2(i, j) * 10000 + 0.5);
+            A2(i, j) /= 10000;
         }
 
     ASSERT_TRUE(A1.isApprox(A2));
@@ -111,15 +112,16 @@ TEST(StateSpaceModels, linearized_matrixes_test)
     ini_time = clock();
     Eigen::MatrixXd B2 = Eigen::MatrixXd::Zero(x.size(), u.size());
     exoter_model->getLinearizedMatrixB(x, u, time_step, B2);
-    std::cout<<cyan <<"[StateSpaceModels::linearized_matrixes_test] Elapsed time matrix B: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+    std::cout << cyan << "[StateSpaceModels::linearized_matrixes_test] Elapsed time matrix B: "
+              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     for(uint i = 0; i < x.size(); i++)
         for(uint j = 0; j < u.size(); j++)
         {
-            B1(i,j) = (int)(B1(i,j)*10000+0.5);
-            B1(i,j) /= 10000;
-            B2(i,j) = (int)(B2(i,j)*10000+0.5);
-            B2(i,j) /= 10000;
+            B1(i, j) = (int)(B1(i, j) * 10000 + 0.5);
+            B1(i, j) /= 10000;
+            B2(i, j) = (int)(B2(i, j) * 10000 + 0.5);
+            B2(i, j) /= 10000;
         }
 
     ASSERT_TRUE(B1.isApprox(B2));
@@ -134,17 +136,19 @@ TEST(StateSpaceModels, constraints_matrixes_test)
     FileManager::readMatrixFile("results/C.txt", C1);
 
     double ini_time = clock();
-    Eigen::MatrixXd C2 = Eigen::MatrixXd::Zero(exoter_model->getNumberStateInputConstraints(), exoter_model->getNumberStates());
+    Eigen::MatrixXd C2 = Eigen::MatrixXd::Zero(exoter_model->getNumberStateInputConstraints(),
+                                               exoter_model->getNumberStates());
     exoter_model->getConstraintsMatrixC(C2);
-    std::cout<<cyan <<"[StateSpaceModels::constraints_matrixes_test] Elapsed time matrix C: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+    std::cout << cyan << "[StateSpaceModels::constraints_matrixes_test] Elapsed time matrix C: "
+              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     for(uint i = 0; i < exoter_model->getNumberStateInputConstraints(); i++)
         for(uint j = 0; j < exoter_model->getNumberStates(); j++)
         {
-            C1(i,j) = (int)(C1(i,j)*10000+0.5);
-            C1(i,j) /= 10000;
-            C2(i,j) = (int)(C2(i,j)*10000+0.5);
-            C2(i,j) /= 10000;
+            C1(i, j) = (int)(C1(i, j) * 10000 + 0.5);
+            C1(i, j) /= 10000;
+            C2(i, j) = (int)(C2(i, j) * 10000 + 0.5);
+            C2(i, j) /= 10000;
         }
 
     ASSERT_TRUE(C1.isApprox(C2));
@@ -154,17 +158,19 @@ TEST(StateSpaceModels, constraints_matrixes_test)
     FileManager::readMatrixFile("results/D.txt", D1);
 
     ini_time = clock();
-    Eigen::MatrixXd D2 = Eigen::MatrixXd::Zero(exoter_model->getNumberStateInputConstraints(), exoter_model->getNumberInputs());
+    Eigen::MatrixXd D2 = Eigen::MatrixXd::Zero(exoter_model->getNumberStateInputConstraints(),
+                                               exoter_model->getNumberInputs());
     exoter_model->getConstraintsMatrixD(D2);
-    std::cout<<cyan <<"[StateSpaceModels::constraints_matrixes_test] Elapsed time matrix D: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+    std::cout << cyan << "[StateSpaceModels::constraints_matrixes_test] Elapsed time matrix D: "
+              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     for(uint i = 0; i < exoter_model->getNumberStateInputConstraints(); i++)
         for(uint j = 0; j < exoter_model->getNumberInputs(); j++)
         {
-            D1(i,j) = (int)(D1(i,j)*10000+0.5);
-            D1(i,j) /= 10000;
-            D2(i,j) = (int)(D2(i,j)*10000+0.5);
-            D2(i,j) /= 10000;
+            D1(i, j) = (int)(D1(i, j) * 10000 + 0.5);
+            D1(i, j) /= 10000;
+            D2(i, j) = (int)(D2(i, j) * 10000 + 0.5);
+            D2(i, j) /= 10000;
         }
 
     ASSERT_TRUE(D1.isApprox(D2));
@@ -176,7 +182,8 @@ TEST(StateSpaceModels, constraints_matrixes_test)
     ini_time = clock();
     Eigen::VectorXd r2 = Eigen::VectorXd::Zero(exoter_model->getNumberStateInputConstraints());
     exoter_model->getConstraintsMatrixR(r2);
-    std::cout<<cyan <<"[StateSpaceModels::constraints_matrixes_test] Elapsed time matrix r: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+    std::cout << cyan << "[StateSpaceModels::constraints_matrixes_test] Elapsed time matrix r: "
+              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     ASSERT_TRUE(r1.isApprox(r2));
 
@@ -185,9 +192,11 @@ TEST(StateSpaceModels, constraints_matrixes_test)
     FileManager::readMatrixFile("results/G.txt", G1);
 
     ini_time = clock();
-    Eigen::MatrixXd G2 = Eigen::MatrixXd::Zero(exoter_model->getNumberPureStateConstraints(), exoter_model->getNumberStates());
+    Eigen::MatrixXd G2 = Eigen::MatrixXd::Zero(exoter_model->getNumberPureStateConstraints(),
+                                               exoter_model->getNumberStates());
     exoter_model->getConstraintsMatrixG(G2);
-    std::cout<<cyan <<"[StateSpaceModels::constraints_matrixes_test] Elapsed time matrix G: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+    std::cout << cyan << "[StateSpaceModels::constraints_matrixes_test] Elapsed time matrix G: "
+              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     ASSERT_TRUE(G1.isApprox(G2));
 
@@ -198,13 +207,14 @@ TEST(StateSpaceModels, constraints_matrixes_test)
     ini_time = clock();
     Eigen::VectorXd h2 = Eigen::VectorXd::Zero(exoter_model->getNumberPureStateConstraints());
     exoter_model->getConstraintsMatrixH(h2);
-    std::cout<<cyan <<"[StateSpaceModels::constraints_matrixes_test] Elapsed time matrix h: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+    std::cout << cyan << "[StateSpaceModels::constraints_matrixes_test] Elapsed time matrix h: "
+              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     for(uint i = 0; i < exoter_model->getNumberPureStateConstraints(); i++)
     {
-        h1(i) = (int)(h1(i)*10000+0.5);
+        h1(i) = (int)(h1(i) * 10000 + 0.5);
         h1(i) /= 10000;
-        h2(i) = (int)(h2(i)*10000+0.5);
+        h2(i) = (int)(h2(i) * 10000 + 0.5);
         h2(i) /= 10000;
     }
 
@@ -220,17 +230,19 @@ TEST(StateSpaceModels, costs_matrixes_test)
     FileManager::readMatrixFile("results/Q.txt", Q1);
 
     double ini_time = clock();
-    Eigen::MatrixXd Q2 = Eigen::MatrixXd::Zero(exoter_model->getNumberStates(), exoter_model->getNumberStates());
-    exoter_model->getStateCostMatrix(5/159*100, 160, Q2);
-    std::cout<<cyan <<"[StateSpaceModels::costs_matrixes_test] Elapsed time matrix Q: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+    Eigen::MatrixXd Q2 =
+        Eigen::MatrixXd::Zero(exoter_model->getNumberStates(), exoter_model->getNumberStates());
+    exoter_model->getStateCostMatrix(5 / 159 * 100, 160, Q2);
+    std::cout << cyan << "[StateSpaceModels::costs_matrixes_test] Elapsed time matrix Q: "
+              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     for(uint i = 0; i < exoter_model->getNumberStates(); i++)
         for(uint j = 0; j < exoter_model->getNumberStates(); j++)
         {
-            Q1(i,j) = (int)(Q1(i,j)*1000+0.5);
-            Q1(i,j) /= 1000;
-            Q2(i,j) = (int)(Q2(i,j)*1000+0.5);
-            Q2(i,j) /= 1000;
+            Q1(i, j) = (int)(Q1(i, j) * 1000 + 0.5);
+            Q1(i, j) /= 1000;
+            Q2(i, j) = (int)(Q2(i, j) * 1000 + 0.5);
+            Q2(i, j) /= 1000;
         }
     ASSERT_TRUE(Q1.isApprox(Q2));
 
@@ -239,17 +251,19 @@ TEST(StateSpaceModels, costs_matrixes_test)
     FileManager::readMatrixFile("results/R.txt", R1);
 
     ini_time = clock();
-    Eigen::MatrixXd R2 = Eigen::MatrixXd::Zero(exoter_model->getNumberInputs(), exoter_model->getNumberInputs());
+    Eigen::MatrixXd R2 =
+        Eigen::MatrixXd::Zero(exoter_model->getNumberInputs(), exoter_model->getNumberInputs());
     exoter_model->getInputCostMatrix(R2, 160);
-    std::cout<<cyan <<"[StateSpaceModels::costs_matrixes_test] Elapsed time matrix R: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+    std::cout << cyan << "[StateSpaceModels::costs_matrixes_test] Elapsed time matrix R: "
+              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     for(uint i = 0; i < exoter_model->getNumberInputs(); i++)
         for(uint j = 0; j < exoter_model->getNumberInputs(); j++)
         {
-            R1(i,j) = (int)(R1(i,j)*10000+0.5);
-            R1(i,j) /= 10000;
-            R2(i,j) = (int)(R2(i,j)*10000+0.5);
-            R2(i,j) /= 10000;
+            R1(i, j) = (int)(R1(i, j) * 10000 + 0.5);
+            R1(i, j) /= 10000;
+            R2(i, j) = (int)(R2(i, j) * 10000 + 0.5);
+            R2(i, j) /= 10000;
         }
 
     ASSERT_TRUE(R1.isApprox(R2));
@@ -259,9 +273,11 @@ TEST(StateSpaceModels, costs_matrixes_test)
     FileManager::readMatrixFile("results/K.txt", K1);
 
     ini_time = clock();
-    Eigen::MatrixXd K2 = Eigen::MatrixXd::Zero(exoter_model->getNumberStates(), exoter_model->getNumberInputs());
+    Eigen::MatrixXd K2 =
+        Eigen::MatrixXd::Zero(exoter_model->getNumberStates(), exoter_model->getNumberInputs());
     exoter_model->getStateInputCostMatrix(K2);
-    std::cout<<cyan <<"[StateSpaceModels::costs_matrixes_test] Elapsed time matrix K: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+    std::cout << cyan << "[StateSpaceModels::costs_matrixes_test] Elapsed time matrix K: "
+              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     ASSERT_TRUE(K1.isApprox(K2));
 }
@@ -284,15 +300,18 @@ TEST(StateSpaceModels, forward_integrate_test)
     Eigen::VectorXd xf2 = Eigen::VectorXd::Zero(exoter_model->getNumberStates());
 
     double ini_time = clock();
-    Eigen::MatrixXd Q2 = Eigen::MatrixXd::Zero(exoter_model->getNumberStates(), exoter_model->getNumberStates());
+    Eigen::MatrixXd Q2 =
+        Eigen::MatrixXd::Zero(exoter_model->getNumberStates(), exoter_model->getNumberStates());
     exoter_model->forwardIntegrateModel(x, u, time_step, xf2);
-    std::cout<<cyan <<"[StateSpaceModels::forward_integrate_test] Elapsed time forward integration: "<< (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor<<std::endl;
+    std::cout << cyan
+              << "[StateSpaceModels::forward_integrate_test] Elapsed time forward integration: "
+              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     for(uint i = 0; i < exoter_model->getNumberStates(); i++)
     {
-        xf1(i) = (int)(xf1(i)*1000+0.5);
+        xf1(i) = (int)(xf1(i) * 1000 + 0.5);
         xf1(i) /= 1000;
-        xf2(i) = (int)(xf2(i)*1000+0.5);
+        xf2(i) = (int)(xf2(i) * 1000 + 0.5);
         xf2(i) /= 1000;
     }
 

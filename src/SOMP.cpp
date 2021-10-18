@@ -74,8 +74,8 @@ bool MotionPlanner::updateHorizon(std::vector<Eigen::VectorXd> & x,
         }
 
         double percentage_horizon = 100 * (i + 1) / number_time_steps;
-        if(!robot_ss_model->getStateCostMatrix(percentage_horizon, Qh[i]) ||
-           !robot_ss_model->getInputCostMatrix(Rh[i]) ||
+        if(!robot_ss_model->getStateCostMatrix(percentage_horizon, time_horizon, Qh[i]) ||
+           !robot_ss_model->getInputCostMatrix(Rh[i], time_horizon) ||
            !robot_ss_model->getStateInputCostMatrix(Kh[i]))
         {
             std::cout

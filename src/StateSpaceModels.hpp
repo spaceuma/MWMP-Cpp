@@ -352,17 +352,19 @@ public:
     // Returns the pure state cost matrix Q, in function of the time step provided
     // e.g. If percentage_horizon is 100, the goal state cost matrix will be returned
     // Size of Q: number_states x number_states
-    bool getStateCostMatrix(double percentage_horizon, std::vector<std::vector<double>> & Q);
+    bool getStateCostMatrix(double percentage_horizon,
+                            double time_horizon,
+                            std::vector<std::vector<double>> & Q);
 
     // Eigen overload
-    bool getStateCostMatrix(double percentage_horizon, Eigen::MatrixXd & Q);
+    bool getStateCostMatrix(double percentage_horizon, double time_horizon, Eigen::MatrixXd & Q);
 
     // Returns the pure input cost matrix R.
     // Size of R: number_inputs x number_inputs
-    bool getInputCostMatrix(std::vector<std::vector<double>> & R);
+    bool getInputCostMatrix(std::vector<std::vector<double>> & R, double time_horizon);
 
     // Eigen overload
-    bool getInputCostMatrix(Eigen::MatrixXd & R);
+    bool getInputCostMatrix(Eigen::MatrixXd & R, double time_horizon);
 
     // Returns the state input cost matrix K.
     // Size of K: number_states x number_inputs

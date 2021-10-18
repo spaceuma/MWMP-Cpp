@@ -90,7 +90,7 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         nominal_speed = 0.10;
 
         state_limits = {-30 * pi / 180,
-                         90 * pi / 180,
+                        90 * pi / 180,
                         -190 * pi / 180,
                         -10 * pi / 180,
                         -160 * pi / 180,
@@ -849,6 +849,7 @@ bool MobileManipulator::getConstraintsMatrixH(Eigen::VectorXd & h)
 }
 
 bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
+                                           double time_horizon,
                                            std::vector<std::vector<double>> & Q)
 {
     if(Q.size() != number_states || Q[0].size() != number_states)
@@ -860,16 +861,23 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
         return false;
     }
 
+    // The costs are proportional to the time horizon
+    double time_ratio = time_horizon / 60;
+
     for(uint i = 0; i < whole_states_indexes.size(); i++)
     {
-        Q[whole_states_indexes[i]][whole_states_indexes[i]] = whole_states_cost[i];
+        if(whole_states_indexes[i] == robot_pose_indexes[0] ||
+           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == yaw_index)
+            Q[whole_states_indexes[i]][whole_states_indexes[i]] = whole_states_cost[i] * time_ratio;
+        else
+            Q[whole_states_indexes[i]][whole_states_indexes[i]] = whole_states_cost[i] / time_ratio;
     }
 
     if(percentage_horizon == 100)
     {
         for(uint i = 0; i < goal_states_indexes.size(); i++)
         {
-            Q[goal_states_indexes[i]][goal_states_indexes[i]] = goal_states_cost[i];
+            Q[goal_states_indexes[i]][goal_states_indexes[i]] = goal_states_cost[i] / time_ratio;
         }
     }
     else if(percentage_horizon > horizon_speed_reduction)
@@ -879,14 +887,17 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
 
         for(uint i = 0; i < base_speed_indexes.size(); i++)
         {
-            Q[base_speed_indexes[i]][base_speed_indexes[i]] = linear_cost * goal_speed_cost;
+            Q[base_speed_indexes[i]][base_speed_indexes[i]] =
+                linear_cost * goal_speed_cost / time_ratio;
         }
     }
 
     return true;
 }
 
-bool MobileManipulator::getStateCostMatrix(double percentage_horizon, Eigen::MatrixXd & Q)
+bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
+                                           double time_horizon,
+                                           Eigen::MatrixXd & Q)
 {
     if(Q.rows() != number_states || Q.cols() != number_states)
     {
@@ -897,16 +908,23 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon, Eigen::Mat
         return false;
     }
 
+    // The costs are proportional to the time horizon
+    double time_ratio = time_horizon / 60;
+
     for(uint i = 0; i < whole_states_indexes.size(); i++)
     {
-        Q(whole_states_indexes[i], whole_states_indexes[i]) = whole_states_cost[i];
+        if(whole_states_indexes[i] == robot_pose_indexes[0] ||
+           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == yaw_index)
+            Q(whole_states_indexes[i], whole_states_indexes[i]) = whole_states_cost[i] * time_ratio;
+        else
+            Q(whole_states_indexes[i], whole_states_indexes[i]) = whole_states_cost[i] / time_ratio;
     }
 
     if(percentage_horizon == 100)
     {
         for(uint i = 0; i < goal_states_indexes.size(); i++)
         {
-            Q(goal_states_indexes[i], goal_states_indexes[i]) = goal_states_cost[i];
+            Q(goal_states_indexes[i], goal_states_indexes[i]) = goal_states_cost[i] / time_ratio;
         }
     }
     else if(percentage_horizon > horizon_speed_reduction)
@@ -916,14 +934,16 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon, Eigen::Mat
 
         for(uint i = 0; i < base_speed_indexes.size(); i++)
         {
-            Q(base_speed_indexes[i], base_speed_indexes[i]) = linear_cost * goal_speed_cost;
+            Q(base_speed_indexes[i], base_speed_indexes[i]) =
+                linear_cost * goal_speed_cost / time_ratio;
         }
     }
 
     return true;
 }
 
-bool MobileManipulator::getInputCostMatrix(std::vector<std::vector<double>> & R)
+bool MobileManipulator::getInputCostMatrix(std::vector<std::vector<double>> & R,
+                                           double time_horizon)
 {
     if(R.size() != number_inputs || R[0].size() != number_inputs)
     {
@@ -934,15 +954,22 @@ bool MobileManipulator::getInputCostMatrix(std::vector<std::vector<double>> & R)
         return false;
     }
 
+    // The costs are proportional to the time horizon
+    double time_ratio = time_horizon / 60;
+
     for(uint i = 0; i < whole_inputs_indexes.size(); i++)
     {
-        R[whole_inputs_indexes[i]][whole_inputs_indexes[i]] = whole_inputs_cost[i];
+        if(whole_inputs_indexes[i] == wheels_actuators_indexes[0] ||
+           whole_inputs_indexes[i] == wheels_actuators_indexes[1])
+            R[whole_inputs_indexes[i]][whole_inputs_indexes[i]] = whole_inputs_cost[i] / time_ratio;
+        else
+            R[whole_inputs_indexes[i]][whole_inputs_indexes[i]] = whole_inputs_cost[i] * time_ratio;
     }
 
     return true;
 }
 
-bool MobileManipulator::getInputCostMatrix(Eigen::MatrixXd & R)
+bool MobileManipulator::getInputCostMatrix(Eigen::MatrixXd & R, double time_horizon)
 {
     if(R.rows() != number_inputs || R.cols() != number_inputs)
     {
@@ -953,9 +980,16 @@ bool MobileManipulator::getInputCostMatrix(Eigen::MatrixXd & R)
         return false;
     }
 
+    // The costs are proportional to the time horizon
+    double time_ratio = time_horizon / 60;
+
     for(uint i = 0; i < whole_inputs_indexes.size(); i++)
     {
-        R(whole_inputs_indexes[i], whole_inputs_indexes[i]) = whole_inputs_cost[i];
+        if(whole_inputs_indexes[i] == wheels_actuators_indexes[0] ||
+           whole_inputs_indexes[i] == wheels_actuators_indexes[1])
+            R(whole_inputs_indexes[i], whole_inputs_indexes[i]) = whole_inputs_cost[i] / time_ratio;
+        else
+            R(whole_inputs_indexes[i], whole_inputs_indexes[i]) = whole_inputs_cost[i] * time_ratio;
     }
 
     return true;
@@ -1670,7 +1704,7 @@ bool MobileManipulator::getObstaclesCost(
 
 double MobileManipulator::getWheelInertia()
 {
-    double I = wheels_weight * pow(wheels_radius, 2)/2;
+    double I = wheels_weight * pow(wheels_radius, 2) / 2;
     return I;
 }
 
@@ -1890,10 +1924,12 @@ bool MobileManipulator::forwardIntegrateModel(const Eigen::VectorXd & x,
     }
 
     std::vector<double> robot_pose;
-    for(uint i = 0; i < 3; i++)
+    for(uint i = 0; i < 2; i++)
     {
         robot_pose.push_back(x(robot_pose_indexes[i]));
     }
+
+    robot_pose.push_back(x(yaw_index));
 
     double robot_yaw = x(yaw_index);
 
@@ -1938,7 +1974,7 @@ bool MobileManipulator::forwardIntegrateModel(const Eigen::VectorXd & x,
                                 sin(robot_yaw) * base_speed[1] * time_step;
     xf(robot_pose_indexes[1]) = robot_pose[1] + sin(robot_yaw) * base_speed[0] * time_step +
                                 cos(robot_yaw) * base_speed[1] * time_step;
-    xf(robot_pose_indexes[2]) = robot_pose[2] + base_speed[2] * time_step;
+    xf(yaw_index) = robot_pose[2] + base_speed[2] * time_step;
 
     // BSpeed
     xf(base_speed_indexes[0]) = wheels_radius / 2 * (wheels_speed[0] + wheels_speed[1]);

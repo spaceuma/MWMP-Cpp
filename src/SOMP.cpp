@@ -383,7 +383,7 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config)
     time_horizon = config.time_horizon;
     time_step = config.time_step;
 
-    number_time_steps = (uint)time_horizon / time_step;
+    number_time_steps = (uint)(time_horizon / time_step) + 1;
 
     max_iterations = config.max_iterations;
     control_threshold = config.control_threshold;
@@ -420,7 +420,7 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
     time_horizon = config.time_horizon;
     time_step = config.time_step;
 
-    number_time_steps = (uint)time_horizon / time_step;
+    number_time_steps = (uint)(time_horizon / time_step) + 1;
 
     max_iterations = config.max_iterations;
     control_threshold = config.control_threshold;
@@ -511,6 +511,22 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                                                    const std::vector<Eigen::VectorXd> & u0,
                                                    uint max_iter)
 {
+    if(x0.size() != number_time_steps)
+    {
+        std::cout << red
+                  << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: The provided goal state matrix has a wrong number of time steps"
+                  << nocolor << std::endl;
+        return -1;
+    }
+
+    if(u0.size() != number_time_steps)
+    {
+        std::cout << red
+                  << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: The provided goal input matrix has a wrong number of time steps"
+                  << nocolor << std::endl;
+        return -1;
+    }
+
     // State and input along the whole time horizon
     std::vector<Eigen::VectorXd> x(number_time_steps, Eigen::VectorXd::Zero(number_states));
     std::vector<Eigen::VectorXd> u(number_time_steps, Eigen::VectorXd::Zero(number_inputs));
@@ -596,17 +612,21 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                                              Eigen::VectorXd::Zero(number_states));
         // Solve backwards
         Eigen::MatrixXd I_states = Eigen::MatrixXd::Identity(number_states, number_states);
-        for(uint i = number_time_steps - 2; i >= 0; i--)
+        for(int i = number_time_steps - 2; i >= 0; i--)
         {
-            Eigen::MatrixXd Rh_inv = Rh[i].inverse();
             Eigen::MatrixXd Ah_trans = Ah[i].transpose();
             Eigen::MatrixXd Bh_trans = Bh[i].transpose();
+            Eigen::MatrixXd Rh_inv_Bh_t = Rh[i].llt().solve(Bh_trans);
 
-            M[i] = I_states + Bh[i] * Rh_inv * Bh_trans * P[i];
-            P[i] = Qh[i] + Ah_trans * P[i] * M[i] * Ah[i];
-            s[i] = Ah_trans * (I_states - P[i + 1] * M[i] * Bh[i] * Rh_inv * Bh_trans) * s[i + 1] +
+            M[i] = (I_states + Bh[i] * Rh_inv_Bh_t * P[i+1]).inverse();
+            P[i] = Qh[i] + Ah_trans * P[i+1] * M[i] * Ah[i];
+            s[i] = Ah_trans * (I_states - P[i + 1] * M[i] * Bh[i] * Rh_inv_Bh_t) * s[i + 1] +
                    Ah_trans * P[i + 1] * M[i] * Bh[i] * uh0[i] - Qh[i] * xh0[i] +
                    obstacles_repulsive_cost[i];
+
+            std::cout<<"M["<<i<<"]: "<<M[i]<<std::endl;
+            std::cout<<"P["<<i<<"]: "<<P[i]<<std::endl;
+            std::cout<<"s["<<i<<"]: "<<s[i]<<std::endl;
         }
 
         // Solve forwards
@@ -625,21 +645,20 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         bool convergence_condition = true;
         double distance_to_goal;
         double orientation_to_goal;
+        std::cout <<"[MotionPlanner::generateUnconstrainedMotionPlan]: Iteration number "
+                  << number_iterations <<std::endl;
         number_iterations++;
-        std::cout << std::endl
-                  << "\r[MotionPlanner::generateUnconstrainedMotionPlan]: Iteration number "
-                  << number_iterations << "...";
 
         // Check if the control is not changing
         for(uint i = 0; i < number_time_steps; i++)
             convergence_condition &=
-                (uh[i].squaredNorm() <= control_threshold * u[i].squaredNorm());
-        if(!convergence_condition) convergence_status = -2;
+                (uh[i].norm() <= control_threshold * u[i].norm());
 
-        // Check if the distance objective has been reached
-        if(convergence_condition)
+        // If the control can be improved, check if a suitable solution is already planned
+        if(!convergence_condition)
         {
-            if(check_distance && convergence_condition)
+            // Check if the distance objective has been reached
+            if(check_distance)
             {
                 Eigen::VectorXd termination_state(distance_indexes.size());
                 Eigen::VectorXd termination_goal(distance_indexes.size());
@@ -649,8 +668,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                     termination_state(i) = x[number_time_steps - 1](distance_indexes[i]);
                     termination_goal(i) = x0[number_time_steps - 1](distance_indexes[i]);
                 }
-
-                distance_to_goal = (termination_state - termination_goal).squaredNorm();
+                distance_to_goal = (termination_state - termination_goal).norm();
 
                 if(distance_to_goal < distance_threshold)
                 {
@@ -658,8 +676,11 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
 
                     for(uint i = 0; i < number_time_steps; i++)
                         convergence_condition &=
-                            (uh[i].squaredNorm() <= 20 * control_threshold * u[i].squaredNorm());
+                            (uh[i].norm() <= 20 * control_threshold * u[i].norm());
                 }
+                std::cout << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
+                             "goal position: "
+                          << distance_to_goal << std::endl;
 
                 if(!convergence_condition) convergence_status = -1;
             }
@@ -675,9 +696,13 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                     termination_goal(i) = x0[number_time_steps - 1](orientation_indexes[i]);
                 }
 
-                orientation_to_goal = (termination_state, termination_goal).squaredNorm();
+                orientation_to_goal = (termination_state, termination_goal).norm();
 
                 convergence_condition &= (orientation_to_goal < orientation_threshold);
+
+                std::cout << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
+                             "goal orientation: "
+                          << orientation_to_goal << std::endl;
 
                 if(!convergence_condition) convergence_status = -1;
             }
@@ -704,18 +729,17 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         // If the algorithm has converged!!
         if(convergence_condition)
         {
-            std::cout << std::endl;
             std::cout << green
                       << "[MotionPlanner::generateUnconstrainedMotionPlan]: The motion planner "
                          "found a solution!"
                       << nocolor << std::endl;
             if(check_distance)
                 std::cout << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
-                             "goalposition: "
+                             "goal position: "
                           << distance_to_goal << std::endl;
             if(check_orientation)
                 std::cout << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
-                             "goalorientation: "
+                             "goal orientation: "
                           << orientation_to_goal << std::endl;
 
             planned_state = x;
@@ -735,21 +759,21 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         {
             std::cout << red
                       << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: The motion "
-                         "planner failed to find a solution";
+                         "planner failed to find a solution, ";
 
             switch(convergence_status)
             {
                 case -1:
-                    std::cout << "The goal distance threshold was not satisfied";
+                    std::cout << "the goal distance threshold was not satisfied";
                     break;
                 case -2:
-                    std::cout << "The goal control threshold was not satisfied";
+                    std::cout << "the goal control threshold was not satisfied";
                     break;
                 case -3:
-                    std::cout << "The generated solution was not safe";
+                    std::cout << "the generated solution was not safe";
                     break;
                 default:
-                    std::cout << "Something unexpected happened";
+                    std::cout << "something unexpected happened";
                     break;
             }
 

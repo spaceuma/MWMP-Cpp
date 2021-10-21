@@ -1241,7 +1241,8 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
             Q(goal_states_indexes[i], goal_states_indexes[i]) = goal_states_cost[i] / time_ratio;
         }
     }
-    else if(percentage_horizon > horizon_speed_reduction)
+
+    if(percentage_horizon > horizon_speed_reduction)
     {
         double linear_cost =
             (percentage_horizon - horizon_speed_reduction) / (100 - horizon_speed_reduction);
@@ -1917,6 +1918,7 @@ bool MobileManipulator::getObstaclesCost(
     double map_resolution,
     const std::vector<std::vector<double>> & gradient_obstacles_map_X,
     const std::vector<std::vector<double>> & gradient_obstacles_map_Y,
+    double time_horizon,
     std::vector<double> & obstacles_cost)
 {
     if(obstacles_cost.size() != number_states)
@@ -1956,10 +1958,12 @@ bool MobileManipulator::getObstaclesCost(
         if(iy < 0 + 2) iy = 0 + 2;
     }
 
+    double time_ratio = time_horizon / 60;
+
     obstacles_cost[robot_pose_indexes[0]] =
-        obstacles_repulsive_cost * gradient_obstacles_map_X[iy][ix];
+        obstacles_repulsive_cost * gradient_obstacles_map_X[iy][ix] * time_ratio;
     obstacles_cost[robot_pose_indexes[1]] =
-        obstacles_repulsive_cost * gradient_obstacles_map_Y[iy][ix];
+        obstacles_repulsive_cost * gradient_obstacles_map_Y[iy][ix] * time_ratio;
 
     return true;
 }
@@ -1969,6 +1973,7 @@ bool MobileManipulator::getObstaclesCost(
     double map_resolution,
     const std::vector<std::vector<double>> & gradient_obstacles_map_X,
     const std::vector<std::vector<double>> & gradient_obstacles_map_Y,
+    double time_horizon,
     Eigen::VectorXd & obstacles_cost)
 {
     if(obstacles_cost.size() != number_states)
@@ -2008,10 +2013,12 @@ bool MobileManipulator::getObstaclesCost(
         if(iy < 0 + 2) iy = 0 + 2;
     }
 
-    obstacles_cost(robot_pose_indexes[0]) =
-        obstacles_repulsive_cost * gradient_obstacles_map_X[iy][ix];
-    obstacles_cost(robot_pose_indexes[1]) =
-        obstacles_repulsive_cost * gradient_obstacles_map_Y[iy][ix];
+    double time_ratio = time_horizon / 60;
+
+    obstacles_cost[robot_pose_indexes[0]] =
+        obstacles_repulsive_cost * gradient_obstacles_map_X[iy][ix] * time_ratio;
+    obstacles_cost[robot_pose_indexes[1]] =
+        obstacles_repulsive_cost * gradient_obstacles_map_Y[iy][ix] * time_ratio;
 
     return true;
 }

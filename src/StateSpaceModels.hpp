@@ -438,6 +438,7 @@ public:
                           double map_resolution,
                           const std::vector<std::vector<double>> & gradient_obstacles_map_X,
                           const std::vector<std::vector<double>> & gradient_obstacles_map_Y,
+                          double time_horizon,
                           std::vector<double> & obstacles_cost);
 
     // Eigen overload
@@ -445,6 +446,7 @@ public:
                           double map_resolution,
                           const std::vector<std::vector<double>> & gradient_obstacles_map_X,
                           const std::vector<std::vector<double>> & gradient_obstacles_map_Y,
+                          double time_horizon,
                           Eigen::VectorXd & obstacles_cost);
 
     // Returns the wheel inertia

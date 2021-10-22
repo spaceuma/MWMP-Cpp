@@ -79,7 +79,7 @@ bool MatrixOperations::dot(const std::vector<std::vector<double>> & A,
         for(int j = 0; j < n; j++)
         {
             C[i][j] = 0;
-            for(int k = 0; k < B.size(); k++)
+            for(int k = 0; k < m; k++)
                 C[i][j] += A[i][k] * B[k][j];
         }
 
@@ -798,8 +798,10 @@ bool MatrixOperations::getCrossProduct(const std::vector<double> & a,
 std::vector<double> MatrixOperations::getSum(const std::vector<double> & a,
                                              const std::vector<double> & b)
 {
+    int m = a.size();
+
     std::vector<double> c;
-    if(a.size() != b.size())
+    if(m != b.size())
     {
         throw std::domain_error(
             red + std::string("ERROR [MatrixOperations::getSum]: Vectors sizes don't match") +
@@ -807,7 +809,7 @@ std::vector<double> MatrixOperations::getSum(const std::vector<double> & a,
         return std::vector<double>(1, 0);
     }
 
-    for(int i = 0; i < a.size(); i++)
+    for(int i = 0; i < m; i++)
     {
         c.push_back(a[i] + b[i]);
     }
@@ -835,7 +837,7 @@ bool MatrixOperations::getSum(const std::vector<double> & a,
         return false;
     }
 
-    for(int i = 0; i < a.size(); i++)
+    for(int i = 0; i < m; i++)
     {
         c.push_back(a[i] + b[i]);
     }
@@ -897,8 +899,10 @@ bool MatrixOperations::getSum(const std::vector<std::vector<double>> & A,
 std::vector<double> MatrixOperations::getDifference(const std::vector<double> & a,
                                                     const std::vector<double> & b)
 {
+    int m = a.size();
+
     std::vector<double> c;
-    if(a.size() != b.size())
+    if(m != b.size())
     {
         throw std::domain_error(
             red +
@@ -907,7 +911,7 @@ std::vector<double> MatrixOperations::getDifference(const std::vector<double> & 
         return std::vector<double>(1, 0);
     }
 
-    for(int i = 0; i < a.size(); i++)
+    for(int i = 0; i < m; i++)
     {
         c.push_back(a[i] - b[i]);
     }

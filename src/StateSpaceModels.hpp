@@ -287,28 +287,52 @@ public:
     double getSafetyDistance();
 
     // Returns the state vector given the robot state.
-    Eigen::VectorXd getInitialStateVector(const std::vector<double> & robot_pose,
-                                          const std::vector<double> & arm_positions);
+    Eigen::VectorXd getInitialStateVectorEigen(const std::vector<double> & robot_pose,
+                                               const std::vector<double> & arm_positions);
+
+    // Returns the state vector given the robot state.
+    bool getInitialStateVectorEigen(const std::vector<double> & robot_pose,
+                                    const std::vector<double> & arm_positions,
+                                    Eigen::VectorXd & x);
+
+    // Returns the state vector given the robot state.
+    std::vector<double> getInitialStateVector(const std::vector<double> & robot_pose,
+                                              const std::vector<double> & arm_positions);
 
     // Returns the state vector given the robot state.
     bool getInitialStateVector(const std::vector<double> & robot_pose,
                                const std::vector<double> & arm_positions,
-                               Eigen::VectorXd & x);
+                               std::vector<double> & x);
 
     // Returns the goal state vector given de desired goal ee pose.
-    Eigen::VectorXd getGoalStateVector(const std::vector<double> & goal_ee_pose);
+    Eigen::VectorXd getGoalStateVectorEigen(const std::vector<double> & goal_ee_pose);
 
     // Returns the goal state vector given de desired goal ee pose.
-    bool getGoalStateVector(const std::vector<double> & goal_ee_pose, Eigen::VectorXd & x);
+    bool getGoalStateVectorEigen(const std::vector<double> & goal_ee_pose, Eigen::VectorXd & x);
+
+    // Returns the goal state vector given de desired goal ee pose.
+    std::vector<double> getGoalStateVector(const std::vector<double> & goal_ee_pose);
+
+    // Returns the goal state vector given de desired goal ee pose.
+    bool getGoalStateVector(const std::vector<double> & goal_ee_pose, std::vector<double> & x);
 
     // Returns the input vector given the robot inputs.
-    Eigen::VectorXd getInputVector(const std::vector<double> & arm_speeds,
-                                   const std::vector<double> & wheel_speeds);
+    Eigen::VectorXd getInputVectorEigen(const std::vector<double> & arm_speeds,
+                                        const std::vector<double> & wheel_speeds);
+
+    // Returns the input vector given the robot inputs.
+    bool getInputVectorEigen(const std::vector<double> & arm_speeds,
+                             const std::vector<double> & wheel_speeds,
+                             Eigen::VectorXd & u);
+
+    // Returns the input vector given the robot inputs.
+    std::vector<double> getInputVector(const std::vector<double> & arm_speeds,
+                                       const std::vector<double> & wheel_speeds);
 
     // Returns the input vector given the robot inputs.
     bool getInputVector(const std::vector<double> & arm_speeds,
                         const std::vector<double> & wheel_speeds,
-                        Eigen::VectorXd & u);
+                        std::vector<double> & u);
 
     // Returns the linearized state space model matrix A.
     // Size of A: number_states x number_states

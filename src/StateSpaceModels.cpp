@@ -207,8 +207,9 @@ double MobileManipulator::getSafetyDistance()
     return safety_distance;
 }
 
-Eigen::VectorXd MobileManipulator::getInitialStateVector(const std::vector<double> & robot_pose,
-                                                         const std::vector<double> & arm_positions)
+Eigen::VectorXd MobileManipulator::getInitialStateVectorEigen(
+    const std::vector<double> & robot_pose,
+    const std::vector<double> & arm_positions)
 {
     Eigen::VectorXd x = Eigen::VectorXd::Zero(number_states);
 
@@ -299,9 +300,9 @@ Eigen::VectorXd MobileManipulator::getInitialStateVector(const std::vector<doubl
     return x;
 }
 
-bool MobileManipulator::getInitialStateVector(const std::vector<double> & robot_pose,
-                                              const std::vector<double> & arm_positions,
-                                              Eigen::VectorXd & x)
+bool MobileManipulator::getInitialStateVectorEigen(const std::vector<double> & robot_pose,
+                                                   const std::vector<double> & arm_positions,
+                                                   Eigen::VectorXd & x)
 {
     if(robot_name == "exoter")
     {
@@ -401,7 +402,202 @@ bool MobileManipulator::getInitialStateVector(const std::vector<double> & robot_
     return true;
 }
 
-Eigen::VectorXd MobileManipulator::getGoalStateVector(const std::vector<double> & goal_ee_pose)
+std::vector<double> MobileManipulator::getInitialStateVector(
+    const std::vector<double> & robot_pose,
+    const std::vector<double> & arm_positions)
+{
+    std::vector<double> x(number_states, 0);
+
+    if(robot_name == "exoter")
+    {
+        // TODO This should be obtained from a URDF file, not hardcoded
+        if(robot_pose.size() != 3)
+        {
+            throw std::domain_error(
+                red +
+                std::string("ERROR [MobileManipulator::getInitialStateVector]: The provided robot "
+                            "pose doesn't match the expected size") +
+                nocolor);
+        }
+
+        if(arm_positions.size() != arm_position_indexes.size())
+        {
+            throw std::domain_error(
+                red +
+                std::string("ERROR [MobileManipulator::getInitialStateVector]: The provided "
+                            "arm_positions don't match the expected size") +
+                nocolor);
+        }
+
+        for(uint i = 0; i < robot_pose_indexes.size(); i++)
+            x[robot_pose_indexes[i]] = robot_pose[i];
+
+        x[yaw_index] = robot_pose[2];
+
+        for(uint i = 0; i < arm_position_indexes.size(); i++)
+            x[arm_position_indexes[i]] = arm_positions[i];
+
+        std::vector<std::vector<double>> transform_center_base =
+            dot(getTraslation(position_offset_cb),
+                dot(getXRot(orientation_offset_cb[0]),
+                    dot(getYRot(orientation_offset_cb[1]), getZRot(orientation_offset_cb[2]))));
+
+        std::vector<std::vector<double>> transform_base_ee(4, std::vector<double>(4, 0));
+        if(!getDirectKinematicsTransform(arm_positions, arm_positions.size(), transform_base_ee))
+        {
+            throw std::domain_error(red +
+                                    std::string("ERROR [MobileManipulator::getInitialStateVector]: "
+                                                "Failure while computing direct kinematics") +
+                                    nocolor);
+        }
+
+        std::vector<std::vector<double>> transform_center_ee =
+            dot(transform_center_base, transform_base_ee);
+
+        for(uint i = 0; i < base_ee_pose_indexes.size(); i++)
+            switch(i)
+            {
+                case 0:
+                    x[base_ee_pose_indexes[i]] = -transform_center_ee[2][3];
+                    break;
+                case 1:
+                    x[base_ee_pose_indexes[i]] = transform_center_ee[i][3];
+                    break;
+                case 2:
+                    x[base_ee_pose_indexes[i]] = transform_center_ee[0][3];
+                    break;
+                case 3:
+                    x[base_ee_pose_indexes[i]] = arm_positions[4];
+                    break;
+                case 4:
+                    x[base_ee_pose_indexes[i]] =
+                        arm_positions[1] + arm_positions[2] + arm_positions[3];
+                    break;
+                case 5:
+                    x[base_ee_pose_indexes[i]] = arm_positions[0];
+                    break;
+                default:
+                    break;
+            }
+
+        std::vector<double> robot_position = robot_pose;
+        robot_position[2] = robot_height;
+        std::vector<std::vector<double>> transform_world_center =
+            dot(getTraslation(robot_position), getZRot(robot_pose[2]));
+
+        std::vector<std::vector<double>> transform_world_ee =
+            dot(transform_world_center, transform_center_ee);
+
+        for(uint i = 0; i < world_ee_pose_indexes.size(); i++)
+            x[world_ee_pose_indexes[i]] = transform_world_ee[i][3];
+    }
+
+    return x;
+}
+
+bool MobileManipulator::getInitialStateVector(const std::vector<double> & robot_pose,
+                                              const std::vector<double> & arm_positions,
+                                              std::vector<double> & x)
+{
+    if(robot_name == "exoter")
+    {
+        // TODO This should be obtained from a URDF file, not hardcoded
+        if(x.size() != number_states)
+        {
+            std::cout
+                << red
+                << "ERROR [MobileManipulator::getInitialStateVector]: The passed-by-reference "
+                   "vector doesn't match the expected size"
+                << nocolor << std::endl;
+            return false;
+        }
+
+        if(robot_pose.size() != 3)
+        {
+            std::cout << red
+                      << "ERROR [MobileManipulator::getInitialStateVector]: The provided robot "
+                         "pose doesn't match the expected size"
+                      << nocolor << std::endl;
+            return false;
+        }
+
+        if(arm_positions.size() != arm_position_indexes.size())
+        {
+            std::cout << red
+                      << "ERROR [MobileManipulator::getInitialStateVector]: The provided arm "
+                         "positions don't match the expected size"
+                      << nocolor << std::endl;
+            return false;
+        }
+
+        for(uint i = 0; i < robot_pose_indexes.size(); i++)
+            x[robot_pose_indexes[i]] = robot_pose[i];
+
+        x[yaw_index] = robot_pose[2];
+
+        for(uint i = 0; i < arm_position_indexes.size(); i++)
+            x[arm_position_indexes[i]] = arm_positions[i];
+
+        std::vector<std::vector<double>> transform_center_base =
+            dot(getTraslation(position_offset_cb),
+                dot(getXRot(orientation_offset_cb[0]),
+                    dot(getYRot(orientation_offset_cb[1]), getZRot(orientation_offset_cb[2]))));
+
+        std::vector<std::vector<double>> transform_base_ee(4, std::vector<double>(4, 0));
+        if(!getDirectKinematicsTransform(arm_positions, arm_positions.size(), transform_base_ee))
+        {
+            std::cout << red
+                      << "ERROR [MobileManipulator::getInitialStateVector]: Failure while "
+                         "computing direct kinematics"
+                      << nocolor << std::endl;
+            ;
+        }
+
+        std::vector<std::vector<double>> transform_center_ee =
+            dot(transform_center_base, transform_base_ee);
+
+        for(uint i = 0; i < base_ee_pose_indexes.size(); i++)
+            switch(i)
+            {
+                case 0:
+                    x[base_ee_pose_indexes[i]] = -transform_center_ee[2][3];
+                    break;
+                case 1:
+                    x[base_ee_pose_indexes[i]] = transform_center_ee[i][3];
+                    break;
+                case 2:
+                    x[base_ee_pose_indexes[i]] = transform_center_ee[0][3];
+                    break;
+                case 3:
+                    x[base_ee_pose_indexes[i]] = arm_positions[4];
+                    break;
+                case 4:
+                    x[base_ee_pose_indexes[i]] =
+                        arm_positions[1] + arm_positions[2] + arm_positions[3];
+                    break;
+                case 5:
+                    x[base_ee_pose_indexes[i]] = arm_positions[0];
+                    break;
+                default:
+                    break;
+            }
+
+        std::vector<double> robot_position = robot_pose;
+        robot_position[2] = robot_height;
+        std::vector<std::vector<double>> transform_world_center =
+            dot(getTraslation(robot_position), getZRot(robot_pose[2]));
+
+        std::vector<std::vector<double>> transform_world_ee =
+            dot(transform_world_center, transform_center_ee);
+
+        for(uint i = 0; i < world_ee_pose_indexes.size(); i++)
+            x[world_ee_pose_indexes[i]] = transform_world_ee[i][3];
+    }
+
+    return true;
+}
+
+Eigen::VectorXd MobileManipulator::getGoalStateVectorEigen(const std::vector<double> & goal_ee_pose)
 {
     if(goal_ee_pose.size() != 6)
     {
@@ -422,8 +618,8 @@ Eigen::VectorXd MobileManipulator::getGoalStateVector(const std::vector<double> 
     return x;
 }
 
-bool MobileManipulator::getGoalStateVector(const std::vector<double> & goal_ee_pose,
-                                           Eigen::VectorXd & x)
+bool MobileManipulator::getGoalStateVectorEigen(const std::vector<double> & goal_ee_pose,
+                                                Eigen::VectorXd & x)
 {
     if(x.size() != number_states)
     {
@@ -451,8 +647,58 @@ bool MobileManipulator::getGoalStateVector(const std::vector<double> & goal_ee_p
     return true;
 }
 
-Eigen::VectorXd MobileManipulator::getInputVector(const std::vector<double> & arm_speeds,
-                                                  const std::vector<double> & wheel_speeds)
+std::vector<double> MobileManipulator::getGoalStateVector(const std::vector<double> & goal_ee_pose)
+{
+    if(goal_ee_pose.size() != 6)
+    {
+        throw std::domain_error(red +
+                                std::string("ERROR [MobileManipulator::getGoalStateVector]: The "
+                                            "goal ee pose doesn't match the expected size") +
+                                nocolor);
+    }
+
+    std::vector<double> x(number_states, 0);
+
+    for(uint i = 0; i < goal_distance_indexes.size(); i++)
+        x[goal_distance_indexes[i]] = goal_ee_pose[i];
+
+    for(uint i = 0; i < goal_orientation_indexes.size(); i++)
+        x[goal_orientation_indexes[i]] = goal_ee_pose[i + 3];
+
+    return x;
+}
+
+bool MobileManipulator::getGoalStateVector(const std::vector<double> & goal_ee_pose,
+                                           std::vector<double> & x)
+{
+    if(x.size() != number_states)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getGoalStateVector]: The passed-by-reference "
+                     "vector doesn't match the expected size"
+                  << nocolor << std::endl;
+        return false;
+    }
+    if(goal_ee_pose.size() != 6)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getGoalStateVector]: The goal ee pose doesn't "
+                     "match the expected size"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    for(uint i = 0; i < goal_distance_indexes.size(); i++)
+        x[goal_distance_indexes[i]] = goal_ee_pose[i];
+
+    for(uint i = 0; i < goal_orientation_indexes.size(); i++)
+        x[goal_orientation_indexes[i]] = goal_ee_pose[i + 3];
+
+    return true;
+}
+
+Eigen::VectorXd MobileManipulator::getInputVectorEigen(const std::vector<double> & arm_speeds,
+                                                       const std::vector<double> & wheel_speeds)
 {
     if(arm_speeds.size() != arm_actuators_indexes.size())
     {
@@ -481,9 +727,9 @@ Eigen::VectorXd MobileManipulator::getInputVector(const std::vector<double> & ar
     return u;
 }
 
-bool MobileManipulator::getInputVector(const std::vector<double> & arm_speeds,
-                                       const std::vector<double> & wheel_speeds,
-                                       Eigen::VectorXd & u)
+bool MobileManipulator::getInputVectorEigen(const std::vector<double> & arm_speeds,
+                                            const std::vector<double> & wheel_speeds,
+                                            Eigen::VectorXd & u)
 {
     if(u.size() != number_inputs)
     {
@@ -517,6 +763,76 @@ bool MobileManipulator::getInputVector(const std::vector<double> & arm_speeds,
 
     for(uint i = 0; i < wheels_actuators_indexes.size(); i++)
         u(wheels_actuators_indexes[i]) = wheel_speeds[i];
+
+    return true;
+}
+
+std::vector<double> MobileManipulator::getInputVector(const std::vector<double> & arm_speeds,
+                                                      const std::vector<double> & wheel_speeds)
+{
+    if(arm_speeds.size() != arm_actuators_indexes.size())
+    {
+        throw std::domain_error(red +
+                                std::string("ERROR [MobileManipulator::getInputVector]: The "
+                                            "provided arm speeds don't match the expected size") +
+                                nocolor);
+    }
+
+    if(wheel_speeds.size() != wheels_actuators_indexes.size())
+    {
+        throw std::domain_error(red +
+                                std::string("ERROR [MobileManipulator::getInputVector]: The "
+                                            "provided wheel speeds don't match the expected size") +
+                                nocolor);
+    }
+
+    std::vector<double> u(number_inputs, 0);
+
+    for(uint i = 0; i < arm_actuators_indexes.size(); i++)
+        u[arm_actuators_indexes[i]] = arm_speeds[i];
+
+    for(uint i = 0; i < wheels_actuators_indexes.size(); i++)
+        u[wheels_actuators_indexes[i]] = wheel_speeds[i];
+
+    return u;
+}
+
+bool MobileManipulator::getInputVector(const std::vector<double> & arm_speeds,
+                                       const std::vector<double> & wheel_speeds,
+                                       std::vector<double> & u)
+{
+    if(u.size() != number_inputs)
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getInputVector]: The passed-by-reference "
+                     "vector doesn't match the expected size"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    if(arm_speeds.size() != arm_actuators_indexes.size())
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getInputVector]: The provided arm speeds don't "
+                     "match the expected size"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    if(wheel_speeds.size() != wheels_actuators_indexes.size())
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getInputVector]: The provided wheel speeds don't "
+                     "match the expected size"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    for(uint i = 0; i < arm_actuators_indexes.size(); i++)
+        u[arm_actuators_indexes[i]] = arm_speeds[i];
+
+    for(uint i = 0; i < wheels_actuators_indexes.size(); i++)
+        u[wheels_actuators_indexes[i]] = wheel_speeds[i];
 
     return true;
 }

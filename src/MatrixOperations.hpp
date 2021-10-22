@@ -57,6 +57,12 @@ bool dot(const std::vector<std::vector<double>> & A,
          const std::vector<std::vector<double>> & B,
          std::vector<std::vector<double>> & C);
 
+std::vector<double> dot(const std::vector<double> & a, const std::vector<std::vector<double>> & B);
+
+bool dot(const std::vector<double> & a,
+         const std::vector<std::vector<double>> & B,
+         std::vector<double> & c);
+
 std::vector<double> dot(const std::vector<std::vector<double>> & A, const std::vector<double> & b);
 
 bool dot(const std::vector<std::vector<double>> & A,
@@ -192,6 +198,30 @@ std::vector<std::vector<double>> getTranspose(const std::vector<std::vector<doub
 
 bool getTranspose(const std::vector<std::vector<double>> & A,
                   std::vector<std::vector<double>> & At);
+
+//****************//
+// Vector 2 Eigen //
+//****************//
+
+Eigen::VectorXd getEigenVector(const std::vector<double> & a);
+
+bool getEigenVector(const std::vector<double> & a, Eigen::VectorXd & b);
+
+Eigen::MatrixXd getEigenMatrix(const std::vector<std::vector<double>> & A);
+
+bool getEigenMatrix(const std::vector<std::vector<double>> & A, Eigen::MatrixXd & B);
+
+//****************//
+// Eigen 2 Vector //
+//****************//
+
+std::vector<double> getVectorFromEigen(const Eigen::VectorXd & a);
+
+bool getVectorFromEigen(const Eigen::VectorXd & a, std::vector<double> & b);
+
+std::vector<std::vector<double>> getMatrixFromEigen(const Eigen::MatrixXd & A);
+
+bool getMatrixFromEigen(const Eigen::MatrixXd & A, std::vector<std::vector<double>> & B);
 
 }    // namespace MatrixOperations
 #endif

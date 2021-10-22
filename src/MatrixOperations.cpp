@@ -92,6 +92,15 @@ std::vector<double> MatrixOperations::dot(const std::vector<std::vector<double>>
     // This function performs matrix and vector product
     int m = A.size();
     int n = b.size();
+
+    if(A[0].size() != n)
+    {
+        throw std::domain_error(
+            red +
+            std::string("ERROR [MatrixOperations::dot]: Matrix and vector sizes don't match") +
+            nocolor);
+    }
+
     std::vector<double> c(m, 0);
 
     for(int i = 0; i < m; i++)
@@ -111,7 +120,13 @@ bool MatrixOperations::dot(const std::vector<std::vector<double>> & A,
     int m = A.size();
     int n = b.size();
 
-    if(c.size() != m || c.size() != n)
+    if(A[0].size() != n)
+    {
+        std::cout << red << "ERROR [MatrixOperations::dot]: Matrix and vector sizes don't match"
+                  << nocolor << std::endl;
+        return false;
+    }
+    if(c.size() != m)
     {
         std::cout << red << "ERROR [MatrixOperations::dot]: Wrong output vector size" << nocolor
                   << std::endl;
@@ -122,6 +137,63 @@ bool MatrixOperations::dot(const std::vector<std::vector<double>> & A,
         for(int j = 0; j < n; j++)
         {
             c[i] += A[i][j] * b[j];
+        }
+
+    return true;
+}
+
+std::vector<double> MatrixOperations::dot(const std::vector<double> & a,
+                                          const std::vector<std::vector<double>> & B)
+{
+    // This function performs vector and matrix product
+    int m = a.size();
+    int n = B[0].size();
+
+    if(B.size() != m)
+    {
+        throw std::domain_error(
+            red +
+            std::string("ERROR [MatrixOperations::dot]: Matrix and vector sizes don't match") +
+            nocolor);
+    }
+
+    std::vector<double> c(n, 0);
+
+    for(int j = 0; j < n; j++)
+        for(int i = 0; i < m; i++)
+        {
+            c[j] += a[i] * B[i][j];
+        }
+
+    return c;
+}
+
+bool MatrixOperations::dot(const std::vector<double> & a,
+                           const std::vector<std::vector<double>> & B,
+                           std::vector<double> & c)
+{
+    // This function performs matrix and vector product
+    int m = a.size();
+    int n = B[0].size();
+
+    if(B.size() != m)
+    {
+        std::cout << red << "ERROR [MatrixOperations::dot]: Matrix and vector sizes don't match"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    if(c.size() != n)
+    {
+        std::cout << red << "ERROR [MatrixOperations::dot]: Wrong output vector size" << nocolor
+                  << std::endl;
+        return false;
+    }
+
+    for(int j = 0; j < n; j++)
+        for(int i = 0; i < m; i++)
+        {
+            c[j] += a[i] * B[i][j];
         }
 
     return true;
@@ -1048,6 +1120,136 @@ bool MatrixOperations::getTranspose(const std::vector<std::vector<double>> & A,
     for(int i = 0; i < m; i++)
         for(int j = 0; j < n; j++)
             At[j][i] = A[i][j];
+
+    return true;
+}
+
+Eigen::VectorXd MatrixOperations::getEigenVector(const std::vector<double> & a)
+{
+    int m = a.size();
+
+    Eigen::VectorXd b(m);
+
+    for(int i = 0; i < m; i++)
+        b(i) = a[i];
+
+    return b;
+}
+
+bool MatrixOperations::getEigenVector(const std::vector<double> & a, Eigen::VectorXd & b)
+{
+    int m = a.size();
+
+    if(b.size() != m)
+    {
+        std::cout << red << "ERROR [MatrixOperations::getEigenVector]: Wrong output vector size"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    for(int i = 0; i < m; i++)
+        b(i) = a[i];
+
+    return true;
+}
+
+Eigen::MatrixXd MatrixOperations::getEigenMatrix(const std::vector<std::vector<double>> & A)
+{
+    int m = A.size();
+    int n = A[0].size();
+
+    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(m, n);
+
+    for(int i = 0; i < m; i++)
+        for(int j = 0; i < n; j++)
+            B(i, j) = A[i][j];
+
+    return B;
+}
+
+bool MatrixOperations::getEigenMatrix(const std::vector<std::vector<double>> & A,
+                                      Eigen::MatrixXd & B)
+{
+    int m = A.size();
+    int n = A[0].size();
+
+    if(B.rows() != m || B.cols() != n)
+    {
+        std::cout << red << "ERROR [MatrixOperations::getEigenMatrix]: Wrong output matrix size"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    for(int i = 0; i < m; i++)
+        for(int j = 0; i < n; j++)
+            B(i, j) = A[i][j];
+
+    return true;
+}
+
+//****************//
+// Eigen 2 Vector //
+//****************//
+
+std::vector<double> MatrixOperations::getVectorFromEigen(const Eigen::VectorXd & a)
+{
+    int m = a.size();
+
+    std::vector<double> b(m, 0);
+
+    for(int i = 0; i < m; i++)
+        b[i] = a(i);
+
+    return b;
+}
+
+bool MatrixOperations::getVectorFromEigen(const Eigen::VectorXd & a, std::vector<double> & b)
+{
+    int m = a.size();
+
+    if(b.size() != m)
+    {
+        std::cout << red << "ERROR [MatrixOperations::getVectorFromEigen]: Wrong output vector size"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    for(int i = 0; i < m; i++)
+        b[i] = a(i);
+
+    return true;
+}
+
+std::vector<std::vector<double>> MatrixOperations::getMatrixFromEigen(const Eigen::MatrixXd & A)
+{
+    int m = A.rows();
+    int n = A.cols();
+
+    std::vector<std::vector<double>> B(m, std::vector<double>(n, 0));
+
+    for(int i = 0; i < m; i++)
+        for(int j = 0; j < n; j++)
+            B[i][j] = A(i, j);
+
+    return B;
+}
+
+bool MatrixOperations::getMatrixFromEigen(const Eigen::MatrixXd & A,
+                                          std::vector<std::vector<double>> & B)
+{
+    int m = A.rows();
+    int n = A.cols();
+
+    if(B.size() != m || B[0].size() != n)
+    {
+        std::cout << red << "ERROR [MatrixOperations::getVectorFromEigen]: Wrong output matrix size"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    for(int i = 0; i < m; i++)
+        for(int j = 0; j < n; j++)
+            B[i][j] = A(i, j);
 
     return true;
 }

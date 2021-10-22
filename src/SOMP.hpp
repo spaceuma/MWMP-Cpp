@@ -190,8 +190,14 @@ private:
     // Resulting state vector. Size: number_states x number_time_steps
     std::vector<Eigen::VectorXd> planned_state;
 
+    // Resulting state vector. Size: number_states x number_time_steps
+    std::vector<std::vector<double>> planned_state_vector;
+
     // Resulting state vector. Size: number_inputs x number_time_steps
     std::vector<Eigen::VectorXd> planned_control;
+
+    // Resulting state vector. Size: number_inputs x number_time_steps
+    std::vector<std::vector<double>> planned_control_vector;
 
     //**********************//
     // Supporting variables //
@@ -222,11 +228,25 @@ private:
                          std::vector<Eigen::MatrixXd> & Rh,
                          std::vector<Eigen::MatrixXd> & Kh);
 
+    bool generateHorizon(std::vector<std::vector<double>> & x,
+                         const std::vector<std::vector<double>> & u,
+                         std::vector<std::vector<std::vector<double>>> & Ah,
+                         std::vector<std::vector<std::vector<double>>> & Bh,
+                         std::vector<std::vector<std::vector<double>>> & Qh,
+                         std::vector<std::vector<std::vector<double>>> & Rh,
+                         std::vector<std::vector<std::vector<double>>> & Kh);
+
     // Update the linearized matrixes A and B throughout the whole time horizon
     bool updateLinearModel(const std::vector<Eigen::VectorXd> & x,
                            const std::vector<Eigen::VectorXd> & u,
                            std::vector<Eigen::MatrixXd> & Ah,
                            std::vector<Eigen::MatrixXd> & Bh);
+
+    // Update the linearized matrixes A and B throughout the whole time horizon
+    bool updateLinearModel(const std::vector<std::vector<double>> & x,
+                           const std::vector<std::vector<double>> & u,
+                           std::vector<std::vector<std::vector<double>>> & Ah,
+                           std::vector<std::vector<std::vector<double>>> & Bh);
 
     // Get the complete time-horizon state, ss linearized matrixes and cost matrixes
     bool generateHorizonConstraints(std::vector<Eigen::MatrixXd> & Ch,
@@ -234,6 +254,13 @@ private:
                                     std::vector<Eigen::VectorXd> & rh,
                                     std::vector<Eigen::MatrixXd> & Gh,
                                     std::vector<Eigen::VectorXd> & hh);
+
+    // Get the complete time-horizon state, ss linearized matrixes and cost matrixes
+    bool generateHorizonConstraints(std::vector<std::vector<std::vector<double>>> & Ch,
+                                    std::vector<std::vector<std::vector<double>>> & Dh,
+                                    std::vector<std::vector<double>> & rh,
+                                    std::vector<std::vector<std::vector<double>>> & Gh,
+                                    std::vector<std::vector<double>> & hh);
 
     // Get the gradient of the obstacles map
     bool computeObstaclesGradient(const std::vector<std::vector<uint>> & obst_map);
@@ -253,6 +280,17 @@ private:
                            const std::vector<Eigen::VectorXd> & uh,
                            const std::vector<Eigen::MatrixXd> & Qh,
                            const std::vector<Eigen::MatrixXd> & Rh);
+
+    // Compute the line search procedure, trying to find the best way to apply
+    // the computed state and control steps (xh and uh),if convergence is not
+    // reached yet, decreasing the intensity of the actuation step
+    bool computeLineSearch(std::vector<std::vector<double>> & x,
+                           const std::vector<std::vector<double>> & x0,
+                           std::vector<std::vector<double>> & u,
+                           const std::vector<std::vector<double>> & u0,
+                           const std::vector<std::vector<double>> & uh,
+                           const std::vector<std::vector<std::vector<double>>> & Qh,
+                           const std::vector<std::vector<std::vector<double>>> & Rh);
 
 public:
     //*******************//
@@ -307,6 +345,12 @@ public:
                                         const std::vector<Eigen::VectorXd> & u0,
                                         uint max_iter);
 
+    int generateUnconstrainedMotionPlan(const std::vector<double> & x_ini,
+                                        const std::vector<std::vector<double>> & x0,
+                                        const std::vector<double> & u_ini,
+                                        const std::vector<std::vector<double>> & u0,
+                                        uint max_iter);
+
     int generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                                       const std::vector<Eigen::VectorXd> & x0,
                                       const Eigen::VectorXd & u_ini,
@@ -322,7 +366,11 @@ public:
     //**********//
     bool getPlannedState(std::vector<Eigen::VectorXd> & x);
 
+    bool getPlannedState(std::vector<std::vector<double>> & x);
+
     bool getPlannedControl(std::vector<Eigen::VectorXd> & u);
+
+    bool getPlannedControl(std::vector<std::vector<double>> & u);
 };
 }    // namespace SOMP
 #endif

@@ -108,6 +108,7 @@ struct MapInfo
 {
     double map_resolution;
     std::vector<std::vector<uint>> obstacles_map;
+    std::vector<double> goal_pose;
 };
 
 class MotionPlanner
@@ -213,20 +214,26 @@ private:
     //**********************//
 
     // Get the complete time-horizon state, ss linearized matrixes and cost matrixes
-    bool updateHorizon(std::vector<Eigen::VectorXd> & x,
-                       const std::vector<Eigen::VectorXd> & u,
-                       std::vector<Eigen::MatrixXd> & Ah,
-                       std::vector<Eigen::MatrixXd> & Bh,
-                       std::vector<Eigen::MatrixXd> & Qh,
-                       std::vector<Eigen::MatrixXd> & Rh,
-                       std::vector<Eigen::MatrixXd> & Kh);
+    bool generateHorizon(std::vector<Eigen::VectorXd> & x,
+                         const std::vector<Eigen::VectorXd> & u,
+                         std::vector<Eigen::MatrixXd> & Ah,
+                         std::vector<Eigen::MatrixXd> & Bh,
+                         std::vector<Eigen::MatrixXd> & Qh,
+                         std::vector<Eigen::MatrixXd> & Rh,
+                         std::vector<Eigen::MatrixXd> & Kh);
+
+    // Update the linearized matrixes A and B throughout the whole time horizon
+    bool updateLinearModel(const std::vector<Eigen::VectorXd> & x,
+                           const std::vector<Eigen::VectorXd> & u,
+                           std::vector<Eigen::MatrixXd> & Ah,
+                           std::vector<Eigen::MatrixXd> & Bh);
 
     // Get the complete time-horizon state, ss linearized matrixes and cost matrixes
-    bool updateHorizonConstraints(std::vector<Eigen::MatrixXd> & Ch,
-                                  std::vector<Eigen::MatrixXd> & Dh,
-                                  std::vector<Eigen::VectorXd> & rh,
-                                  std::vector<Eigen::MatrixXd> & Gh,
-                                  std::vector<Eigen::VectorXd> & hh);
+    bool generateHorizonConstraints(std::vector<Eigen::MatrixXd> & Ch,
+                                    std::vector<Eigen::MatrixXd> & Dh,
+                                    std::vector<Eigen::VectorXd> & rh,
+                                    std::vector<Eigen::MatrixXd> & Gh,
+                                    std::vector<Eigen::VectorXd> & hh);
 
     // Get the gradient of the obstacles map
     bool computeObstaclesGradient(const std::vector<std::vector<uint>> & obst_map);

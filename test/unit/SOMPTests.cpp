@@ -91,7 +91,7 @@ TEST(SOMP, unconstrained_mp_test)
     mp_config.line_search_step = 0.32;
     mp_config.check_distance = true;
     mp_config.check_orientation = true;
-    uint number_time_steps = 160;
+    uint number_time_steps = (uint)(mp_config.time_horizon / mp_config.time_step) + 1;
 
     SOMP::MapInfo mp_map;
     mp_map.map_resolution = 0.05;
@@ -126,7 +126,4 @@ TEST(SOMP, unconstrained_mp_test)
     std::vector<Eigen::VectorXd> u;
     exoter_mp->getPlannedState(x);
     exoter_mp->getPlannedControl(u);
-
-    std::cout << "Planned state:\n" << x[number_time_steps - 1] << std::endl;
-    std::cout << "Planned control:\n" << u[number_time_steps - 2] << std::endl;
 }

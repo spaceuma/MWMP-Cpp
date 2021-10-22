@@ -29,6 +29,7 @@
 // Space Robotics Lab (www.uma.es/space-robotics)
 
 #include "SOMP.hpp"
+#include <ctime>
 
 using namespace SOMP;
 using namespace StateSpaceModels;
@@ -625,9 +626,15 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
     std::vector<Eigen::VectorXd> xh0(number_time_steps, Eigen::VectorXd::Zero(number_states));
     std::vector<Eigen::VectorXd> uh0(number_time_steps, Eigen::VectorXd::Zero(number_inputs));
 
+    // Auxiliary variables
+    Eigen::MatrixXd I_states = Eigen::MatrixXd::Identity(number_states, number_states);
+    Eigen::MatrixXd I_inputs = Eigen::MatrixXd::Identity(number_inputs, number_inputs);
+    Eigen::MatrixXd Rh_inv = Rh[0].llt().solve(I_inputs);
+
     // Starting main loop
     while(true)
     {
+        double it_time = clock();
         // Generate reference trajectories
         //        xh0 = getDifference(x0, x);
         //        uh0 = getDifference(u0, u);
@@ -670,26 +677,32 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         std::vector<Eigen::VectorXd> v(number_time_steps, Eigen::VectorXd::Zero(number_states));
         std::vector<Eigen::VectorXd> lambdah(number_time_steps,
                                              Eigen::VectorXd::Zero(number_states));
+
         // Solve backwards
-        Eigen::MatrixXd I_states = Eigen::MatrixXd::Identity(number_states, number_states);
         for(int i = number_time_steps - 2; i >= 0; i--)
         {
             Eigen::MatrixXd Ah_trans = Ah[i].transpose();
             Eigen::MatrixXd Bh_trans = Bh[i].transpose();
-            Eigen::MatrixXd Rh_inv_Bh_t = Rh[i].llt().solve(Bh_trans);
+            Eigen::MatrixXd Rh_inv_Bh_t = Rh_inv*Bh_trans;
 
-            M[i] = (I_states + Bh[i] * Rh_inv_Bh_t * P[i + 1]).inverse();
-            P[i] = Qh[i] + Ah_trans * P[i + 1] * M[i] * Ah[i];
-            s[i] = Ah_trans * (I_states - P[i + 1] * M[i] * Bh[i] * Rh_inv_Bh_t) * s[i + 1] +
-                   Ah_trans * P[i + 1] * M[i] * Bh[i] * uh0[i] - Qh[i] * xh0[i] +
-                   obstacles_repulsive_cost[i];
+            M[i] = I_states;
+            M[i].noalias() += Bh[i] * Rh_inv_Bh_t * P[i + 1];
+            M[i].noalias() = M[i].inverse();
+
+            P[i] = Qh[i];
+            P[i].noalias() += Ah_trans * P[i + 1] * M[i] * Ah[i];
+
+            s[i] = obstacles_repulsive_cost[i];
+            s[i].noalias() += Ah_trans * (I_states - P[i + 1] * M[i] * Bh[i] * Rh_inv_Bh_t) * s[i + 1];
+            s[i].noalias() += Ah_trans * P[i + 1] * M[i] * Bh[i] * uh0[i];
+            s[i].noalias() -= - Qh[i] * xh0[i];
         }
 
         // Solve forwards
         for(uint i = 0; i < number_time_steps - 1; i++)
         {
             Eigen::MatrixXd Bh_trans = Bh[i].transpose();
-            Eigen::MatrixXd Rh_inv_Bh_t = Rh[i].llt().solve(Bh_trans);
+            Eigen::MatrixXd Rh_inv_Bh_t = Rh_inv*Bh_trans;
 
             v[i] = M[i] * Bh[i] * (uh0[i] - Rh_inv_Bh_t * s[i + 1]);
             xh[i + 1] = M[i] * Ah[i] * xh[i] + v[i];
@@ -839,6 +852,9 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
             std::cout << nocolor << std::endl;
             return convergence_status;
         }
+
+        std::cout<<yellow<<"Elapsed iteration time: "<<(double)(clock()-it_time)/CLOCKS_PER_SEC<<nocolor<<std::endl;
+        std::cout<<yellow<<"Threads used: "<<Eigen::nbThreads()<<nocolor<<std::endl;
     }
 
     return 1;

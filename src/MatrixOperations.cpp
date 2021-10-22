@@ -1158,11 +1158,13 @@ Eigen::MatrixXd MatrixOperations::getEigenMatrix(const std::vector<std::vector<d
     int m = A.size();
     int n = A[0].size();
 
-    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(m, n);
+    Eigen::MatrixXd B(m, n);
 
     for(int i = 0; i < m; i++)
-        for(int j = 0; i < n; j++)
+        for(int j = 0; j < n; j++)
+        {
             B(i, j) = A[i][j];
+        }
 
     return B;
 }
@@ -1181,7 +1183,7 @@ bool MatrixOperations::getEigenMatrix(const std::vector<std::vector<double>> & A
     }
 
     for(int i = 0; i < m; i++)
-        for(int j = 0; i < n; j++)
+        for(int j = 0; j < n; j++)
             B(i, j) = A[i][j];
 
     return true;

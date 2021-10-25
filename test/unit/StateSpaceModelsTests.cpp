@@ -64,7 +64,7 @@ TEST(StateSpaceModels, getters_test)
 
     EXPECT_EQ(0.15, exoter_model->getThresholdGoalOrientation());
 
-    std::vector<uint> robot_pose_indexes = {9, 10};
+    std::vector<uint> robot_pose_indexes = {9, 10, 11};
     EXPECT_EQ(robot_pose_indexes, exoter_model->getIndexesRobotPose());
 
     EXPECT_EQ(0.30, exoter_model->getRiskDistance());
@@ -300,8 +300,6 @@ TEST(StateSpaceModels, forward_integrate_test)
     Eigen::VectorXd xf2 = Eigen::VectorXd::Zero(exoter_model->getNumberStates());
 
     double ini_time = clock();
-    Eigen::MatrixXd Q2 =
-        Eigen::MatrixXd::Zero(exoter_model->getNumberStates(), exoter_model->getNumberStates());
     exoter_model->forwardIntegrateModel(x, u, time_step, xf2);
     std::cout << cyan
               << "[StateSpaceModels::forward_integrate_test] Elapsed time forward integration: "

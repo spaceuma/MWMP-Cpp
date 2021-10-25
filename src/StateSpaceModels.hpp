@@ -89,9 +89,6 @@ private:
     // Size: 2
     std::vector<uint> robot_pose_indexes;
 
-    // Index of the yaw of the robot
-    uint yaw_index;
-
     // Indexes of the XY and yaw speed of the robot
     // Size: 3
     std::vector<uint> base_speed_indexes;

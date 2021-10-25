@@ -48,8 +48,7 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         world_ee_pose_indexes = {0, 1, 2};
         base_ee_pose_indexes = {3, 4, 5, 6, 7, 8};
 
-        robot_pose_indexes = {9, 10};
-        yaw_index = 11;
+        robot_pose_indexes = {9, 10, 11};
 
         base_speed_indexes = {12, 13, 14};
 
@@ -237,8 +236,6 @@ Eigen::VectorXd MobileManipulator::getInitialStateVectorEigen(
         for(uint i = 0; i < robot_pose_indexes.size(); i++)
             x(robot_pose_indexes[i]) = robot_pose[i];
 
-        x(yaw_index) = robot_pose[2];
-
         for(uint i = 0; i < arm_position_indexes.size(); i++)
             x(arm_position_indexes[i]) = arm_positions[i];
 
@@ -338,8 +335,6 @@ bool MobileManipulator::getInitialStateVectorEigen(const std::vector<double> & r
         for(uint i = 0; i < robot_pose_indexes.size(); i++)
             x(robot_pose_indexes[i]) = robot_pose[i];
 
-        x(yaw_index) = robot_pose[2];
-
         for(uint i = 0; i < arm_position_indexes.size(); i++)
             x(arm_position_indexes[i]) = arm_positions[i];
 
@@ -431,8 +426,6 @@ std::vector<double> MobileManipulator::getInitialStateVector(
 
         for(uint i = 0; i < robot_pose_indexes.size(); i++)
             x[robot_pose_indexes[i]] = robot_pose[i];
-
-        x[yaw_index] = robot_pose[2];
 
         for(uint i = 0; i < arm_position_indexes.size(); i++)
             x[arm_position_indexes[i]] = arm_positions[i];
@@ -532,8 +525,6 @@ bool MobileManipulator::getInitialStateVector(const std::vector<double> & robot_
 
         for(uint i = 0; i < robot_pose_indexes.size(); i++)
             x[robot_pose_indexes[i]] = robot_pose[i];
-
-        x[yaw_index] = robot_pose[2];
 
         for(uint i = 0; i < arm_position_indexes.size(); i++)
             x[arm_position_indexes[i]] = arm_positions[i];
@@ -850,7 +841,7 @@ bool MobileManipulator::getLinearizedMatrixA(const std::vector<double> & x,
         return false;
     }
 
-    double robot_yaw = x[yaw_index];
+    double robot_yaw = x[robot_pose_indexes[2]];
 
     std::vector<double> robot_speed = {
         x[base_speed_indexes[0]], x[base_speed_indexes[1]], x[base_speed_indexes[2]]};
@@ -882,7 +873,7 @@ bool MobileManipulator::getLinearizedMatrixA(const std::vector<double> & x,
 
     // W2Cx
     A[robot_pose_indexes[0]][robot_pose_indexes[0]] = 1;
-    A[robot_pose_indexes[0]][yaw_index] =
+    A[robot_pose_indexes[0]][robot_pose_indexes[2]] =
         time_step * (-sin(robot_yaw) * robot_speed[0] * yaw_linearization_cost -
                      cos(robot_yaw) * robot_speed[1] * yaw_linearization_cost);
     A[robot_pose_indexes[0]][base_speed_indexes[0]] =
@@ -892,7 +883,7 @@ bool MobileManipulator::getLinearizedMatrixA(const std::vector<double> & x,
 
     // W2Cy
     A[robot_pose_indexes[1]][robot_pose_indexes[1]] = 1;
-    A[robot_pose_indexes[1]][yaw_index] =
+    A[robot_pose_indexes[1]][robot_pose_indexes[2]] =
         time_step * (cos(robot_yaw) * robot_speed[0] * yaw_linearization_cost -
                      sin(robot_yaw) * robot_speed[1] * yaw_linearization_cost);
     A[robot_pose_indexes[1]][base_speed_indexes[0]] =
@@ -901,8 +892,8 @@ bool MobileManipulator::getLinearizedMatrixA(const std::vector<double> & x,
         time_step * (cos(robot_yaw) + sin(robot_yaw) * robot_yaw * yaw_linearization_cost);
 
     // W2C Heading
-    A[yaw_index][yaw_index] = 1;
-    A[yaw_index][base_speed_indexes[2]] = time_step;
+    A[robot_pose_indexes[2]][robot_pose_indexes[2]] = 1;
+    A[robot_pose_indexes[2]][base_speed_indexes[2]] = time_step;
 
     // Arm joints position
     for(uint i = 0; i < number_arm_joints; i++)
@@ -961,7 +952,7 @@ bool MobileManipulator::getLinearizedMatrixA(const Eigen::VectorXd & x,
         return false;
     }
 
-    double robot_yaw = x(yaw_index);
+    double robot_yaw = x(robot_pose_indexes[2]);
 
     std::vector<double> robot_speed = {
         x(base_speed_indexes[0]), x(base_speed_indexes[1]), x(base_speed_indexes[2])};
@@ -993,7 +984,7 @@ bool MobileManipulator::getLinearizedMatrixA(const Eigen::VectorXd & x,
 
     // W2Cx
     A(robot_pose_indexes[0], robot_pose_indexes[0]) = 1;
-    A(robot_pose_indexes[0], yaw_index) =
+    A(robot_pose_indexes[0], robot_pose_indexes[2]) =
         time_step * (-sin(robot_yaw) * robot_speed[0] * yaw_linearization_cost -
                      cos(robot_yaw) * robot_speed[1] * yaw_linearization_cost);
     A(robot_pose_indexes[0], base_speed_indexes[0]) =
@@ -1003,7 +994,7 @@ bool MobileManipulator::getLinearizedMatrixA(const Eigen::VectorXd & x,
 
     // W2Cy
     A(robot_pose_indexes[1], robot_pose_indexes[1]) = 1;
-    A(robot_pose_indexes[1], yaw_index) =
+    A(robot_pose_indexes[1], robot_pose_indexes[2]) =
         time_step * (cos(robot_yaw) * robot_speed[0] * yaw_linearization_cost -
                      sin(robot_yaw) * robot_speed[1] * yaw_linearization_cost);
     A(robot_pose_indexes[1], base_speed_indexes[0]) =
@@ -1012,8 +1003,8 @@ bool MobileManipulator::getLinearizedMatrixA(const Eigen::VectorXd & x,
         time_step * (cos(robot_yaw) + sin(robot_yaw) * robot_yaw * yaw_linearization_cost);
 
     // W2C Heading
-    A(yaw_index, yaw_index) = 1;
-    A(yaw_index, base_speed_indexes[2]) = time_step;
+    A(robot_pose_indexes[2], robot_pose_indexes[2]) = 1;
+    A(robot_pose_indexes[2], base_speed_indexes[2]) = time_step;
 
     // Arm joints position
     for(uint i = 0; i < number_arm_joints; i++)
@@ -1497,7 +1488,7 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
     for(uint i = 0; i < whole_states_indexes.size(); i++)
     {
         if(whole_states_indexes[i] == robot_pose_indexes[0] ||
-           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == yaw_index)
+           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == robot_pose_indexes[2])
             Q[whole_states_indexes[i]][whole_states_indexes[i]] = whole_states_cost[i] * time_ratio;
         else
             Q[whole_states_indexes[i]][whole_states_indexes[i]] = whole_states_cost[i] / time_ratio;
@@ -1544,7 +1535,7 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
     for(uint i = 0; i < whole_states_indexes.size(); i++)
     {
         if(whole_states_indexes[i] == robot_pose_indexes[0] ||
-           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == yaw_index)
+           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == robot_pose_indexes[2])
             Q(whole_states_indexes[i], whole_states_indexes[i]) = whole_states_cost[i] * time_ratio;
         else
             Q(whole_states_indexes[i], whole_states_indexes[i]) = whole_states_cost[i] / time_ratio;
@@ -2396,12 +2387,12 @@ bool MobileManipulator::forwardIntegrateModel(std::vector<double> x,
     }
 
     std::vector<double> robot_pose;
-    for(uint i = 0; i < 3; i++)
+    for(uint i = 0; i < robot_pose_indexes.size(); i++)
     {
         robot_pose.push_back(x[robot_pose_indexes[i]]);
     }
 
-    double robot_yaw = x[yaw_index];
+    double robot_yaw = x[robot_pose_indexes[2]];
 
     std::vector<double> base_speed = {
         x[base_speed_indexes[0]], x[base_speed_indexes[1]], x[base_speed_indexes[2]]};
@@ -2561,14 +2552,12 @@ bool MobileManipulator::forwardIntegrateModel(const Eigen::VectorXd & x,
     }
 
     std::vector<double> robot_pose;
-    for(uint i = 0; i < 2; i++)
+    for(uint i = 0; i < robot_pose_indexes.size(); i++)
     {
         robot_pose.push_back(x(robot_pose_indexes[i]));
     }
 
-    robot_pose.push_back(x(yaw_index));
-
-    double robot_yaw = x(yaw_index);
+    double robot_yaw = x(robot_pose_indexes[2]);
 
     std::vector<double> base_speed = {
         x(base_speed_indexes[0]), x(base_speed_indexes[1]), x(base_speed_indexes[2])};
@@ -2611,7 +2600,7 @@ bool MobileManipulator::forwardIntegrateModel(const Eigen::VectorXd & x,
                                 sin(robot_yaw) * base_speed[1] * time_step;
     xf(robot_pose_indexes[1]) = robot_pose[1] + sin(robot_yaw) * base_speed[0] * time_step +
                                 cos(robot_yaw) * base_speed[1] * time_step;
-    xf(yaw_index) = robot_pose[2] + base_speed[2] * time_step;
+    xf(robot_pose_indexes[2]) = robot_pose[2] + base_speed[2] * time_step;
 
     // BSpeed
     xf(base_speed_indexes[0]) = wheels_radius / 2 * (wheels_speed[0] + wheels_speed[1]);

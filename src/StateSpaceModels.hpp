@@ -403,7 +403,10 @@ public:
                             bool track_reference_trajectory = false);
 
     // Eigen overload
-    bool getStateCostMatrix(double percentage_horizon, double time_horizon, Eigen::MatrixXd & Q, bool track_reference_trajectory = false);
+    bool getStateCostMatrix(double percentage_horizon,
+                            double time_horizon,
+                            Eigen::MatrixXd & Q,
+                            bool track_reference_trajectory = false);
 
     // Returns the pure input cost matrix R.
     // Size of R: number_inputs x number_inputs

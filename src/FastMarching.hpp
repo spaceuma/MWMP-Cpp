@@ -51,52 +51,51 @@ private:
     // -- PARAMETERS --
     double waypointDistance;
 
-    void computeEntireTMap(const std::vector<std::vector<double>> *costMap,
+    void computeEntireTMap(const std::vector<std::vector<double>> * costMap,
                            std::vector<int> goal,
-                           std::vector<std::vector<double>> *closedMap,
-                           std::vector<std::vector<double>> *TMap);
+                           std::vector<std::vector<double>> * closedMap,
+                           std::vector<std::vector<double>> * TMap);
 
-    bool computeTMap(const std::vector<std::vector<double>> *costMap,
+    bool computeTMap(const std::vector<std::vector<double>> * costMap,
                      std::vector<int> goal,
                      std::vector<int> start,
-                     std::vector<std::vector<double>> *TMap);
+                     std::vector<std::vector<double>> * TMap);
 
     void updateNode(std::vector<int> nodeTarget,
-                    const std::vector<std::vector<double>> *costMap,
-                    std::vector<std::vector<double>> *TMap,
-                    std::vector<double> *nbT,
-                    std::vector<std::vector<int>> *nbNodes,
-                    const std::vector<std::vector<double>> *closedMap);
+                    const std::vector<std::vector<double>> * costMap,
+                    std::vector<std::vector<double>> * TMap,
+                    std::vector<double> * nbT,
+                    std::vector<std::vector<int>> * nbNodes,
+                    const std::vector<std::vector<double>> * closedMap);
 
     double getEikonal(double THor, double TVer, double cost);
 
-    int getInsertIndex(std::vector<double> *nbT, double T);
+    int getInsertIndex(std::vector<double> * nbT, double T);
 
-    void computePathGDM(const std::vector<std::vector<double>> *TMap,
+    void computePathGDM(const std::vector<std::vector<double>> * TMap,
                         std::vector<int> initNode,
                         std::vector<int> endNode,
                         double tau,
-                        std::vector<std::vector<double>> *path);
+                        std::vector<std::vector<double>> * path);
 
-    void computeGradient(const std::vector<std::vector<double>> *TMap,
+    void computeGradient(const std::vector<std::vector<double>> * TMap,
                          std::vector<double> point,
-                         std::vector<std::vector<double>> *Gnx,
-                         std::vector<std::vector<double>> *Gny);
+                         std::vector<std::vector<double>> * Gnx,
+                         std::vector<std::vector<double>> * Gny);
 
     double getInterpolatedPoint(std::vector<double> point,
-                                const std::vector<std::vector<double>> *mapI);
+                                const std::vector<std::vector<double>> * mapI);
 
 public:
     // -- FUNCTIONS --
     PathPlanner(double _waypointDistance = 0.5);
     ~PathPlanner();
 
-    bool planPath(const std::vector<std::vector<double>> *costMap,
+    bool planPath(const std::vector<std::vector<double>> * costMap,
                   double mapResolution,
                   std::vector<double> iniPos,
                   std::vector<double> finalPos,
-                  std::vector<std::vector<double>> *path);
-
+                  std::vector<std::vector<double>> * path);
 };
-} // namespace FastMarching
+}    // namespace FastMarching
 #endif

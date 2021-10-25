@@ -275,7 +275,7 @@ private:
     bool computeObstaclesGradient(const std::vector<std::vector<uint>> & obst_map);
 
     // Get the cost map for the path planner
-    bool computeCostMap(const std::vector<std::vector<uint>> & obst_map, 
+    bool computeCostMap(const std::vector<std::vector<uint>> & obst_map,
                         const std::vector<std::vector<uint>> & safe_obst_map);
 
     // Dilate a binary obstacles map to ensure safety

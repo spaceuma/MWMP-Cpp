@@ -1489,7 +1489,9 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
     for(uint i = 0; i < whole_states_indexes.size(); i++)
     {
         if((whole_states_indexes[i] == robot_pose_indexes[0] ||
-           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == robot_pose_indexes[2]) && track_reference_trajectory)
+            whole_states_indexes[i] == robot_pose_indexes[1] ||
+            whole_states_indexes[i] == robot_pose_indexes[2]) &&
+           track_reference_trajectory)
             Q[whole_states_indexes[i]][whole_states_indexes[i]] = whole_states_cost[i] * time_ratio;
         else
             Q[whole_states_indexes[i]][whole_states_indexes[i]] = whole_states_cost[i] / time_ratio;
@@ -1537,7 +1539,9 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
     for(uint i = 0; i < whole_states_indexes.size(); i++)
     {
         if((whole_states_indexes[i] == robot_pose_indexes[0] ||
-           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == robot_pose_indexes[2]) && track_reference_trajectory)
+            whole_states_indexes[i] == robot_pose_indexes[1] ||
+            whole_states_indexes[i] == robot_pose_indexes[2]) &&
+           track_reference_trajectory)
             Q(whole_states_indexes[i], whole_states_indexes[i]) = whole_states_cost[i] * time_ratio;
         else
             Q(whole_states_indexes[i], whole_states_indexes[i]) = whole_states_cost[i] / time_ratio;

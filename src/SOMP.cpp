@@ -87,7 +87,8 @@ bool MotionPlanner::generateHorizon(std::vector<Eigen::VectorXd> & x,
 
         double percentage_horizon = 100 * ((double)i + 1) / (double)number_time_steps;
 
-        if(!robot_ss_model->getStateCostMatrix(percentage_horizon, time_horizon, Qh[i], track_reference_trajectory) ||
+        if(!robot_ss_model->getStateCostMatrix(
+               percentage_horizon, time_horizon, Qh[i], track_reference_trajectory) ||
            !robot_ss_model->getInputCostMatrix(Rh[i], time_horizon) ||
            !robot_ss_model->getStateInputCostMatrix(Kh[i]))
         {
@@ -435,7 +436,7 @@ bool MotionPlanner::computeObstaclesGradient(const std::vector<std::vector<uint>
     return true;
 }
 
-bool MotionPlanner::computeCostMap(const std::vector<std::vector<uint>> & obst_map, 
+bool MotionPlanner::computeCostMap(const std::vector<std::vector<uint>> & obst_map,
                                    const std::vector<std::vector<uint>> & safe_obst_map)
 {
     uint m = obst_map.size();
@@ -451,17 +452,15 @@ bool MotionPlanner::computeCostMap(const std::vector<std::vector<uint>> & obst_m
             cv_obst_map.at<uchar>(i, j) = 1 - obst_map[i][j];
 
     cv::distanceTransform(cv_obst_map, cv_distance, cv::DIST_L2, 5);
-    cv::Mat cv_aux_map = 1/cv_distance;
+    cv::Mat cv_aux_map = 1 / cv_distance;
     double min;
     cv::minMaxLoc(cv_aux_map, &min);
 
     for(uint i = 0; i < m; i++)
         for(uint j = 0; j < n; j++)
         {
-            if(safe_obst_map[i][j])
-                cost_map[i][j] = (1 + cv_aux_map.at<float>(i,j)/min)/2;
-            if(obst_map[i][j])
-                cost_map[i][j] = inf;
+            if(safe_obst_map[i][j]) cost_map[i][j] = (1 + cv_aux_map.at<float>(i, j) / min) / 2;
+            if(obst_map[i][j]) cost_map[i][j] = inf;
         }
 
     return true;
@@ -743,14 +742,13 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
             obstacles_map.size(), std::vector<double>(obstacles_map[0].size(), 1));
         if(!computeCostMap(obstacles_map, safety_obstacles_map))
         {
-            throw std::domain_error(red +
-                                std::string("ERROR [MotionPlanner::MotionPlanner]: Failure while "
-                                            "generating the path planner cost map") +
-                                nocolor);
-
+            throw std::domain_error(
+                red +
+                std::string("ERROR [MotionPlanner::MotionPlanner]: Failure while "
+                            "generating the path planner cost map") +
+                nocolor);
         }
     }
-
 
     number_states = robot_ss_model->getNumberStates();
     number_inputs = robot_ss_model->getNumberInputs();
@@ -819,13 +817,16 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
     {
         FastMarching::PathPlanner * path_planner = new FastMarching::PathPlanner();
         std::vector<double> ini_pose = {x_ini(pose_indexes[0]), x_ini(pose_indexes[1])};
-        std::vector<double> goal_pose = {reference_state[number_time_steps -1](distance_indexes[0]), reference_state[number_time_steps -1](distance_indexes[1])};
+        std::vector<double> goal_pose = {
+            reference_state[number_time_steps - 1](distance_indexes[0]),
+            reference_state[number_time_steps - 1](distance_indexes[1])};
         std::vector<std::vector<double>> reference_path;
 
         if(!path_planner->planPath(&cost_map, map_resolution, ini_pose, goal_pose, &reference_path))
         {
             std::cout << red
-                      << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: Failure while computing the reference trajectory"
+                      << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: Failure while "
+                         "computing the reference trajectory"
                       << nocolor << std::endl;
             return -1;
         }
@@ -833,7 +834,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         uint path_size = reference_path.size();
         for(uint i = 0; i < number_time_steps; i++)
         {
-            uint path_index = (uint)(path_size*i/number_time_steps);
+            uint path_index = (uint)(path_size * i / number_time_steps);
             reference_state[i](pose_indexes[0]) = reference_path[path_index][0];
             reference_state[i](pose_indexes[1]) = reference_path[path_index][1];
             reference_state[i](pose_indexes[2]) = reference_path[path_index][2];
@@ -913,13 +914,15 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         }
 
         // LQR problem solution
-        std::vector<Eigen::MatrixXd> M(number_time_steps, Eigen::MatrixXd::Identity(number_states,number_states));
+        std::vector<Eigen::MatrixXd> M(number_time_steps,
+                                       Eigen::MatrixXd::Identity(number_states, number_states));
         std::vector<Eigen::MatrixXd> P = Qh;
         std::vector<Eigen::VectorXd> s = obstacles_repulsive_cost;
 
         P = Qh;
         s = obstacles_repulsive_cost;
-        s[number_time_steps - 1].noalias() -= Qh[number_time_steps - 1] * xh0[number_time_steps - 1];
+        s[number_time_steps - 1].noalias() -=
+            Qh[number_time_steps - 1] * xh0[number_time_steps - 1];
 
         // Solve backwards
         std::vector<Eigen::MatrixXd> Rh_inv_Bh_t(number_time_steps);
@@ -933,7 +936,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
             M[i].noalias() += Bh[i] * Rh_inv_Bh_t[i] * P[i + 1];
             M[i].noalias() = M[i].partialPivLu().solve(I_states);
 
-            Eigen::MatrixXd Ah_trans_P1_M = Ah_trans * P[i+1] * M[i];
+            Eigen::MatrixXd Ah_trans_P1_M = Ah_trans * P[i + 1] * M[i];
 
             P[i].noalias() += Ah_trans_P1_M * Ah[i];
 
@@ -953,7 +956,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         // Solve forwards
         for(uint i = 0; i < number_time_steps - 1; i++)
         {
-            v[i] = M[i]*Bh[i] * (uh0[i] - Rh_inv_Bh_t_s1[i]);
+            v[i] = M[i] * Bh[i] * (uh0[i] - Rh_inv_Bh_t_s1[i]);
             xh[i + 1] = v[i];
             xh[i + 1].noalias() += M[i] * (Ah[i] * xh[i]);
             lambdah[i + 1].noalias() += P[i + 1] * xh[i + 1];
@@ -969,10 +972,10 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         double distance_to_goal;
         double orientation_to_goal;
         std::cout << blue << "[MotionPlanner::generateUnconstrainedMotionPlan]: Iteration number "
-                  << number_iterations <<nocolor<< std::endl;
+                  << number_iterations << nocolor << std::endl;
         std::cout << yellow
-                  << "[MotionPlanner::generateUnconstrainedMotionPlan]: Elapsed iteration time: " << (double)(clock() - it_time) / CLOCKS_PER_SEC
-                  << nocolor << std::endl;
+                  << "[MotionPlanner::generateUnconstrainedMotionPlan]: Elapsed iteration time: "
+                  << (double)(clock() - it_time) / CLOCKS_PER_SEC << nocolor << std::endl;
         number_iterations++;
 
         // Check if the control is not changing
@@ -991,7 +994,8 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                 for(uint i = 0; i < distance_indexes.size(); i++)
                 {
                     termination_state(i) = x[number_time_steps - 1](distance_indexes[i]);
-                    termination_goal(i) = reference_state[number_time_steps - 1](distance_indexes[i]);
+                    termination_goal(i) =
+                        reference_state[number_time_steps - 1](distance_indexes[i]);
                 }
                 distance_to_goal = (termination_state - termination_goal).norm();
 
@@ -1003,9 +1007,10 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                         convergence_condition &=
                             (uh[i].norm() <= (20 * control_threshold * u[i].norm()));
                 }
-                std::cout << blue << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
+                std::cout << blue
+                          << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
                              "goal position: "
-                          << distance_to_goal <<nocolor<< std::endl;
+                          << distance_to_goal << nocolor << std::endl;
 
                 if(!convergence_condition) convergence_status = -1;
             }
@@ -1018,16 +1023,18 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                 for(uint i = 0; i < orientation_indexes.size(); i++)
                 {
                     termination_state(i) = x[number_time_steps - 1](orientation_indexes[i]);
-                    termination_goal(i) = reference_state[number_time_steps - 1](orientation_indexes[i]);
+                    termination_goal(i) =
+                        reference_state[number_time_steps - 1](orientation_indexes[i]);
                 }
 
                 orientation_to_goal = (termination_state - termination_goal).norm();
 
                 convergence_condition &= (orientation_to_goal < orientation_threshold);
 
-                std::cout << blue << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
+                std::cout << blue
+                          << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
                              "goal orientation: "
-                          << orientation_to_goal << nocolor <<std::endl;
+                          << orientation_to_goal << nocolor << std::endl;
 
                 if(!convergence_condition) convergence_status = -1;
             }
@@ -1105,7 +1112,6 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
             std::cout << nocolor << std::endl;
             return convergence_status;
         }
-
     }
 
     return 1;

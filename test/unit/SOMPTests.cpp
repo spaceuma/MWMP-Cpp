@@ -79,59 +79,7 @@ TEST(SOMP, constructors_test)
     MotionPlanner * exoter_mp3 = new MotionPlanner(exoter_model, mp_config, mp_map);
 }
 
-TEST(SOMP, unconstrained_mp_vector_test)
-{
-    StateSpaceModels::MobileManipulator * exoter_model =
-        new StateSpaceModels::MobileManipulator("exoter");
-
-    SOMP::Config mp_config;
-    mp_config.time_horizon = 160;
-    mp_config.time_step = 1.006289308;
-    mp_config.max_iterations = 200;
-    mp_config.control_threshold = 5e-2;
-    mp_config.line_search_step = 0.32;
-    mp_config.check_distance = true;
-    mp_config.check_orientation = true;
-    mp_config.track_reference_trajectory = true;
-    uint number_time_steps = (uint)(mp_config.time_horizon / mp_config.time_step) + 1;
-
-    SOMP::MapInfo mp_map;
-    mp_map.map_resolution = 0.05;
-    std::vector<double> goal_pose = {3.1, 2.8};
-    mp_map.goal_pose = goal_pose;
-    FileManager::readMatrixFile("inputs/dummy_obstacles_map.txt", mp_map.obstacles_map);
-
-    MotionPlanner * exoter_mp = new MotionPlanner(exoter_model, mp_config, mp_map);
-
-    std::vector<double> ini_rover_pose = {2, 2.8, pi / 8};
-    std::vector<double> ini_arm_positions = {0.5708, -pi, 2.21, pi / 2, 0};
-    std::vector<double> ini_arm_speeds = {0, 0, 0, 0, 0};
-    std::vector<double> ini_wheels_speed = {0, 0};
-
-    std::vector<double> x_ini =
-        exoter_model->getInitialStateVector(ini_rover_pose, ini_arm_positions);
-    std::vector<double> u_ini = exoter_model->getInputVector(ini_arm_speeds, ini_wheels_speed);
-
-    std::vector<std::vector<double>> x0(number_time_steps,
-                                        std::vector<double>(exoter_model->getNumberStates(), 0));
-    std::vector<std::vector<double>> u0(number_time_steps,
-                                        std::vector<double>(exoter_model->getNumberInputs(), 0));
-
-    std::vector<double> goal_ee_pose = {3.1, 2.80, 0.10, 0, pi / 2, pi / 3};
-    x0[number_time_steps - 1] = exoter_model->getGoalStateVector(goal_ee_pose);
-
-    double ini_time = clock();
-    EXPECT_EQ(1, exoter_mp->generateUnconstrainedMotionPlan(x_ini, x0, u_ini, u0, 100));
-    std::cout << cyan << "[SOMP::unconstrained_mp_test] Elapsed time: "
-              << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
-
-    std::vector<std::vector<double>> x;
-    std::vector<std::vector<double>> u;
-    exoter_mp->getPlannedState(x);
-    exoter_mp->getPlannedControl(u);
-}
-
-TEST(SOMP, unconstrained_mp_eigen_test)
+TEST(SOMP, unconstrained_mp_test)
 {
     StateSpaceModels::MobileManipulator * exoter_model =
         new StateSpaceModels::MobileManipulator("exoter");

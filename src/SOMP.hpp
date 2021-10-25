@@ -202,17 +202,11 @@ private:
     // Reference state vector (x0). Size: number_states x number_time_steps
     std::vector<Eigen::VectorXd> reference_state;
 
-    // Resulting state vector. Size: number_states x number_time_steps
-    std::vector<std::vector<double>> planned_state_vector;
-
     // Resulting input vector. Size: number_inputs x number_time_steps
     std::vector<Eigen::VectorXd> planned_control;
 
     // Reference input vector. Size: number_inputs x number_time_steps
     std::vector<Eigen::VectorXd> reference_control;
-
-    // Resulting input vector. Size: number_inputs x number_time_steps
-    std::vector<std::vector<double>> planned_control_vector;
 
     //**********************//
     // Supporting variables //
@@ -364,12 +358,6 @@ public:
                                         const std::vector<Eigen::VectorXd> & u0,
                                         uint max_iter);
 
-    int generateUnconstrainedMotionPlan(const std::vector<double> & x_ini,
-                                        const std::vector<std::vector<double>> & x0,
-                                        const std::vector<double> & u_ini,
-                                        const std::vector<std::vector<double>> & u0,
-                                        uint max_iter);
-
     int generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                                       const std::vector<Eigen::VectorXd> & x0,
                                       const Eigen::VectorXd & u_ini,
@@ -385,11 +373,7 @@ public:
     //**********//
     bool getPlannedState(std::vector<Eigen::VectorXd> & x);
 
-    bool getPlannedState(std::vector<std::vector<double>> & x);
-
     bool getPlannedControl(std::vector<Eigen::VectorXd> & u);
-
-    bool getPlannedControl(std::vector<std::vector<double>> & u);
 };
 }    // namespace SOMP
 #endif

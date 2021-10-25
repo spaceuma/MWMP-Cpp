@@ -232,7 +232,7 @@ TEST(StateSpaceModels, costs_matrixes_test)
     double ini_time = clock();
     Eigen::MatrixXd Q2 =
         Eigen::MatrixXd::Zero(exoter_model->getNumberStates(), exoter_model->getNumberStates());
-    exoter_model->getStateCostMatrix(5 / 159 * 100, 160, Q2);
+    exoter_model->getStateCostMatrix(5 / 159 * 100, 160, Q2, true);
     std::cout << cyan << "[StateSpaceModels::costs_matrixes_test] Elapsed time matrix Q: "
               << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 

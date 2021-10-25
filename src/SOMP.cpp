@@ -806,7 +806,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
     // Auxiliary variables
     Eigen::MatrixXd I_states = Eigen::MatrixXd::Identity(number_states, number_states);
     Eigen::MatrixXd I_inputs = Eigen::MatrixXd::Identity(number_inputs, number_inputs);
-    Eigen::MatrixXd Rh_inv = Rh[0].llt().solve(I_inputs);
+    Eigen::MatrixXd Rh_inv = Rh[0].partialPivLu().solve(I_inputs);
 
     // Starting main loop
     while(true)
@@ -837,53 +837,51 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         }
 
         // LQR problem solution
-        std::vector<Eigen::MatrixXd> M(number_time_steps,
-                                       Eigen::MatrixXd::Zero(number_states, number_states));
-        std::vector<Eigen::MatrixXd> P(number_time_steps,
-                                       Eigen::MatrixXd::Zero(number_states, number_states));
-        std::vector<Eigen::VectorXd> s(number_time_steps, Eigen::VectorXd::Zero(number_states));
+        std::vector<Eigen::MatrixXd> M(number_time_steps, Eigen::MatrixXd::Identity(number_states,number_states));
+        std::vector<Eigen::MatrixXd> P = Qh;
+        std::vector<Eigen::VectorXd> s = obstacles_repulsive_cost;
 
-        P[number_time_steps - 1] = Qh[number_time_steps - 1];
-        s[number_time_steps - 1] = obstacles_repulsive_cost[number_time_steps - 1] -
-                                   Qh[number_time_steps - 1] * xh0[number_time_steps - 1];
-
-        std::vector<Eigen::VectorXd> xh(number_time_steps, Eigen::VectorXd::Zero(number_states));
-        std::vector<Eigen::VectorXd> uh(number_time_steps, Eigen::VectorXd::Zero(number_inputs));
-        std::vector<Eigen::VectorXd> v(number_time_steps, Eigen::VectorXd::Zero(number_states));
-        std::vector<Eigen::VectorXd> lambdah(number_time_steps,
-                                             Eigen::VectorXd::Zero(number_states));
+        P = Qh;
+        s = obstacles_repulsive_cost;
+        s[number_time_steps - 1].noalias() -= Qh[number_time_steps - 1] * xh0[number_time_steps - 1];
 
         // Solve backwards
+        std::vector<Eigen::MatrixXd> Rh_inv_Bh_t(number_time_steps);
+        std::vector<Eigen::MatrixXd> Rh_inv_Bh_t_s1(number_time_steps);
+
         for(int i = number_time_steps - 2; i >= 0; i--)
         {
             Eigen::MatrixXd Ah_trans = Ah[i].transpose();
-            Eigen::MatrixXd Bh_trans = Bh[i].transpose();
-            Eigen::MatrixXd Rh_inv_Bh_t = Rh_inv * Bh_trans;
+            Rh_inv_Bh_t[i] = Rh_inv * Bh[i].transpose();
 
-            M[i] = I_states;
-            M[i].noalias() += Bh[i] * Rh_inv_Bh_t * P[i + 1];
-            M[i].noalias() = M[i].inverse();
+            M[i].noalias() += Bh[i] * Rh_inv_Bh_t[i] * P[i + 1];
+            M[i].noalias() = M[i].partialPivLu().solve(I_states);
 
-            P[i] = Qh[i];
-            P[i].noalias() += Ah_trans * P[i + 1] * M[i] * Ah[i];
+            Eigen::MatrixXd Ah_trans_P1_M = Ah_trans * P[i+1] * M[i];
 
-            s[i] = obstacles_repulsive_cost[i];
-            s[i].noalias() +=
-                Ah_trans * (I_states - P[i + 1] * M[i] * Bh[i] * Rh_inv_Bh_t) * s[i + 1];
-            s[i].noalias() += Ah_trans * P[i + 1] * M[i] * Bh[i] * uh0[i];
-            s[i].noalias() -= -Qh[i] * xh0[i];
+            P[i].noalias() += Ah_trans_P1_M * Ah[i];
+
+            Eigen::MatrixXd Ah_trans_P1_M_Bh = Ah_trans_P1_M * Bh[i];
+            Rh_inv_Bh_t_s1[i] = Rh_inv_Bh_t[i] * s[i + 1];
+            s[i].noalias() += Ah_trans * s[i + 1];
+            s[i].noalias() -= Ah_trans_P1_M_Bh * Rh_inv_Bh_t_s1[i];
+            s[i].noalias() += Ah_trans_P1_M_Bh * uh0[i];
+            s[i].noalias() -= Qh[i] * xh0[i];
         }
+
+        std::vector<Eigen::VectorXd> v(number_time_steps, Eigen::VectorXd::Zero(number_states));
+        std::vector<Eigen::VectorXd> xh(number_time_steps, Eigen::VectorXd::Zero(number_states));
+        std::vector<Eigen::VectorXd> lambdah = s;
+        std::vector<Eigen::VectorXd> uh = uh0;
 
         // Solve forwards
         for(uint i = 0; i < number_time_steps - 1; i++)
         {
-            Eigen::MatrixXd Bh_trans = Bh[i].transpose();
-            Eigen::MatrixXd Rh_inv_Bh_t = Rh_inv * Bh_trans;
-
-            v[i] = M[i] * Bh[i] * (uh0[i] - Rh_inv_Bh_t * s[i + 1]);
-            xh[i + 1] = M[i] * Ah[i] * xh[i] + v[i];
-            lambdah[i + 1] = P[i + 1] * xh[i + 1] + s[i + 1];
-            uh[i] = uh0[i] - Rh_inv_Bh_t * lambdah[i + 1];
+            v[i] = M[i]*Bh[i] * (uh0[i] - Rh_inv_Bh_t_s1[i]);
+            xh[i + 1] = v[i];
+            xh[i + 1].noalias() += M[i] * (Ah[i] * xh[i]);
+            lambdah[i + 1].noalias() += P[i + 1] * xh[i + 1];
+            uh[i].noalias() -= Rh_inv_Bh_t[i] * lambdah[i + 1];
         }
 
         // Decide the best way to apply the last obtained state and control
@@ -894,8 +892,11 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         bool convergence_condition = true;
         double distance_to_goal;
         double orientation_to_goal;
-        std::cout << "[MotionPlanner::generateUnconstrainedMotionPlan]: Iteration number "
-                  << number_iterations << std::endl;
+        std::cout << blue << "[MotionPlanner::generateUnconstrainedMotionPlan]: Iteration number "
+                  << number_iterations <<nocolor<< std::endl;
+        std::cout << yellow
+                  << "[MotionPlanner::generateUnconstrainedMotionPlan]: Elapsed iteration time: " << (double)(clock() - it_time) / CLOCKS_PER_SEC
+                  << nocolor << std::endl;
         number_iterations++;
 
         // Check if the control is not changing
@@ -926,9 +927,9 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                         convergence_condition &=
                             (uh[i].norm() <= (20 * control_threshold * u[i].norm()));
                 }
-                std::cout << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
+                std::cout << blue << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
                              "goal position: "
-                          << distance_to_goal << std::endl;
+                          << distance_to_goal <<nocolor<< std::endl;
 
                 if(!convergence_condition) convergence_status = -1;
             }
@@ -948,9 +949,9 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
 
                 convergence_condition &= (orientation_to_goal < orientation_threshold);
 
-                std::cout << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
+                std::cout << blue << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
                              "goal orientation: "
-                          << orientation_to_goal << std::endl;
+                          << orientation_to_goal << nocolor <<std::endl;
 
                 if(!convergence_condition) convergence_status = -1;
             }
@@ -1029,10 +1030,6 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
             return convergence_status;
         }
 
-        std::cout << yellow
-                  << "Elapsed iteration time: " << (double)(clock() - it_time) / CLOCKS_PER_SEC
-                  << nocolor << std::endl;
-        std::cout << yellow << "Threads used: " << Eigen::nbThreads() << nocolor << std::endl;
     }
 
     return 1;

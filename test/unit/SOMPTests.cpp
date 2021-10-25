@@ -63,6 +63,7 @@ TEST(SOMP, constructors_test)
     mp_config.line_search_step = 0.32;
     mp_config.check_distance = true;
     mp_config.check_orientation = true;
+    mp_config.track_reference_trajectory = true;
     uint number_time_steps = 159;
 
     MotionPlanner * exoter_mp2 = new MotionPlanner(exoter_model, mp_config);
@@ -91,6 +92,7 @@ TEST(SOMP, unconstrained_mp_vector_test)
     mp_config.line_search_step = 0.32;
     mp_config.check_distance = true;
     mp_config.check_orientation = true;
+    mp_config.track_reference_trajectory = true;
     uint number_time_steps = (uint)(mp_config.time_horizon / mp_config.time_step) + 1;
 
     SOMP::MapInfo mp_map;
@@ -142,6 +144,7 @@ TEST(SOMP, unconstrained_mp_eigen_test)
     mp_config.line_search_step = 0.32;
     mp_config.check_distance = true;
     mp_config.check_orientation = true;
+    mp_config.track_reference_trajectory = true;
     uint number_time_steps = (uint)(mp_config.time_horizon / mp_config.time_step) + 1;
 
     SOMP::MapInfo mp_map;

@@ -36,7 +36,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 
-#include "FileManager.hpp"
+#include "FastMarching.hpp"
 #include "StateSpaceModels.hpp"
 
 #define inf 1000000007
@@ -80,6 +80,7 @@ namespace SOMP
  *       Default: 0.30.
  *     - Yes/no about check distance to goal, "bool check_distance".
  *     - Yes/no about check final orientation, "bool check_orientation".
+ *     - Yes/no about tracking a reference trajectory, "bool track_reference_trajectory".
  *
  * "SSModel state_space_model" should be an instance of the state space model to be used.
  *
@@ -102,6 +103,8 @@ struct Config
     bool check_distance;
 
     bool check_orientation;
+
+    bool track_reference_trajectory;
 };
 
 struct MapInfo
@@ -164,6 +167,9 @@ private:
     // Decide whether to check obstacle collisions or not, default false
     bool check_safety = false;
 
+    // Decide whether to track a reference trajectory for the robot base or not, default false
+    bool track_reference_trajectory = false;
+
     // Parameters that depend on the model, defining the index in the state vector
     // where to check for the pose of the robot to confirm safety
     std::vector<uint> pose_indexes;
@@ -178,6 +184,9 @@ private:
     std::vector<std::vector<uint>> dilated_obstacles_map;
     std::vector<std::vector<uint>> safety_obstacles_map;
 
+    // Cost map of the scenario, to be used to compute reference trajectories
+    std::vector<std::vector<double>> cost_map;
+
     // Gradient of the obstacles map in X and Y directions, used for computing the cost
     // of the robot pose with respect to nearby obstacles
     std::vector<std::vector<double>> gradient_obstacles_map_x;
@@ -187,16 +196,22 @@ private:
     // Motion Plan Results //
     //*********************//
 
-    // Resulting state vector. Size: number_states x number_time_steps
+    // Resulting state vector (x). Size: number_states x number_time_steps
     std::vector<Eigen::VectorXd> planned_state;
+
+    // Reference state vector (x0). Size: number_states x number_time_steps
+    std::vector<Eigen::VectorXd> reference_state;
 
     // Resulting state vector. Size: number_states x number_time_steps
     std::vector<std::vector<double>> planned_state_vector;
 
-    // Resulting state vector. Size: number_inputs x number_time_steps
+    // Resulting input vector. Size: number_inputs x number_time_steps
     std::vector<Eigen::VectorXd> planned_control;
 
-    // Resulting state vector. Size: number_inputs x number_time_steps
+    // Reference input vector. Size: number_inputs x number_time_steps
+    std::vector<Eigen::VectorXd> reference_control;
+
+    // Resulting input vector. Size: number_inputs x number_time_steps
     std::vector<std::vector<double>> planned_control_vector;
 
     //**********************//
@@ -264,6 +279,10 @@ private:
 
     // Get the gradient of the obstacles map
     bool computeObstaclesGradient(const std::vector<std::vector<uint>> & obst_map);
+
+    // Get the cost map for the path planner
+    bool computeCostMap(const std::vector<std::vector<uint>> & obst_map, 
+                        const std::vector<std::vector<uint>> & safe_obst_map);
 
     // Dilate a binary obstacles map to ensure safety
     bool dilateObstaclesMap(const std::vector<std::vector<uint>> & obst_map,

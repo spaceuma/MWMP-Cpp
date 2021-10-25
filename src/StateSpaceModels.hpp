@@ -399,10 +399,11 @@ public:
     // Size of Q: number_states x number_states
     bool getStateCostMatrix(double percentage_horizon,
                             double time_horizon,
-                            std::vector<std::vector<double>> & Q);
+                            std::vector<std::vector<double>> & Q,
+                            bool track_reference_trajectory = false);
 
     // Eigen overload
-    bool getStateCostMatrix(double percentage_horizon, double time_horizon, Eigen::MatrixXd & Q);
+    bool getStateCostMatrix(double percentage_horizon, double time_horizon, Eigen::MatrixXd & Q, bool track_reference_trajectory = false);
 
     // Returns the pure input cost matrix R.
     // Size of R: number_inputs x number_inputs

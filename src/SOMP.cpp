@@ -53,7 +53,7 @@ bool MotionPlanner::generateHorizon(std::vector<Eigen::VectorXd> & x,
         return false;
     }
 
-    if(!robot_ss_model->getStateCostMatrix(0, time_horizon, Qh[0]) ||
+    if(!robot_ss_model->getStateCostMatrix(0, time_horizon, Qh[0], track_reference_trajectory) ||
        !robot_ss_model->getInputCostMatrix(Rh[0], time_horizon) ||
        !robot_ss_model->getStateInputCostMatrix(Kh[0]))
     {
@@ -87,7 +87,7 @@ bool MotionPlanner::generateHorizon(std::vector<Eigen::VectorXd> & x,
 
         double percentage_horizon = 100 * ((double)i + 1) / (double)number_time_steps;
 
-        if(!robot_ss_model->getStateCostMatrix(percentage_horizon, time_horizon, Qh[i]) ||
+        if(!robot_ss_model->getStateCostMatrix(percentage_horizon, time_horizon, Qh[i], track_reference_trajectory) ||
            !robot_ss_model->getInputCostMatrix(Rh[i], time_horizon) ||
            !robot_ss_model->getStateInputCostMatrix(Kh[i]))
         {
@@ -435,6 +435,37 @@ bool MotionPlanner::computeObstaclesGradient(const std::vector<std::vector<uint>
     return true;
 }
 
+bool MotionPlanner::computeCostMap(const std::vector<std::vector<uint>> & obst_map, 
+                                   const std::vector<std::vector<uint>> & safe_obst_map)
+{
+    uint m = obst_map.size();
+    uint n = obst_map[0].size();
+
+    // Obtaining the distance to obstacles
+    cv::Mat cv_obst_map = cv::Mat::ones(m, n, CV_8UC1);
+    cv::Mat cv_distance = cv::Mat::zeros(m, n, CV_32FC1);
+
+    // Computing distance
+    for(uint i = 0; i < m; i++)
+        for(uint j = 0; j < n; j++)
+            cv_obst_map.at<uchar>(i, j) = 1 - obst_map[i][j];
+
+    cv::distanceTransform(cv_obst_map, cv_distance, cv::DIST_L2, 5);
+    cv::Mat cv_aux_map = 1/cv_distance;
+    double min;
+    cv::minMaxLoc(cv_aux_map, &min);
+
+    for(uint i = 0; i < m; i++)
+        for(uint j = 0; j < n; j++)
+        {
+            if(safe_obst_map[i][j])
+                cost_map[i][j] = (1 + cv_aux_map.at<float>(i,j)/min)/2;
+            if(obst_map[i][j])
+                cost_map[i][j] = inf;
+        }
+
+    return true;
+}
 bool MotionPlanner::dilateObstaclesMap(const std::vector<std::vector<uint>> & obst_map,
                                        double dilatation_distance,
                                        std::vector<std::vector<uint>> & dilated_map)
@@ -635,6 +666,7 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config)
     orientation_threshold = robot_ss_model->getThresholdGoalOrientation();
 
     check_safety = false;
+    track_reference_trajectory = false;
 
     number_states = robot_ss_model->getNumberStates();
     number_inputs = robot_ss_model->getNumberInputs();
@@ -673,6 +705,7 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
 
     // Process the map info to obtain a safer representation of the scenario
     check_safety = true;
+    track_reference_trajectory = config.track_reference_trajectory;
     pose_indexes = robot_ss_model->getIndexesRobotPose();
     map_resolution = map_info.map_resolution;
     obstacles_map = map_info.obstacles_map;
@@ -703,6 +736,21 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
                                             "processing the input obstacles map") +
                                 nocolor);
     }
+
+    if(track_reference_trajectory)
+    {
+        cost_map = std::vector<std::vector<double>>(
+            obstacles_map.size(), std::vector<double>(obstacles_map[0].size(), 1));
+        if(!computeCostMap(obstacles_map, safety_obstacles_map))
+        {
+            throw std::domain_error(red +
+                                std::string("ERROR [MotionPlanner::MotionPlanner]: Failure while "
+                                            "generating the path planner cost map") +
+                                nocolor);
+
+        }
+    }
+
 
     number_states = robot_ss_model->getNumberStates();
     number_inputs = robot_ss_model->getNumberInputs();
@@ -746,7 +794,10 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                                                    const std::vector<Eigen::VectorXd> & u0,
                                                    uint max_iter)
 {
-    if(x0.size() != number_time_steps)
+    reference_state = x0;
+    reference_control = u0;
+
+    if(reference_state.size() != number_time_steps)
     {
         std::cout << red
                   << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: The provided goal "
@@ -755,13 +806,38 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         return -1;
     }
 
-    if(u0.size() != number_time_steps)
+    if(reference_control.size() != number_time_steps)
     {
         std::cout << red
                   << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: The provided goal "
                      "input matrix has a wrong number of time steps"
                   << nocolor << std::endl;
         return -1;
+    }
+
+    if(track_reference_trajectory)
+    {
+        FastMarching::PathPlanner * path_planner = new FastMarching::PathPlanner();
+        std::vector<double> ini_pose = {x_ini(pose_indexes[0]), x_ini(pose_indexes[1])};
+        std::vector<double> goal_pose = {reference_state[number_time_steps -1](distance_indexes[0]), reference_state[number_time_steps -1](distance_indexes[1])};
+        std::vector<std::vector<double>> reference_path;
+
+        if(!path_planner->planPath(&cost_map, map_resolution, ini_pose, goal_pose, &reference_path))
+        {
+            std::cout << red
+                      << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: Failure while computing the reference trajectory"
+                      << nocolor << std::endl;
+            return -1;
+        }
+
+        uint path_size = reference_path.size();
+        for(uint i = 0; i < number_time_steps; i++)
+        {
+            uint path_index = (uint)(path_size*i/number_time_steps);
+            reference_state[i](pose_indexes[0]) = reference_path[path_index][0];
+            reference_state[i](pose_indexes[1]) = reference_path[path_index][1];
+            reference_state[i](pose_indexes[2]) = reference_path[path_index][2];
+        }
     }
 
     // State and input along the whole time horizon
@@ -815,8 +891,8 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         // Generate reference trajectories
         for(uint i = 0; i < number_time_steps; i++)
         {
-            xh0[i] = x0[i] - x[i];
-            uh0[i] = u0[i] - u[i];
+            xh0[i] = reference_state[i] - x[i];
+            uh0[i] = reference_control[i] - u[i];
         }
 
         // If checking safety, generate obstacles repulsive cost
@@ -886,7 +962,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
 
         // Decide the best way to apply the last obtained state and control
         // steps (xh and uh)
-        computeLineSearch(x, x0, u, u0, uh, Qh, Rh);
+        computeLineSearch(x, reference_state, u, reference_control, uh, Qh, Rh);
 
         // Checking termination conditions
         bool convergence_condition = true;
@@ -915,7 +991,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                 for(uint i = 0; i < distance_indexes.size(); i++)
                 {
                     termination_state(i) = x[number_time_steps - 1](distance_indexes[i]);
-                    termination_goal(i) = x0[number_time_steps - 1](distance_indexes[i]);
+                    termination_goal(i) = reference_state[number_time_steps - 1](distance_indexes[i]);
                 }
                 distance_to_goal = (termination_state - termination_goal).norm();
 
@@ -942,7 +1018,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                 for(uint i = 0; i < orientation_indexes.size(); i++)
                 {
                     termination_state(i) = x[number_time_steps - 1](orientation_indexes[i]);
-                    termination_goal(i) = x0[number_time_steps - 1](orientation_indexes[i]);
+                    termination_goal(i) = reference_state[number_time_steps - 1](orientation_indexes[i]);
                 }
 
                 orientation_to_goal = (termination_state - termination_goal).norm();

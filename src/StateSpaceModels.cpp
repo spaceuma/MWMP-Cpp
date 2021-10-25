@@ -1471,7 +1471,8 @@ bool MobileManipulator::getConstraintsMatrixH(Eigen::VectorXd & h)
 
 bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
                                            double time_horizon,
-                                           std::vector<std::vector<double>> & Q)
+                                           std::vector<std::vector<double>> & Q,
+                                           bool track_reference_trajectory)
 {
     if(Q.size() != number_states || Q[0].size() != number_states)
     {
@@ -1487,8 +1488,8 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
 
     for(uint i = 0; i < whole_states_indexes.size(); i++)
     {
-        if(whole_states_indexes[i] == robot_pose_indexes[0] ||
-           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == robot_pose_indexes[2])
+        if((whole_states_indexes[i] == robot_pose_indexes[0] ||
+           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == robot_pose_indexes[2]) && track_reference_trajectory)
             Q[whole_states_indexes[i]][whole_states_indexes[i]] = whole_states_cost[i] * time_ratio;
         else
             Q[whole_states_indexes[i]][whole_states_indexes[i]] = whole_states_cost[i] / time_ratio;
@@ -1518,7 +1519,8 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
 
 bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
                                            double time_horizon,
-                                           Eigen::MatrixXd & Q)
+                                           Eigen::MatrixXd & Q,
+                                           bool track_reference_trajectory)
 {
     if(Q.rows() != number_states || Q.cols() != number_states)
     {
@@ -1534,8 +1536,8 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
 
     for(uint i = 0; i < whole_states_indexes.size(); i++)
     {
-        if(whole_states_indexes[i] == robot_pose_indexes[0] ||
-           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == robot_pose_indexes[2])
+        if((whole_states_indexes[i] == robot_pose_indexes[0] ||
+           whole_states_indexes[i] == robot_pose_indexes[1] || whole_states_indexes[i] == robot_pose_indexes[2]) && track_reference_trajectory)
             Q(whole_states_indexes[i], whole_states_indexes[i]) = whole_states_cost[i] * time_ratio;
         else
             Q(whole_states_indexes[i], whole_states_indexes[i]) = whole_states_cost[i] / time_ratio;

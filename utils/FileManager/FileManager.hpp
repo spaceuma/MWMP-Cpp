@@ -64,6 +64,8 @@ void writeVectorFile(std::string vector_file, const Eigen::VectorXd & vector);
 
 void writeMatrixFile(std::string matrix_file, std::vector<std::vector<double>> & matrix);
 
+void writeMatrixFile(std::string matrix_file, std::vector<Eigen::VectorXd> & matrix);
+
 void writeMatrixFile(std::string matrix_file, const Eigen::MatrixXd & matrix);
 
 void writeMatrixFile(std::string matrix_file, std::vector<std::vector<int>> & matrix);

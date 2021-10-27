@@ -911,7 +911,14 @@ bool MobileManipulator::getLinearizedMatrixA(const std::vector<double> & x,
     // Arm joints torques
     std::vector<std::vector<double>> I(number_arm_joints,
                                        std::vector<double>(number_arm_joints, 0));
-    if(!getArmInertiaMatrix(arm_positions, I)) { return false; }
+    if(!getArmInertiaMatrix(arm_positions, I))
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getLinearizedMatrixA]: Failure computing arm "
+                     "inertia matrix"
+                  << nocolor << std::endl;
+        return false;
+    }
     for(uint i = 0; i < number_arm_joints; i++)
     {
         for(uint j = 0; j < number_arm_joints; j++)
@@ -1022,7 +1029,14 @@ bool MobileManipulator::getLinearizedMatrixA(const Eigen::VectorXd & x,
     // Arm joints torques
     std::vector<std::vector<double>> I(number_arm_joints,
                                        std::vector<double>(number_arm_joints, 0));
-    if(!getArmInertiaMatrix(arm_positions, I)) { return false; }
+    if(!getArmInertiaMatrix(arm_positions, I))
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getLinearizedMatrixA]: Failure while computing arm "
+                     "inertia matrix"
+                  << nocolor << std::endl;
+        return false;
+    }
     for(uint i = 0; i < number_arm_joints; i++)
     {
         for(uint j = 0; j < number_arm_joints; j++)
@@ -1133,7 +1147,14 @@ bool MobileManipulator::getLinearizedMatrixB(const std::vector<double> & x,
     // Arm joints torques
     std::vector<std::vector<double>> C(number_arm_joints,
                                        std::vector<double>(number_arm_joints, 0));
-    if(!getArmCoriolisMatrix(arm_positions, arm_actuators, C)) { return false; }
+    if(!getArmCoriolisMatrix(arm_positions, arm_actuators, C))
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getLinearizedMatrixB]: Failure while computing arm "
+                     "coriolis matrix"
+                  << nocolor << std::endl;
+        return false;
+    }
     for(uint i = 0; i < number_arm_joints; i++)
     {
         for(uint j = 0; j < number_arm_joints; j++)
@@ -1241,7 +1262,14 @@ bool MobileManipulator::getLinearizedMatrixB(const Eigen::VectorXd & x,
     // Arm joints torques
     std::vector<std::vector<double>> C(number_arm_joints,
                                        std::vector<double>(number_arm_joints, 0));
-    if(!getArmCoriolisMatrix(arm_positions, arm_actuators, C)) { return false; }
+    if(!getArmCoriolisMatrix(arm_positions, arm_actuators, C))
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::getLinearizedMatrixB]: Failure while computing arm "
+                     "coriolis matrix"
+                  << nocolor << std::endl;
+        return false;
+    }
     for(uint i = 0; i < number_arm_joints; i++)
     {
         for(uint j = 0; j < number_arm_joints; j++)
@@ -2476,7 +2504,13 @@ bool MobileManipulator::forwardIntegrateModel(std::vector<double> x,
                                        std::vector<double>(number_arm_joints, 0));
     if(!getArmGravityMatrix(arm_positions, G) || !getArmInertiaMatrix(arm_positions, I) ||
        !getArmCoriolisMatrix(arm_positions, arm_speeds, C))
-    { return false; }
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::forwardIntegrateModel]: Failure computing arm "
+                     "dynamic matrixes"
+                  << nocolor << std::endl;
+        return false;
+    }
 
     for(uint i = 0; i < number_arm_joints; i++)
     {
@@ -2641,7 +2675,13 @@ bool MobileManipulator::forwardIntegrateModel(const Eigen::VectorXd & x,
                                        std::vector<double>(number_arm_joints, 0));
     if(!getArmGravityMatrix(arm_positions, G) || !getArmInertiaMatrix(arm_positions, I) ||
        !getArmCoriolisMatrix(arm_positions, arm_speeds, C))
-    { return false; }
+    {
+        std::cout << red
+                  << "ERROR [MobileManipulator::forwardIntegrateModel]: Failure while computing "
+                     "arm dynamic matrixes"
+                  << nocolor << std::endl;
+        return false;
+    }
 
     for(uint i = 0; i < number_arm_joints; i++)
     {

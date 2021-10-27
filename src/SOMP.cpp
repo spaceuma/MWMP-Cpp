@@ -35,32 +35,18 @@ using namespace SOMP;
 using namespace StateSpaceModels;
 using namespace MatrixOperations;
 
-bool MotionPlanner::generateHorizon(std::vector<Eigen::VectorXd> & x,
-                                    const std::vector<Eigen::VectorXd> & u,
-                                    std::vector<Eigen::MatrixXd> & Ah,
-                                    std::vector<Eigen::MatrixXd> & Bh,
-                                    std::vector<Eigen::MatrixXd> & Qh,
-                                    std::vector<Eigen::MatrixXd> & Rh,
-                                    std::vector<Eigen::MatrixXd> & Kh)
+bool MotionPlanner::generateHorizonLinearization(std::vector<Eigen::VectorXd> & x,
+                                                 const std::vector<Eigen::VectorXd> & u,
+                                                 std::vector<Eigen::MatrixXd> & Ath,
+                                                 std::vector<Eigen::MatrixXd> & Bth)
 {
-    if(!robot_ss_model->getLinearizedMatrixA(x[0], time_step, Ah[0]) ||
-       !robot_ss_model->getLinearizedMatrixB(x[0], u[0], time_step, Bh[0]))
+    if(!robot_ss_model->getLinearizedMatrixA(x[0], time_step, Ath[0]) ||
+       !robot_ss_model->getLinearizedMatrixB(x[0], u[0], time_step, Bth[0]))
     {
-        std::cout
-            << red
-            << "ERROR [MotionPlanner::generateHorizon]: Unable to linearize the state space model"
-            << nocolor << std::endl;
-        return false;
-    }
-
-    if(!robot_ss_model->getStateCostMatrix(0, time_horizon, Qh[0], track_reference_trajectory) ||
-       !robot_ss_model->getInputCostMatrix(Rh[0], time_horizon) ||
-       !robot_ss_model->getStateInputCostMatrix(Kh[0]))
-    {
-        std::cout
-            << red
-            << "ERROR [MotionPlanner::generateHorizon]: Unable to compute the quadratized costs"
-            << nocolor << std::endl;
+        std::cout << red
+                  << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to linearize the "
+                     "state space model"
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -68,34 +54,21 @@ bool MotionPlanner::generateHorizon(std::vector<Eigen::VectorXd> & x,
     {
         if(!robot_ss_model->forwardIntegrateModel(x[i - 1], u[i - 1], time_step, x[i]))
         {
-            std::cout
-                << red
-                << "ERROR [MotionPlanner::generateHorizon]: Unable to forward integrate the model"
-                << nocolor << std::endl;
-            return false;
-        }
-
-        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, Ah[i]) ||
-           !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, Bh[i]))
-        {
             std::cout << red
-                      << "ERROR [MotionPlanner::generateHorizon]: Unable to linearize the state "
-                         "space model"
+                      << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to forward "
+                         "integrate the model"
                       << nocolor << std::endl;
             return false;
         }
 
-        double percentage_horizon = 100 * ((double)i + 1) / (double)number_time_steps;
-
-        if(!robot_ss_model->getStateCostMatrix(
-               percentage_horizon, time_horizon, Qh[i], track_reference_trajectory) ||
-           !robot_ss_model->getInputCostMatrix(Rh[i], time_horizon) ||
-           !robot_ss_model->getStateInputCostMatrix(Kh[i]))
+        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, Ath[i]) ||
+           !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, Bth[i]))
         {
-            std::cout
-                << red
-                << "ERROR [MotionPlanner::generateHorizon]: Unable to compute the quadratized costs"
-                << nocolor << std::endl;
+            std::cout << red
+                      << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to linearize "
+                         "the state "
+                         "space model"
+                      << nocolor << std::endl;
             return false;
         }
     }
@@ -103,32 +76,19 @@ bool MotionPlanner::generateHorizon(std::vector<Eigen::VectorXd> & x,
     return true;
 }
 
-bool MotionPlanner::generateHorizon(std::vector<std::vector<double>> & x,
-                                    const std::vector<std::vector<double>> & u,
-                                    std::vector<std::vector<std::vector<double>>> & Ah,
-                                    std::vector<std::vector<std::vector<double>>> & Bh,
-                                    std::vector<std::vector<std::vector<double>>> & Qh,
-                                    std::vector<std::vector<std::vector<double>>> & Rh,
-                                    std::vector<std::vector<std::vector<double>>> & Kh)
+bool MotionPlanner::generateHorizonLinearization(
+    std::vector<std::vector<double>> & x,
+    const std::vector<std::vector<double>> & u,
+    std::vector<std::vector<std::vector<double>>> & Ath,
+    std::vector<std::vector<std::vector<double>>> & Bth)
 {
-    if(!robot_ss_model->getLinearizedMatrixA(x[0], time_step, Ah[0]) ||
-       !robot_ss_model->getLinearizedMatrixB(x[0], u[0], time_step, Bh[0]))
+    if(!robot_ss_model->getLinearizedMatrixA(x[0], time_step, Ath[0]) ||
+       !robot_ss_model->getLinearizedMatrixB(x[0], u[0], time_step, Bth[0]))
     {
-        std::cout
-            << red
-            << "ERROR [MotionPlanner::generateHorizon]: Unable to linearize the state space model"
-            << nocolor << std::endl;
-        return false;
-    }
-
-    if(!robot_ss_model->getStateCostMatrix(0, time_horizon, Qh[0]) ||
-       !robot_ss_model->getInputCostMatrix(Rh[0], time_horizon) ||
-       !robot_ss_model->getStateInputCostMatrix(Kh[0]))
-    {
-        std::cout
-            << red
-            << "ERROR [MotionPlanner::generateHorizon]: Unable to compute the quadratized costs"
-            << nocolor << std::endl;
+        std::cout << red
+                  << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to linearize the "
+                     "state space model"
+                  << nocolor << std::endl;
         return false;
     }
 
@@ -136,33 +96,90 @@ bool MotionPlanner::generateHorizon(std::vector<std::vector<double>> & x,
     {
         if(!robot_ss_model->forwardIntegrateModel(x[i - 1], u[i - 1], time_step, x[i]))
         {
-            std::cout
-                << red
-                << "ERROR [MotionPlanner::generateHorizon]: Unable to forward integrate the model"
-                << nocolor << std::endl;
-            return false;
-        }
-
-        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, Ah[i]) ||
-           !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, Bh[i]))
-        {
             std::cout << red
-                      << "ERROR [MotionPlanner::generateHorizon]: Unable to linearize the state "
-                         "space model"
+                      << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to forward "
+                         "integrate the model"
                       << nocolor << std::endl;
             return false;
         }
 
+        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, Ath[i]) ||
+           !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, Bth[i]))
+        {
+            std::cout << red
+                      << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to linearize "
+                         "the state "
+                         "space model"
+                      << nocolor << std::endl;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool MotionPlanner::generateHorizonCosts(std::vector<Eigen::MatrixXd> & Qth,
+                                         std::vector<Eigen::MatrixXd> & Rth,
+                                         std::vector<Eigen::MatrixXd> & Kth)
+{
+    if(!robot_ss_model->getStateCostMatrix(0, time_horizon, Qth[0], track_reference_trajectory) ||
+       !robot_ss_model->getInputCostMatrix(Rth[0], time_horizon) ||
+       !robot_ss_model->getStateInputCostMatrix(Kth[0]))
+    {
+        std::cout << red
+                  << "ERROR [MotionPlanner::generateHorizonCosts]: Unable to compute the "
+                     "quadratized costs"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    for(uint i = 1; i < number_time_steps; i++)
+    {
         double percentage_horizon = 100 * ((double)i + 1) / (double)number_time_steps;
 
-        if(!robot_ss_model->getStateCostMatrix(percentage_horizon, time_horizon, Qh[i]) ||
-           !robot_ss_model->getInputCostMatrix(Rh[i], time_horizon) ||
-           !robot_ss_model->getStateInputCostMatrix(Kh[i]))
+        if(!robot_ss_model->getStateCostMatrix(
+               percentage_horizon, time_horizon, Qth[i], track_reference_trajectory) ||
+           !robot_ss_model->getInputCostMatrix(Rth[i], time_horizon) ||
+           !robot_ss_model->getStateInputCostMatrix(Kth[i]))
         {
-            std::cout
-                << red
-                << "ERROR [MotionPlanner::generateHorizon]: Unable to compute the quadratized costs"
-                << nocolor << std::endl;
+            std::cout << red
+                      << "ERROR [MotionPlanner::generateHorizonCosts]: Unable to compute the "
+                         "quadratized costs"
+                      << nocolor << std::endl;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool MotionPlanner::generateHorizonCosts(std::vector<std::vector<std::vector<double>>> & Qth,
+                                         std::vector<std::vector<std::vector<double>>> & Rth,
+                                         std::vector<std::vector<std::vector<double>>> & Kth)
+{
+    if(!robot_ss_model->getStateCostMatrix(0, time_horizon, Qth[0]) ||
+       !robot_ss_model->getInputCostMatrix(Rth[0], time_horizon) ||
+       !robot_ss_model->getStateInputCostMatrix(Kth[0]))
+    {
+        std::cout << red
+                  << "ERROR [MotionPlanner::generateHorizonCosts]: Unable to compute the "
+                     "quadratized costs"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    for(uint i = 1; i < number_time_steps; i++)
+    {
+        double percentage_horizon = 100 * ((double)i + 1) / (double)number_time_steps;
+
+        if(!robot_ss_model->getStateCostMatrix(percentage_horizon, time_horizon, Qth[i]) ||
+           !robot_ss_model->getInputCostMatrix(Rth[i], time_horizon) ||
+           !robot_ss_model->getStateInputCostMatrix(Kth[i]))
+        {
+            std::cout << red
+                      << "ERROR [MotionPlanner::generateHorizonCosts]: Unable to compute the "
+                         "quadratized costs"
+                      << nocolor << std::endl;
             return false;
         }
     }
@@ -172,13 +189,13 @@ bool MotionPlanner::generateHorizon(std::vector<std::vector<double>> & x,
 
 bool MotionPlanner::updateLinearModel(const std::vector<Eigen::VectorXd> & x,
                                       const std::vector<Eigen::VectorXd> & u,
-                                      std::vector<Eigen::MatrixXd> & Ah,
-                                      std::vector<Eigen::MatrixXd> & Bh)
+                                      std::vector<Eigen::MatrixXd> & Ath,
+                                      std::vector<Eigen::MatrixXd> & Bth)
 {
     for(uint i = 1; i < number_time_steps; i++)
     {
-        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, Ah[i]) ||
-           !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, Bh[i]))
+        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, Ath[i]) ||
+           !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, Bth[i]))
         {
             std::cout << red
                       << "ERROR [MotionPlanner::updateLinearModel]: Unable to linearize the state "
@@ -193,13 +210,13 @@ bool MotionPlanner::updateLinearModel(const std::vector<Eigen::VectorXd> & x,
 
 bool MotionPlanner::updateLinearModel(const std::vector<std::vector<double>> & x,
                                       const std::vector<std::vector<double>> & u,
-                                      std::vector<std::vector<std::vector<double>>> & Ah,
-                                      std::vector<std::vector<std::vector<double>>> & Bh)
+                                      std::vector<std::vector<std::vector<double>>> & Ath,
+                                      std::vector<std::vector<std::vector<double>>> & Bth)
 {
     for(uint i = 1; i < number_time_steps; i++)
     {
-        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, Ah[i]) ||
-           !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, Bh[i]))
+        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, Ath[i]) ||
+           !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, Bth[i]))
         {
             std::cout << red
                       << "ERROR [MotionPlanner::updateLinearModel]: Unable to linearize the state "
@@ -212,17 +229,17 @@ bool MotionPlanner::updateLinearModel(const std::vector<std::vector<double>> & x
     return true;
 }
 
-bool MotionPlanner::generateHorizonConstraints(std::vector<Eigen::MatrixXd> & Ch,
-                                               std::vector<Eigen::MatrixXd> & Dh,
-                                               std::vector<Eigen::VectorXd> & rh,
-                                               std::vector<Eigen::MatrixXd> & Gh,
-                                               std::vector<Eigen::VectorXd> & hh)
+bool MotionPlanner::generateHorizonConstraints(std::vector<Eigen::MatrixXd> & Cth,
+                                               std::vector<Eigen::MatrixXd> & Dth,
+                                               std::vector<Eigen::VectorXd> & rth,
+                                               std::vector<Eigen::MatrixXd> & Gth,
+                                               std::vector<Eigen::VectorXd> & hth)
 {
     for(uint i = 0; i < number_time_steps; i++)
     {
-        if(!robot_ss_model->getConstraintsMatrixC(Ch[i]) ||
-           !robot_ss_model->getConstraintsMatrixD(Dh[i]) ||
-           !robot_ss_model->getConstraintsMatrixR(rh[i]))
+        if(!robot_ss_model->getConstraintsMatrixC(Cth[i]) ||
+           !robot_ss_model->getConstraintsMatrixD(Dth[i]) ||
+           !robot_ss_model->getConstraintsMatrixR(rth[i]))
         {
             std::cout << red
                       << "ERROR [MotionPlanner::generateHorizonConstraints]: Unable to compute the "
@@ -230,8 +247,8 @@ bool MotionPlanner::generateHorizonConstraints(std::vector<Eigen::MatrixXd> & Ch
                       << nocolor << std::endl;
             return false;
         }
-        if(!robot_ss_model->getConstraintsMatrixG(Gh[i]) ||
-           !robot_ss_model->getConstraintsMatrixH(hh[i]))
+        if(!robot_ss_model->getConstraintsMatrixG(Gth[i]) ||
+           !robot_ss_model->getConstraintsMatrixH(hth[i]))
         {
             std::cout << red
                       << "ERROR [MotionPlanner::generateHorizonConstraints]: Unable to compute the "
@@ -244,17 +261,17 @@ bool MotionPlanner::generateHorizonConstraints(std::vector<Eigen::MatrixXd> & Ch
     return true;
 }
 
-bool MotionPlanner::generateHorizonConstraints(std::vector<std::vector<std::vector<double>>> & Ch,
-                                               std::vector<std::vector<std::vector<double>>> & Dh,
-                                               std::vector<std::vector<double>> & rh,
-                                               std::vector<std::vector<std::vector<double>>> & Gh,
-                                               std::vector<std::vector<double>> & hh)
+bool MotionPlanner::generateHorizonConstraints(std::vector<std::vector<std::vector<double>>> & Cth,
+                                               std::vector<std::vector<std::vector<double>>> & Dth,
+                                               std::vector<std::vector<double>> & rth,
+                                               std::vector<std::vector<std::vector<double>>> & Gth,
+                                               std::vector<std::vector<double>> & hth)
 {
     for(uint i = 0; i < number_time_steps; i++)
     {
-        if(!robot_ss_model->getConstraintsMatrixC(Ch[i]) ||
-           !robot_ss_model->getConstraintsMatrixD(Dh[i]) ||
-           !robot_ss_model->getConstraintsMatrixR(rh[i]))
+        if(!robot_ss_model->getConstraintsMatrixC(Cth[i]) ||
+           !robot_ss_model->getConstraintsMatrixD(Dth[i]) ||
+           !robot_ss_model->getConstraintsMatrixR(rth[i]))
         {
             std::cout << red
                       << "ERROR [MotionPlanner::generateHorizonConstraints]: Unable to compute the "
@@ -262,8 +279,8 @@ bool MotionPlanner::generateHorizonConstraints(std::vector<std::vector<std::vect
                       << nocolor << std::endl;
             return false;
         }
-        if(!robot_ss_model->getConstraintsMatrixG(Gh[i]) ||
-           !robot_ss_model->getConstraintsMatrixH(hh[i]))
+        if(!robot_ss_model->getConstraintsMatrixG(Gth[i]) ||
+           !robot_ss_model->getConstraintsMatrixH(hth[i]))
         {
             std::cout << red
                       << "ERROR [MotionPlanner::generateHorizonConstraints]: Unable to compute the "
@@ -617,6 +634,46 @@ bool MotionPlanner::computeLineSearch(std::vector<std::vector<double>> & x,
     return true;
 }
 
+bool MotionPlanner::checkConstraints(bool & constraints_satisfied)
+{
+    if(!is_motion_planned)
+    {
+        std::cout << red
+                  << "ERROR [MotionPlanner::checkConstraints]: The motion planner has not yet been "
+                     "generated"
+                  << nocolor << std::endl;
+        return false;
+    }
+
+    // Checking the constraints in the planned state
+    for(uint n = 0; n < number_time_steps; n++)
+    {
+        for(uint i = 0; i < number_si_constraints; i++)
+        {
+            double rhoi = Ch[n].row(i) * planned_state[n];
+            rhoi += Dh[n].row(i) * planned_control[n];
+            rhoi += rh[n](i);
+            if(rhoi > 1e-4)
+            {
+                constraints_satisfied = false;
+                return true;
+            }
+        }
+        for(uint j = 0; j < number_ps_constraints; j++)
+        {
+            double rhoj = Gh[n].row(j) * planned_state[n] + hh[n](j);
+            if(rhoj > 1e-4)
+            {
+                constraints_satisfied = false;
+                return true;
+            }
+        }
+    }
+
+    constraints_satisfied = true;
+    return true;
+}
+
 MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model)
 {
     robot_ss_model = _robot_ss_model;
@@ -633,6 +690,51 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model)
     number_inputs = robot_ss_model->getNumberInputs();
     number_si_constraints = robot_ss_model->getNumberStateInputConstraints();
     number_ps_constraints = robot_ss_model->getNumberPureStateConstraints();
+
+    std::vector<Eigen::MatrixXd> Qh_aux(number_time_steps,
+                                        Eigen::MatrixXd::Zero(number_states, number_states));
+    std::vector<Eigen::MatrixXd> Rh_aux(number_time_steps,
+                                        Eigen::MatrixXd::Zero(number_inputs, number_inputs));
+    std::vector<Eigen::MatrixXd> Kh_aux(number_time_steps,
+                                        Eigen::MatrixXd::Zero(number_states, number_inputs));
+
+    if(!generateHorizonCosts(Qh_aux, Rh_aux, Kh_aux))
+    {
+        throw std::domain_error(
+            red +
+            std::string(
+                "ERROR [MotionPlanner::MotionPlanner]: Failure generating the cost matrixes") +
+            nocolor);
+    }
+
+    Qh = Qh_aux;
+    Rh = Rh_aux;
+    Kh = Kh_aux;
+
+    std::vector<Eigen::MatrixXd> Ch_aux(
+        number_time_steps, Eigen::MatrixXd::Zero(number_si_constraints, number_states));
+    std::vector<Eigen::MatrixXd> Dh_aux(
+        number_time_steps, Eigen::MatrixXd::Zero(number_si_constraints, number_inputs));
+    std::vector<Eigen::VectorXd> rh_aux(number_time_steps,
+                                        Eigen::VectorXd::Zero(number_si_constraints));
+    std::vector<Eigen::MatrixXd> Gh_aux(
+        number_time_steps, Eigen::MatrixXd::Zero(number_ps_constraints, number_states));
+    std::vector<Eigen::VectorXd> hh_aux(number_time_steps,
+                                        Eigen::VectorXd::Zero(number_ps_constraints));
+
+    if(!generateHorizonConstraints(Ch_aux, Dh_aux, rh_aux, Gh_aux, hh_aux))
+    {
+        throw std::domain_error(red +
+                                std::string("ERROR [MotionPlanner::MotionPlanner]: Failure "
+                                            "generating the constraints matrixes") +
+                                nocolor);
+    }
+
+    Ch = Ch_aux;
+    Dh = Dh_aux;
+    rh = rh_aux;
+    Gh = Gh_aux;
+    hh = hh_aux;
 }
 
 MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config)
@@ -671,6 +773,51 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config)
     number_inputs = robot_ss_model->getNumberInputs();
     number_si_constraints = robot_ss_model->getNumberStateInputConstraints();
     number_ps_constraints = robot_ss_model->getNumberPureStateConstraints();
+
+    std::vector<Eigen::MatrixXd> Qh_aux(number_time_steps,
+                                        Eigen::MatrixXd::Zero(number_states, number_states));
+    std::vector<Eigen::MatrixXd> Rh_aux(number_time_steps,
+                                        Eigen::MatrixXd::Zero(number_inputs, number_inputs));
+    std::vector<Eigen::MatrixXd> Kh_aux(number_time_steps,
+                                        Eigen::MatrixXd::Zero(number_states, number_inputs));
+
+    if(!generateHorizonCosts(Qh_aux, Rh_aux, Kh_aux))
+    {
+        throw std::domain_error(
+            red +
+            std::string(
+                "ERROR [MotionPlanner::MotionPlanner]: Failure generating the cost matrixes") +
+            nocolor);
+    }
+
+    Qh = Qh_aux;
+    Rh = Rh_aux;
+    Kh = Kh_aux;
+
+    std::vector<Eigen::MatrixXd> Ch_aux(
+        number_time_steps, Eigen::MatrixXd::Zero(number_si_constraints, number_states));
+    std::vector<Eigen::MatrixXd> Dh_aux(
+        number_time_steps, Eigen::MatrixXd::Zero(number_si_constraints, number_inputs));
+    std::vector<Eigen::VectorXd> rh_aux(number_time_steps,
+                                        Eigen::VectorXd::Zero(number_si_constraints));
+    std::vector<Eigen::MatrixXd> Gh_aux(
+        number_time_steps, Eigen::MatrixXd::Zero(number_ps_constraints, number_states));
+    std::vector<Eigen::VectorXd> hh_aux(number_time_steps,
+                                        Eigen::VectorXd::Zero(number_ps_constraints));
+
+    if(!generateHorizonConstraints(Ch_aux, Dh_aux, rh_aux, Gh_aux, hh_aux))
+    {
+        throw std::domain_error(red +
+                                std::string("ERROR [MotionPlanner::MotionPlanner]: Failure "
+                                            "generating the constraints matrixes") +
+                                nocolor);
+    }
+
+    Ch = Ch_aux;
+    Dh = Dh_aux;
+    rh = rh_aux;
+    Gh = Gh_aux;
+    hh = hh_aux;
 }
 
 MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config, MapInfo map_info)
@@ -754,6 +901,51 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
     number_inputs = robot_ss_model->getNumberInputs();
     number_si_constraints = robot_ss_model->getNumberStateInputConstraints();
     number_ps_constraints = robot_ss_model->getNumberPureStateConstraints();
+
+    std::vector<Eigen::MatrixXd> Qh_aux(number_time_steps,
+                                        Eigen::MatrixXd::Zero(number_states, number_states));
+    std::vector<Eigen::MatrixXd> Rh_aux(number_time_steps,
+                                        Eigen::MatrixXd::Zero(number_inputs, number_inputs));
+    std::vector<Eigen::MatrixXd> Kh_aux(number_time_steps,
+                                        Eigen::MatrixXd::Zero(number_states, number_inputs));
+
+    if(!generateHorizonCosts(Qh_aux, Rh_aux, Kh_aux))
+    {
+        throw std::domain_error(
+            red +
+            std::string(
+                "ERROR [MotionPlanner::MotionPlanner]: Failure generating the cost matrixes") +
+            nocolor);
+    }
+
+    Qh = Qh_aux;
+    Rh = Rh_aux;
+    Kh = Kh_aux;
+
+    std::vector<Eigen::MatrixXd> Ch_aux(
+        number_time_steps, Eigen::MatrixXd::Zero(number_si_constraints, number_states));
+    std::vector<Eigen::MatrixXd> Dh_aux(
+        number_time_steps, Eigen::MatrixXd::Zero(number_si_constraints, number_inputs));
+    std::vector<Eigen::VectorXd> rh_aux(number_time_steps,
+                                        Eigen::VectorXd::Zero(number_si_constraints));
+    std::vector<Eigen::MatrixXd> Gh_aux(
+        number_time_steps, Eigen::MatrixXd::Zero(number_ps_constraints, number_states));
+    std::vector<Eigen::VectorXd> hh_aux(number_time_steps,
+                                        Eigen::VectorXd::Zero(number_ps_constraints));
+
+    if(!generateHorizonConstraints(Ch_aux, Dh_aux, rh_aux, Gh_aux, hh_aux))
+    {
+        throw std::domain_error(red +
+                                std::string("ERROR [MotionPlanner::MotionPlanner]: Failure "
+                                            "generating the constraints matrixes") +
+                                nocolor);
+    }
+
+    Ch = Ch_aux;
+    Dh = Dh_aux;
+    rh = rh_aux;
+    Gh = Gh_aux;
+    hh = hh_aux;
 }
 
 bool MotionPlanner::setTimeHorizon(double new_time_horizon)
@@ -855,23 +1047,16 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
     std::vector<Eigen::MatrixXd> Bh(number_time_steps,
                                     Eigen::MatrixXd::Zero(number_states, number_inputs));
 
-    std::vector<Eigen::MatrixXd> Qh(number_time_steps,
-                                    Eigen::MatrixXd::Zero(number_states, number_states));
-    std::vector<Eigen::MatrixXd> Rh(number_time_steps,
-                                    Eigen::MatrixXd::Zero(number_inputs, number_inputs));
-    std::vector<Eigen::MatrixXd> Kh(number_time_steps,
-                                    Eigen::MatrixXd::Zero(number_states, number_inputs));
-
     // Initializing variables to control the status of the algorithm
     uint number_iterations = 0;
     int convergence_status = 0;
 
-    // Generating the state, linearized matrixes and cost matrixes for the whole time horizon
-    if(!generateHorizon(x, u, Ah, Bh, Qh, Rh, Kh))
+    // Generating the state and linearized matrixes for the whole time horizon
+    if(!generateHorizonLinearization(x, u, Ah, Bh))
     {
         std::cout << red
                   << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: Unable to generate "
-                     "the system state, linear matrixes and costs for the time horizon"
+                     "the system state and linear matrixes for the time horizon"
                   << nocolor << std::endl;
         return 0;
     }
@@ -1119,8 +1304,10 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
 
 int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                                                  const std::vector<Eigen::VectorXd> & x0,
+                                                 const std::vector<Eigen::VectorXd> & xs,
                                                  const Eigen::VectorXd & u_ini,
                                                  const std::vector<Eigen::VectorXd> & u0,
+                                                 const std::vector<Eigen::VectorXd> & us,
                                                  uint max_iter)
 {
     return 1;
@@ -1131,6 +1318,55 @@ int MotionPlanner::generateSteppedMotionPlan(const Eigen::VectorXd & x_ini,
                                              const Eigen::VectorXd & u_ini,
                                              const std::vector<Eigen::VectorXd> & u0)
 {
+    if(generateUnconstrainedMotionPlan(x_ini, x0, u_ini, u0, (uint)(max_iterations / 2 + 0.4)) != 1)
+    {
+        std::cout << red
+                  << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Failed to generate the "
+                     "unconstrained motion plan"
+                  << nocolor << std::endl;
+        return -1;
+    }
+
+    bool constraints_satisfied;
+    if(!checkConstraints(constraints_satisfied))
+    {
+        std::cout << red
+                  << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Failure while checking the "
+                     "constraints"
+                  << nocolor << std::endl;
+        return -1;
+    }
+
+    if(constraints_satisfied)
+    {
+        std::cout << green
+                  << "[MotionPlanner::generateSteppedMotionPlan]: The imposed constraints are "
+                     "satisfied, the stepped motion planner found a solution!"
+                  << nocolor << std::endl;
+
+        return 1;
+    }
+
+    std::cout << blue
+              << "[MotionPlanner::generateSteppedMotionPlan]: Generating a further constrained "
+                 "motion plan to ensure the imposed constraints are satisfied"
+              << nocolor << std::endl;
+
+    if(generateConstrainedMotionPlan(
+           x_ini, x0, planned_state, u_ini, u0, planned_control, (uint)(max_iterations / 2)) != 1)
+    {
+        std::cout << red
+                  << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Failed to generate the "
+                     "constrained motion plan"
+                  << nocolor << std::endl;
+        return -1;
+    }
+
+    std::cout << green
+              << "[MotionPlanner::generateSteppedMotionPlan]: The imposed constraints are "
+                 "satisfied, the stepped motion planner found a solution!"
+              << nocolor << std::endl;
+
     return 1;
 }
 

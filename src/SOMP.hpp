@@ -224,52 +224,65 @@ private:
     uint number_si_constraints;
     uint number_ps_constraints;
 
+    // Constraint time horizon matrixes
+    std::vector<Eigen::MatrixXd> Qh;
+    std::vector<Eigen::MatrixXd> Rh;
+    std::vector<Eigen::MatrixXd> Kh;
+
+    // Constraint time horizon matrixes
+    std::vector<Eigen::MatrixXd> Ch;
+    std::vector<Eigen::MatrixXd> Dh;
+    std::vector<Eigen::VectorXd> rh;
+    std::vector<Eigen::MatrixXd> Gh;
+    std::vector<Eigen::VectorXd> hh;
+
     //**********************//
     // Supporting functions //
     //**********************//
 
-    // Get the complete time-horizon state, ss linearized matrixes and cost matrixes
-    bool generateHorizon(std::vector<Eigen::VectorXd> & x,
-                         const std::vector<Eigen::VectorXd> & u,
-                         std::vector<Eigen::MatrixXd> & Ah,
-                         std::vector<Eigen::MatrixXd> & Bh,
-                         std::vector<Eigen::MatrixXd> & Qh,
-                         std::vector<Eigen::MatrixXd> & Rh,
-                         std::vector<Eigen::MatrixXd> & Kh);
+    // Get the complete time-horizon state and ss linearized matrixes
+    bool generateHorizonLinearization(std::vector<Eigen::VectorXd> & x,
+                                      const std::vector<Eigen::VectorXd> & u,
+                                      std::vector<Eigen::MatrixXd> & Ath,
+                                      std::vector<Eigen::MatrixXd> & Bth);
 
-    bool generateHorizon(std::vector<std::vector<double>> & x,
-                         const std::vector<std::vector<double>> & u,
-                         std::vector<std::vector<std::vector<double>>> & Ah,
-                         std::vector<std::vector<std::vector<double>>> & Bh,
-                         std::vector<std::vector<std::vector<double>>> & Qh,
-                         std::vector<std::vector<std::vector<double>>> & Rh,
-                         std::vector<std::vector<std::vector<double>>> & Kh);
+    bool generateHorizonLinearization(std::vector<std::vector<double>> & x,
+                                      const std::vector<std::vector<double>> & u,
+                                      std::vector<std::vector<std::vector<double>>> & Ath,
+                                      std::vector<std::vector<std::vector<double>>> & Bth);
+
+    // Get the complete time-horizon cost matrixes
+    bool generateHorizonCosts(std::vector<Eigen::MatrixXd> & Qth,
+                              std::vector<Eigen::MatrixXd> & Rth,
+                              std::vector<Eigen::MatrixXd> & Kth);
+
+    bool generateHorizonCosts(std::vector<std::vector<std::vector<double>>> & Qth,
+                              std::vector<std::vector<std::vector<double>>> & Rth,
+                              std::vector<std::vector<std::vector<double>>> & Kth);
 
     // Update the linearized matrixes A and B throughout the whole time horizon
     bool updateLinearModel(const std::vector<Eigen::VectorXd> & x,
                            const std::vector<Eigen::VectorXd> & u,
-                           std::vector<Eigen::MatrixXd> & Ah,
-                           std::vector<Eigen::MatrixXd> & Bh);
+                           std::vector<Eigen::MatrixXd> & Ath,
+                           std::vector<Eigen::MatrixXd> & Bth);
 
-    // Update the linearized matrixes A and B throughout the whole time horizon
     bool updateLinearModel(const std::vector<std::vector<double>> & x,
                            const std::vector<std::vector<double>> & u,
-                           std::vector<std::vector<std::vector<double>>> & Ah,
-                           std::vector<std::vector<std::vector<double>>> & Bh);
+                           std::vector<std::vector<std::vector<double>>> & Ath,
+                           std::vector<std::vector<std::vector<double>>> & Bth);
 
-    // Get the complete time-horizon state, ss linearized matrixes and cost matrixes
-    bool generateHorizonConstraints(std::vector<Eigen::MatrixXd> & Ch,
-                                    std::vector<Eigen::MatrixXd> & Dh,
-                                    std::vector<Eigen::VectorXd> & rh,
-                                    std::vector<Eigen::MatrixXd> & Gh,
-                                    std::vector<Eigen::VectorXd> & hh);
+    // Get the complete time-horizon constraint matrixes
+    bool generateHorizonConstraints(std::vector<Eigen::MatrixXd> & Cth,
+                                    std::vector<Eigen::MatrixXd> & Dth,
+                                    std::vector<Eigen::VectorXd> & rth,
+                                    std::vector<Eigen::MatrixXd> & Gth,
+                                    std::vector<Eigen::VectorXd> & hth);
 
-    // Get the complete time-horizon state, ss linearized matrixes and cost matrixes
-    bool generateHorizonConstraints(std::vector<std::vector<std::vector<double>>> & Ch,
-                                    std::vector<std::vector<std::vector<double>>> & Dh,
-                                    std::vector<std::vector<double>> & rh,
-                                    std::vector<std::vector<std::vector<double>>> & Gh,
-                                    std::vector<std::vector<double>> & hh);
+    bool generateHorizonConstraints(std::vector<std::vector<std::vector<double>>> & Cth,
+                                    std::vector<std::vector<std::vector<double>>> & Dth,
+                                    std::vector<std::vector<double>> & rth,
+                                    std::vector<std::vector<std::vector<double>>> & Gth,
+                                    std::vector<std::vector<double>> & hth);
 
     // Get the gradient of the obstacles map
     bool computeObstaclesGradient(const std::vector<std::vector<uint>> & obst_map);
@@ -304,6 +317,8 @@ private:
                            const std::vector<std::vector<double>> & uh,
                            const std::vector<std::vector<std::vector<double>>> & Qh,
                            const std::vector<std::vector<std::vector<double>>> & Rh);
+
+    bool checkConstraints(bool & constraints_satisfied);
 
 public:
     //*******************//
@@ -360,8 +375,10 @@ public:
 
     int generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                                       const std::vector<Eigen::VectorXd> & x0,
+                                      const std::vector<Eigen::VectorXd> & xs,
                                       const Eigen::VectorXd & u_ini,
                                       const std::vector<Eigen::VectorXd> & u0,
+                                      const std::vector<Eigen::VectorXd> & us,
                                       uint max_iter);
 
     int generateSteppedMotionPlan(const Eigen::VectorXd & x_ini,

@@ -39,3 +39,8 @@ build
 
 # Unit test executable
 test/unit/runUnitTests
+
+# Unit test results
+test/unit/results/stepped_planned_control.txt
+test/unit/results/stepped_planned_state.txt
+

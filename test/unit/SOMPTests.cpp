@@ -181,4 +181,7 @@ TEST(SOMP, stepped_mp_test)
     std::vector<Eigen::VectorXd> u;
     exoter_mp->getPlannedState(x);
     exoter_mp->getPlannedControl(u);
+
+    FileManager::writeMatrixFile("results/stepped_planned_state.txt", x);
+    FileManager::writeMatrixFile("results/stepped_planned_control.txt", u);
 }

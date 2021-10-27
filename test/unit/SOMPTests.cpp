@@ -184,4 +184,6 @@ TEST(SOMP, stepped_mp_test)
 
     FileManager::writeMatrixFile("results/stepped_planned_state.txt", x);
     FileManager::writeMatrixFile("results/stepped_planned_control.txt", u);
+
+    system("../../utils/MatlabPlots/plotMM.sh");
 }

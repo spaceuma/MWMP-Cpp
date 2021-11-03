@@ -199,14 +199,8 @@ private:
     // Resulting state vector (x). Size: number_states x number_time_steps
     std::vector<Eigen::VectorXd> planned_state;
 
-    // Reference state vector (x0). Size: number_states x number_time_steps
-    std::vector<Eigen::VectorXd> reference_state;
-
     // Resulting input vector. Size: number_inputs x number_time_steps
     std::vector<Eigen::VectorXd> planned_control;
-
-    // Reference input vector. Size: number_inputs x number_time_steps
-    std::vector<Eigen::VectorXd> reference_control;
 
     //**********************//
     // Supporting variables //
@@ -225,16 +219,16 @@ private:
     uint number_ps_constraints;
 
     // Constraint time horizon matrixes
-    std::vector<Eigen::MatrixXd> Qh;
-    std::vector<Eigen::MatrixXd> Rh;
-    std::vector<Eigen::MatrixXd> Kh;
+    std::vector<Eigen::MatrixXd> Q_hor;
+    std::vector<Eigen::MatrixXd> R_hor;
+    std::vector<Eigen::MatrixXd> K_hor;
 
     // Constraint time horizon matrixes
-    std::vector<Eigen::MatrixXd> Ch;
-    std::vector<Eigen::MatrixXd> Dh;
-    std::vector<Eigen::VectorXd> rh;
-    std::vector<Eigen::MatrixXd> Gh;
-    std::vector<Eigen::VectorXd> hh;
+    std::vector<Eigen::MatrixXd> C_hor;
+    std::vector<Eigen::MatrixXd> D_hor;
+    std::vector<Eigen::VectorXd> r_hor;
+    std::vector<Eigen::MatrixXd> G_hor;
+    std::vector<Eigen::VectorXd> h_hor;
 
     //**********************//
     // Supporting functions //
@@ -243,46 +237,46 @@ private:
     // Get the complete time-horizon state and ss linearized matrixes
     bool generateHorizonLinearization(std::vector<Eigen::VectorXd> & x,
                                       const std::vector<Eigen::VectorXd> & u,
-                                      std::vector<Eigen::MatrixXd> & Ath,
-                                      std::vector<Eigen::MatrixXd> & Bth);
+                                      std::vector<Eigen::MatrixXd> & A_hor_output,
+                                      std::vector<Eigen::MatrixXd> & B_hor_output);
 
     bool generateHorizonLinearization(std::vector<std::vector<double>> & x,
                                       const std::vector<std::vector<double>> & u,
-                                      std::vector<std::vector<std::vector<double>>> & Ath,
-                                      std::vector<std::vector<std::vector<double>>> & Bth);
+                                      std::vector<std::vector<std::vector<double>>> & A_hor_output,
+                                      std::vector<std::vector<std::vector<double>>> & B_hor_output);
 
     // Get the complete time-horizon cost matrixes
-    bool generateHorizonCosts(std::vector<Eigen::MatrixXd> & Qth,
-                              std::vector<Eigen::MatrixXd> & Rth,
-                              std::vector<Eigen::MatrixXd> & Kth);
+    bool generateHorizonCosts(std::vector<Eigen::MatrixXd> & Q_hor_output,
+                              std::vector<Eigen::MatrixXd> & R_hor_output,
+                              std::vector<Eigen::MatrixXd> & K_hor_output);
 
-    bool generateHorizonCosts(std::vector<std::vector<std::vector<double>>> & Qth,
-                              std::vector<std::vector<std::vector<double>>> & Rth,
-                              std::vector<std::vector<std::vector<double>>> & Kth);
+    bool generateHorizonCosts(std::vector<std::vector<std::vector<double>>> & Q_hor_output,
+                              std::vector<std::vector<std::vector<double>>> & R_hor_output,
+                              std::vector<std::vector<std::vector<double>>> & K_hor_output);
 
     // Update the linearized matrixes A and B throughout the whole time horizon
     bool updateLinearModel(const std::vector<Eigen::VectorXd> & x,
                            const std::vector<Eigen::VectorXd> & u,
-                           std::vector<Eigen::MatrixXd> & Ath,
-                           std::vector<Eigen::MatrixXd> & Bth);
+                           std::vector<Eigen::MatrixXd> & A_hor_output,
+                           std::vector<Eigen::MatrixXd> & B_hor_output);
 
     bool updateLinearModel(const std::vector<std::vector<double>> & x,
                            const std::vector<std::vector<double>> & u,
-                           std::vector<std::vector<std::vector<double>>> & Ath,
-                           std::vector<std::vector<std::vector<double>>> & Bth);
+                           std::vector<std::vector<std::vector<double>>> & A_hor_output,
+                           std::vector<std::vector<std::vector<double>>> & B_hor_output);
 
     // Get the complete time-horizon constraint matrixes
-    bool generateHorizonConstraints(std::vector<Eigen::MatrixXd> & Cth,
-                                    std::vector<Eigen::MatrixXd> & Dth,
-                                    std::vector<Eigen::VectorXd> & rth,
-                                    std::vector<Eigen::MatrixXd> & Gth,
-                                    std::vector<Eigen::VectorXd> & hth);
+    bool generateHorizonConstraints(std::vector<Eigen::MatrixXd> & C_hor_output,
+                                    std::vector<Eigen::MatrixXd> & D_hor_output,
+                                    std::vector<Eigen::VectorXd> & r_hor_output,
+                                    std::vector<Eigen::MatrixXd> & G_hor_output,
+                                    std::vector<Eigen::VectorXd> & h_hor_output);
 
-    bool generateHorizonConstraints(std::vector<std::vector<std::vector<double>>> & Cth,
-                                    std::vector<std::vector<std::vector<double>>> & Dth,
-                                    std::vector<std::vector<double>> & rth,
-                                    std::vector<std::vector<std::vector<double>>> & Gth,
-                                    std::vector<std::vector<double>> & hth);
+    bool generateHorizonConstraints(std::vector<std::vector<std::vector<double>>> & C_hor_output,
+                                    std::vector<std::vector<std::vector<double>>> & D_hor_output,
+                                    std::vector<std::vector<double>> & r_hor_output,
+                                    std::vector<std::vector<std::vector<double>>> & G_hor_output,
+                                    std::vector<std::vector<double>> & h_hor_output);
 
     // Get the gradient of the obstacles map
     bool computeObstaclesGradient(const std::vector<std::vector<uint>> & obst_map);
@@ -303,9 +297,17 @@ private:
                            const std::vector<Eigen::VectorXd> & x0,
                            std::vector<Eigen::VectorXd> & u,
                            const std::vector<Eigen::VectorXd> & u0,
+                           const std::vector<Eigen::VectorXd> & uh);
+
+    // Line search with a specified maximum actuation percentage
+    bool computeLineSearch(std::vector<Eigen::VectorXd> & x,
+                           const std::vector<Eigen::VectorXd> & x0,
+                           std::vector<Eigen::VectorXd> & u,
+                           const std::vector<Eigen::VectorXd> & u0,
                            const std::vector<Eigen::VectorXd> & uh,
-                           const std::vector<Eigen::MatrixXd> & Qh,
-                           const std::vector<Eigen::MatrixXd> & Rh);
+                           double max_alfa,
+                           double & final_alfa);
+
 
     // Compute the line search procedure, trying to find the best way to apply
     // the computed state and control steps (xh and uh),if convergence is not
@@ -315,8 +317,8 @@ private:
                            std::vector<std::vector<double>> & u,
                            const std::vector<std::vector<double>> & u0,
                            const std::vector<std::vector<double>> & uh,
-                           const std::vector<std::vector<std::vector<double>>> & Qh,
-                           const std::vector<std::vector<std::vector<double>>> & Rh);
+                           const std::vector<std::vector<std::vector<double>>> & Q_hor,
+                           const std::vector<std::vector<std::vector<double>>> & R_hor);
 
     bool checkConstraints(bool & constraints_satisfied);
 

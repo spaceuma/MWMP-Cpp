@@ -58,8 +58,8 @@ global g;
 g = 9.81;
 
 % Loading planned state and control
-x = importdata("../../test/unit/results/stepped_planned_state.txt").';
-u = importdata("../../test/unit/results/stepped_planned_control.txt").';
+x = importdata("../../test/unit/results/planned_state.txt").';
+u = importdata("../../test/unit/results/planned_control.txt").';
 
 % Initial state
 xei = x(1,1);
@@ -71,12 +71,13 @@ yC0 = x(11,1);
 yawC0 = x(12,1);
 
 % Goal end effector pose
-xef = 3.0;
-yef = 2.80;
-zef = 0.10;
-rollef = pi/4;
-pitchef = pi/2;
-yawef = 0;
+goal_ee_pose = importdata("../../test/unit/inputs/goal_ee_pose.txt");
+xef = goal_ee_pose(1);
+yef = goal_ee_pose(2);
+zef = goal_ee_pose(3);
+rollef = goal_ee_pose(4);
+pitchef = goal_ee_pose(5);
+yawef = goal_ee_pose(6);
 
 % Solution characteristics
 timeSteps = 160;

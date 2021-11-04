@@ -1643,7 +1643,8 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
 
         for(uint i = 0; i < number_time_steps; i++)
         {
-            E[i] = Cl[i] - Dl[i] * R_hor_inv * K_hor[i];
+
+            E[i] = Cl[i] - Dl[i] * R_hor_inv * K_hor[i].transpose();
             rh[i] = rl[i] - Dl[i] * (R_hor_inv * us0[i]);
 
             Ah[i] = A_hor[i] - B_hor[i] * R_hor_inv *
@@ -1683,12 +1684,9 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
         z[number_time_steps - 1].noalias() += xs0[number_time_steps - 1];
 
         // Solve backwards
-        std::vector<Eigen::MatrixXd> R_hor_inv_B_hor_t(number_time_steps);
-        std::vector<Eigen::MatrixXd> R_hor_inv_B_hor_t_s1(number_time_steps);
-
         for(int i = number_time_steps - 2; i >= 0; i--)
         {
-            M[i].noalias() += R_hor[i] * P[i + 1];
+            M[i].noalias() += Rh[i] * P[i + 1];
             M[i].noalias() = M[i].partialPivLu().solve(I_states);
 
             P[i].noalias() += A_hor[i].transpose() * P[i + 1] * M[i] * A_hor[i];
@@ -1775,7 +1773,8 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
         Eigen::VectorXd nuV =
             Eigen::VectorXd::Zero(number_active_ps_constraints * number_constrained_ps_timesteps);
 
-        nuV = F.inverse() * (-Gamma * step_state[0] - y - H);
+        if(number_active_ps_constraints > 0)
+            nuV = F.inverse() * (-Gamma * step_state[0] - y - H);
 
         std::vector<Eigen::VectorXd> nu(number_time_steps,
                                         Eigen::VectorXd::Zero(number_active_ps_constraints));
@@ -1806,15 +1805,15 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
             }
         }
 
+        // Solve forwards
         std::vector<Eigen::VectorXd> v(number_time_steps, Eigen::VectorXd::Zero(number_states));
         std::vector<Eigen::VectorXd> lambda = s;
         std::vector<Eigen::VectorXd> mu(number_time_steps,
                                         Eigen::VectorXd::Zero(number_active_si_constraints));
 
-        // Solve forwards
         for(uint i = 0; i < number_time_steps - 1; i++)
         {
-            v[i] = M[i] * (u0h[i] - R_hor[i] * s[i + 1]);
+            v[i] = M[i] * (u0h[i] - Rh[i] * s[i + 1]);
 
             step_state[i + 1] = v[i];
             step_state[i + 1].noalias() += M[i] * (A_hor[i] * step_state[i]);
@@ -1828,14 +1827,13 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                                   Dl[i].transpose() * mu[i] + us0[i]);
         }
 
-
         // Checking termination conditions
         bool convergence_condition = true;
         bool step_3 = true;
 
         // Check if the control is not changing
         for(uint i = 0; i < number_time_steps; i++)
-            convergence_condition &= (us[i].norm() <= control_threshold * u[i].norm());
+            convergence_condition &= (step_control[i].norm() <= control_threshold * u[i].norm());
 
         if(!convergence_condition)
         {
@@ -1857,7 +1855,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                 for(uint n = 0; n < number_time_steps; n++)
                 {
                     rhoi[n] = C_hor[n]*x[n] + D_hor[n]*u[n] + r_hor[n];
-                    deltai[n] = C_hor[n]*xs[n] + D_hor[n]*us[n];
+                    deltai[n] = C_hor[n]*xs[n] + D_hor[n]*step_control[n];
                     for(uint i = 0; i < number_si_constraints; i ++)
                     {
                         if(!I_hor[i][n])
@@ -1897,7 +1895,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
 
                 // Decide the best way to apply the last obtained state and control
                 // steps (xs and us)
-                computeLineSearch(x, reference_state, u, reference_control, us);
+                computeLineSearch(x, reference_state, u, reference_control, step_control);
             }
             // Some violated constraints
             else
@@ -1907,7 +1905,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                 // Decide the best way to apply the last obtained state and control
                 // steps (xs and us)
                 double final_alfa;
-                computeLineSearch(x, reference_state, u, reference_control, us, alfak, final_alfa);
+                computeLineSearch(x, reference_state, u, reference_control, step_control, alfak, final_alfa);
 
                 if(alfak == final_alfa)
                 {
@@ -1916,12 +1914,18 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                         for(uint i = 0; i < number_si_constraints; i++)
                         {
                             if(-rhoi[n](i)/deltai[n](i) == alfak)
+                            {
+                                std::cout<<magenta<<"[MotionPlanner::generateConstrainedMotionPlan]: New state input constraint reached\n"<<nocolor;
                                 I_hor[i][n] = 1;
+                            }
                         }
                         for(uint j = 0; j < number_ps_constraints; j++)
                         {
                             if(-rhoj[n](j)/deltaj[n](j) == alfak)
+                            {
+                                std::cout<<magenta<<"[MotionPlanner::generateConstrainedMotionPlan]: New pure state constraint reached\n"<<nocolor;
                                 J_hor[j][n] = 1;
+                            }
                         }
                     }
                 }
@@ -2015,7 +2019,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
 
             // Check if the control is not changing
             for(uint i = 0; i < number_time_steps; i++)
-                convergence_condition &= (us[i].norm() <= control_threshold * u[i].norm());
+                convergence_condition &= (step_control[i].norm() <= control_threshold * u[i].norm());
 
             // If the control can be improved, check if a suitable solution is already planned
             if(!convergence_condition)
@@ -2040,7 +2044,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
 
                         for(uint i = 0; i < number_time_steps; i++)
                             convergence_condition &=
-                                (us[i].norm() <= (20 * control_threshold * u[i].norm()));
+                                (step_control[i].norm() <= (20 * control_threshold * u[i].norm()));
                     }
                     std::cout << blue
                               << "[MotionPlanner::generateConstrainedMotionPlan]: Distance to "
@@ -2215,10 +2219,32 @@ int MotionPlanner::generateSteppedMotionPlan(const Eigen::VectorXd & x_ini,
         return -1;
     }
 
-    std::cout << green
-              << "[MotionPlanner::generateSteppedMotionPlan]: The imposed constraints are "
-                 "satisfied, the stepped motion planner found a solution!"
-              << nocolor << std::endl;
+    if(!checkConstraints(constraints_satisfied))
+    {
+        std::cout << red
+                  << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Failure while checking the "
+                     "constraints"
+                  << nocolor << std::endl;
+        return -1;
+    }
+
+    if(constraints_satisfied)
+    {
+        std::cout << green
+                  << "[MotionPlanner::generateSteppedMotionPlan]: The imposed constraints are "
+                     "satisfied, the stepped motion planner found a solution!"
+                  << nocolor << std::endl;
+
+        return 1;
+    }
+    else
+    {
+        std::cout << red
+                  << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Unexpected behaviour of the constrained motion planner, the imposed constraints are not satisfied"
+                  << nocolor << std::endl;
+        return -1;
+
+    }
 
     return 1;
 }

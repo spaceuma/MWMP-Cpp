@@ -1012,7 +1012,7 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
 
 bool MotionPlanner::setTimeHorizon(double new_time_horizon)
 {
-    //TODO generate again Q and R
+    // TODO generate again Q and R
     if(new_time_horizon > 0 && new_time_horizon > time_step)
         time_horizon = new_time_horizon;
     else
@@ -1028,7 +1028,7 @@ bool MotionPlanner::setTimeHorizon(double new_time_horizon)
 
 bool MotionPlanner::setTimeStep(double new_time_step)
 {
-    //TODO generate again Q and R
+    // TODO generate again Q and R
     if(new_time_step > 0 && new_time_step < time_horizon)
         time_step = new_time_step;
     else
@@ -1261,7 +1261,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                         convergence_condition &=
                             (uh[i].norm() <= (20 * control_threshold * u[i].norm()));
                 }
-                std::cout << blue
+                std::cout << yellow
                           << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
                              "goal position: "
                           << distance_to_goal << nocolor << std::endl;
@@ -1285,7 +1285,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
 
                 convergence_condition &= (orientation_to_goal < orientation_threshold);
 
-                std::cout << blue
+                std::cout << yellow
                           << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
                              "goal orientation: "
                           << orientation_to_goal << nocolor << std::endl;
@@ -1406,7 +1406,8 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
     if(track_reference_trajectory)
     {
         // Creating the path planner object
-        FastMarching::PathPlanner * path_planner = new FastMarching::PathPlanner();
+        double waypoint_distance = 0.1;
+        FastMarching::PathPlanner * path_planner = new FastMarching::PathPlanner(waypoint_distance);
 
         // Goal and initial poses
         std::vector<double> ini_pose = {x_ini(pose_indexes[0]), x_ini(pose_indexes[1])};
@@ -1430,11 +1431,15 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
         uint path_size = reference_path.size();
         for(uint i = 0; i < number_time_steps; i++)
         {
-            uint path_index = (uint)(path_size * i / number_time_steps);
+            uint path_index = (uint)(path_size * i / number_time_steps + 0.5);
             reference_state[i](pose_indexes[0]) = reference_path[path_index][0];
             reference_state[i](pose_indexes[1]) = reference_path[path_index][1];
             reference_state[i](pose_indexes[2]) = reference_path[path_index][2];
         }
+
+        reference_state[number_time_steps - 1](pose_indexes[0]) = reference_path[path_size - 1][0];
+        reference_state[number_time_steps - 1](pose_indexes[1]) = reference_path[path_size - 1][1];
+        reference_state[number_time_steps - 1](pose_indexes[2]) = reference_path[path_size - 1][2];
     }
 
     // State and input along the whole time horizon
@@ -1463,9 +1468,9 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
 
     // Initializing the active constraints matrixes
     std::vector<std::vector<bool>> I_hor(number_time_steps,
-                                      std::vector<bool>(number_si_constraints, false));
+                                         std::vector<bool>(number_si_constraints, false));
     std::vector<std::vector<bool>> J_hor(number_time_steps,
-                                      std::vector<bool>(number_ps_constraints, false));
+                                         std::vector<bool>(number_ps_constraints, false));
 
     // Initializing reference trajectories
     std::vector<Eigen::VectorXd> xs0(number_time_steps, Eigen::VectorXd::Zero(number_states));
@@ -1485,346 +1490,377 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
     {
         double it_time = clock();
 
-        // Generate reference trajectories
-        for(uint i = 0; i < number_time_steps; i++)
-        {
-            xs0[i] = Q_hor[i] * (x[i] - reference_state[i]);
-            us0[i] = R_hor[i] * (u[i] - reference_control[i]);
-        }
+        std::cout << blue << "[MotionPlanner::generateConstrainedMotionPlan]: Iteration number "
+                  << number_iterations << nocolor << std::endl;
 
-        // Active constraints definition
-        // State input constraints
         std::vector<uint> constrained_si_timesteps;
-
+        uint number_constrained_si_timesteps = 0;
         std::vector<std::vector<uint>> active_si_constraints_horizon;
-        active_si_constraints_horizon.resize(number_time_steps);
+        std::vector<Eigen::VectorXd> mu;
 
-        std::vector<bool> active_si_constraints(number_si_constraints, false);
-        std::vector<int> lut_si_constraints(number_si_constraints, -1);
-
-        for(uint i = 0; i < number_time_steps; i++)
-        {
-            bool is_any_constraint_active = false;
-            for(uint j = 0; j < number_si_constraints; j++)
-            {
-                if(I_hor[i][j])
-                {
-                    active_si_constraints_horizon[i].push_back(j);
-                    active_si_constraints[j] = true;
-                    is_any_constraint_active = true;
-                }
-            }
-
-            if(is_any_constraint_active) constrained_si_timesteps.push_back(i);
-        }
-
-        uint number_active_si_constraints = 0;
-        uint index = 0;
-
-        for(uint j = 0; j < number_si_constraints; j++)
-        {
-            if(active_si_constraints[j])
-            {
-                number_active_si_constraints++;
-                lut_si_constraints[j] = index;
-                index++;
-            }
-        }
-
-        // Creating active constraint state input (si) matrixes
-        std::vector<Eigen::MatrixXd> Cl(
-            number_time_steps, Eigen::MatrixXd::Zero(number_active_si_constraints, number_states));
-        std::vector<Eigen::MatrixXd> Dl(
-            number_time_steps, Eigen::MatrixXd::Zero(number_active_si_constraints, number_inputs));
-        std::vector<Eigen::VectorXd> rl(number_time_steps,
-                                        Eigen::VectorXd::Zero(number_active_si_constraints));
-
-        uint number_constrained_si_timesteps = constrained_si_timesteps.size();
-        for(uint i = 0; i < number_constrained_si_timesteps; i++)
-        {
-            uint timestep_index = constrained_si_timesteps[i];
-            for(uint j = 0; j < active_si_constraints_horizon[timestep_index].size(); j++)
-            {
-                uint constraint_index = active_si_constraints_horizon[timestep_index][j];
-                Cl[timestep_index].row(lut_si_constraints[constraint_index]) =
-                    C_hor[timestep_index].row(constraint_index);
-                Dl[timestep_index].row(lut_si_constraints[constraint_index]) =
-                    D_hor[timestep_index].row(constraint_index);
-            }
-        }
-
-        // Pure state constraints
         std::vector<uint> constrained_ps_timesteps;
-
+        uint number_constrained_ps_timesteps = 0;
         std::vector<std::vector<uint>> active_ps_constraints_horizon;
-        active_ps_constraints_horizon.resize(number_time_steps);
+        std::vector<Eigen::VectorXd> nu;
 
-        std::vector<bool> active_ps_constraints(number_ps_constraints, false);
-        std::vector<int> lut_ps_constraints(number_ps_constraints, -1);
-
-        for(uint i = 0; i < number_time_steps; i++)
+        if(number_iterations != 0)
         {
-            bool is_any_constraint_active = false;
-            for(uint j = 0; j < number_ps_constraints; j++)
-            {
-                if(J_hor[i][j])
-                {
-                    active_ps_constraints_horizon[i].push_back(j);
-                    active_ps_constraints[j] = true;
-                    is_any_constraint_active = true;
-                }
-            }
-
-            if(is_any_constraint_active) constrained_ps_timesteps.push_back(i);
-        }
-
-        uint number_active_ps_constraints = 0;
-        index = 0;
-
-        for(uint j = 0; j < number_ps_constraints; j++)
-        {
-            if(active_ps_constraints[j])
-            {
-                number_active_ps_constraints++;
-                lut_ps_constraints[j] = index;
-                index++;
-            }
-        }
-
-        // Creating active constraint pure state (ps) matrixes
-        std::vector<Eigen::MatrixXd> Gk(
-            number_time_steps, Eigen::MatrixXd::Zero(number_active_ps_constraints, number_states));
-        std::vector<Eigen::VectorXd> hk(number_time_steps,
-                                        Eigen::VectorXd::Zero(number_active_ps_constraints));
-
-        uint number_constrained_ps_timesteps = constrained_ps_timesteps.size();
-        for(uint i = 0; i < number_constrained_ps_timesteps; i++)
-        {
-            uint timestep_index = constrained_si_timesteps[i];
-            for(uint j = 0; j < active_ps_constraints_horizon[timestep_index].size(); j++)
-            {
-                uint constraint_index = active_ps_constraints_horizon[timestep_index][j];
-
-                Gk[timestep_index].row(lut_ps_constraints[constraint_index]) =
-                    G_hor[timestep_index].row(constraint_index);
-            }
-        }
-
-        // Matrixes predefinitions
-        std::vector<Eigen::MatrixXd> Dh(
-            number_time_steps,
-            Eigen::MatrixXd::Zero(number_active_si_constraints, number_active_si_constraints));
-        std::vector<Eigen::MatrixXd> E(
-            number_time_steps, Eigen::MatrixXd::Zero(number_active_si_constraints, number_states));
-        std::vector<Eigen::VectorXd> rh(number_time_steps,
-                                        Eigen::VectorXd::Zero(number_active_si_constraints));
-
-        std::vector<Eigen::MatrixXd> Ah(number_time_steps,
-                                        Eigen::MatrixXd::Zero(number_states, number_states));
-        std::vector<Eigen::MatrixXd> Rh(number_time_steps,
-                                        Eigen::MatrixXd::Zero(number_states, number_states));
-        std::vector<Eigen::MatrixXd> Qh(number_time_steps,
-                                        Eigen::MatrixXd::Zero(number_states, number_states));
-        std::vector<Eigen::VectorXd> x0h(number_time_steps, Eigen::VectorXd::Zero(number_states));
-        std::vector<Eigen::VectorXd> u0h(number_time_steps, Eigen::VectorXd::Zero(number_states));
-
-        for(uint i = 0; i < number_constrained_si_timesteps; i++)
-        {
-            uint timestep_index = constrained_si_timesteps[i];
-            for(uint j = 0; j < active_si_constraints_horizon[timestep_index].size(); j++)
-            {
-                uint constraint_index =
-                    lut_si_constraints[active_si_constraints_horizon[timestep_index][j]];
-                Dh[i](constraint_index, constraint_index) =
-                    1 / (Dl[i].row(constraint_index) * R_hor_inv *
-                         Dl[i].row(constraint_index).transpose());
-            }
-        }
-
-        for(uint i = 0; i < number_time_steps; i++)
-        {
-
-            E[i] = Cl[i] - Dl[i] * R_hor_inv * K_hor[i].transpose();
-            rh[i] = rl[i] - Dl[i] * (R_hor_inv * us0[i]);
-
-            Ah[i] = A_hor[i] - B_hor[i] * R_hor_inv *
-                                   (K_hor[i].transpose() + Dl[i].transpose() * Dh[i] * E[i]);
-            Rh[i] = B_hor[i] * R_hor_inv *
-                    (I_inputs - Dl[i].transpose() * Dh[i] * Dl[i] * R_hor_inv) *
-                    B_hor[i].transpose();
-            Qh[i] = Q_hor[i] - K_hor[i] * R_hor_inv * K_hor[i].transpose() +
-                    E[i].transpose() * Dh[i] * E[i];
-            x0h[i] = xs0[i] - K_hor[i] * (R_hor_inv * us0[i]) + E[i].transpose() * (Dh[i] * rh[i]);
-            u0h[i] = -B_hor[i] * (R_hor_inv * (us0[i] + Dl[i].transpose() * (Dh[i] * rh[i])));
-        }
-
-        // If checking safety, generate obstacles repulsive cost
-        std::vector<Eigen::VectorXd> obstacles_repulsive_cost(number_time_steps,
-                                                              Eigen::VectorXd::Zero(number_states));
-
-        if(check_safety)
-        {
+            // Generate reference trajectories
             for(uint i = 0; i < number_time_steps; i++)
             {
-                robot_ss_model->getObstaclesCost(x[i],
-                                                 map_resolution,
-                                                 gradient_obstacles_map_x,
-                                                 gradient_obstacles_map_y,
-                                                 time_horizon,
-                                                 obstacles_repulsive_cost[i]);
-            }
-        }
-
-        // LQR problem solution
-        std::vector<Eigen::MatrixXd> M(number_time_steps,
-                                       Eigen::MatrixXd::Identity(number_states, number_states));
-        std::vector<Eigen::MatrixXd> P = Q_hor;
-        std::vector<Eigen::VectorXd> z = obstacles_repulsive_cost;
-
-        z[number_time_steps - 1].noalias() += xs0[number_time_steps - 1];
-
-        // Solve backwards
-        for(int i = number_time_steps - 2; i >= 0; i--)
-        {
-            M[i].noalias() += Rh[i] * P[i + 1];
-            M[i].noalias() = M[i].partialPivLu().solve(I_states);
-
-            P[i].noalias() += A_hor[i].transpose() * P[i + 1] * M[i] * A_hor[i];
-
-            z[i].noalias() += A_hor[i].transpose() * (M[i].transpose() * z[i + 1]);
-            z[i].noalias() += A_hor[i].transpose() * (P[i + 1] * (M[i] * u0h[i]));
-            z[i].noalias() += x0h[i];
-        }
-
-        // Solve over all state constraints
-        Eigen::MatrixXd Gamma = Eigen::MatrixXd::Zero(
-            number_active_ps_constraints * number_constrained_ps_timesteps, number_states);
-        std::vector<std::vector<Eigen::MatrixXd>> Gammak(
-            number_time_steps,
-            std::vector<Eigen::MatrixXd>(
-                number_constrained_ps_timesteps,
-                Eigen::MatrixXd::Zero(number_active_ps_constraints, number_states)));
-        Eigen::VectorXd y =
-            Eigen::VectorXd::Zero(number_active_ps_constraints * number_constrained_ps_timesteps);
-        Eigen::MatrixXd F =
-            Eigen::MatrixXd::Zero(number_active_ps_constraints * number_constrained_ps_timesteps,
-                                  number_active_ps_constraints * number_constrained_ps_timesteps);
-        Eigen::VectorXd H =
-            Eigen::VectorXd::Zero(number_active_ps_constraints * number_constrained_ps_timesteps);
-
-        for(uint k = 0; k < number_constrained_ps_timesteps; k++)
-        {
-            uint time_step = constrained_ps_timesteps[k];
-            std::vector<Eigen::VectorXd> yk(time_step,
-                                            Eigen::VectorXd::Zero(number_active_ps_constraints));
-
-            Gammak[time_step][k] = Gk[time_step];
-
-            for(int n = time_step - 1; n >= 0; n--)
-            {
-                Gammak[n][k] = Gammak[n + 1][k] * M[n] * Ah[n];
-                yk[n] = yk[n + 1] + Gammak[n + 1][k] * M[n] * (u0h[n] - Rh[n] * z[n + 1]);
+                xs0[i] = Q_hor[i] * (x[i] - reference_state[i]);
+                us0[i] = R_hor[i] * (u[i] - reference_control[i]);
             }
 
-            for(uint n = k * number_active_ps_constraints;
-                n < (k + 1) * number_active_ps_constraints;
-                n++)
-            {
-                H(n) = hk[time_step](n - k * number_active_ps_constraints);
-                Gamma.row(n) = Gammak[0][k].row(n - k * number_active_ps_constraints);
-                y(n) = yk[0](n - k * number_active_ps_constraints);
-            }
-        }
+            // Active constraints definition
+            // State input constraints
+            active_si_constraints_horizon.resize(number_time_steps);
 
-        for(uint k = 0; k < number_constrained_ps_timesteps; k++)
-        {
-            for(uint j = 0; j < number_constrained_ps_timesteps; j++)
-            {
-                uint min_constraint_time_step =
-                    constrained_ps_timesteps[k] < constrained_ps_timesteps[j] ?
-                        constrained_ps_timesteps[k] :
-                        constrained_ps_timesteps[j];
+            std::vector<bool> active_si_constraints(number_si_constraints, false);
+            std::vector<int> lut_si_constraints(number_si_constraints, -1);
 
-                std::vector<Eigen::MatrixXd> Fkj(
-                    min_constraint_time_step,
-                    Eigen::MatrixXd::Zero(number_active_ps_constraints,
-                                          number_active_ps_constraints));
-                for(int n = min_constraint_time_step - 1; n > 0; n--)
+            for(uint i = 0; i < number_time_steps; i++)
+            {
+                bool is_any_constraint_active = false;
+                for(uint j = 0; j < number_si_constraints; j++)
                 {
-                    Fkj[n] =
-                        Fkj[n + 1] - Gammak[n + 1][k] * M[n] * Rh[n] * Gammak[n + 1][j].transpose();
+                    if(I_hor[i][j])
+                    {
+                        active_si_constraints_horizon[i].push_back(j);
+                        active_si_constraints[j] = true;
+                        is_any_constraint_active = true;
+                    }
                 }
 
-                for(uint m = k * number_active_ps_constraints;
-                    m < (k + 1) * number_active_ps_constraints;
-                    m++)
+                if(is_any_constraint_active) constrained_si_timesteps.push_back(i);
+            }
+
+            uint number_active_si_constraints = 0;
+            uint index = 0;
+
+            for(uint j = 0; j < number_si_constraints; j++)
+            {
+                if(active_si_constraints[j])
                 {
-                    for(uint n = j * number_active_ps_constraints;
-                        n < (j + 1) * number_active_ps_constraints;
-                        n++)
+                    number_active_si_constraints++;
+                    lut_si_constraints[j] = index;
+                    index++;
+                }
+            }
+
+            // Creating active constraint state input (si) matrixes
+            std::vector<Eigen::MatrixXd> Cl(
+                number_time_steps,
+                Eigen::MatrixXd::Zero(number_active_si_constraints, number_states));
+            std::vector<Eigen::MatrixXd> Dl(
+                number_time_steps,
+                Eigen::MatrixXd::Zero(number_active_si_constraints, number_inputs));
+            std::vector<Eigen::VectorXd> rl(number_time_steps,
+                                            Eigen::VectorXd::Zero(number_active_si_constraints));
+
+            number_constrained_si_timesteps = constrained_si_timesteps.size();
+            for(uint i = 0; i < number_constrained_si_timesteps; i++)
+            {
+                uint timestep_index = constrained_si_timesteps[i];
+                for(uint j = 0; j < active_si_constraints_horizon[timestep_index].size(); j++)
+                {
+                    uint constraint_index = active_si_constraints_horizon[timestep_index][j];
+                    Cl[timestep_index].row(lut_si_constraints[constraint_index]) =
+                        C_hor[timestep_index].row(constraint_index);
+                    Dl[timestep_index].row(lut_si_constraints[constraint_index]) =
+                        D_hor[timestep_index].row(constraint_index);
+                }
+            }
+            
+            if(number_constrained_si_timesteps)
+                std::cout << yellow
+                          << "[MotionPlanner::generateConstrainedMotionPlan]: Number of state-input "
+                             "constrained time_steps: "
+                          << number_constrained_si_timesteps << nocolor << std::endl;
+
+            // Pure state constraints
+            active_ps_constraints_horizon.resize(number_time_steps);
+
+            std::vector<bool> active_ps_constraints(number_ps_constraints, false);
+            std::vector<int> lut_ps_constraints(number_ps_constraints, -1);
+
+            for(uint i = 0; i < number_time_steps; i++)
+            {
+                bool is_any_constraint_active = false;
+                for(uint j = 0; j < number_ps_constraints; j++)
+                {
+                    if(J_hor[i][j])
                     {
-                        F(m, n) = Fkj[0](m - k * number_active_ps_constraints,
-                                         n - j * number_active_ps_constraints);
+                        active_ps_constraints_horizon[i].push_back(j);
+                        active_ps_constraints[j] = true;
+                        is_any_constraint_active = true;
+                    }
+                }
+
+                if(is_any_constraint_active) constrained_ps_timesteps.push_back(i);
+            }
+
+            uint number_active_ps_constraints = 0;
+            index = 0;
+
+            for(uint j = 0; j < number_ps_constraints; j++)
+            {
+                if(active_ps_constraints[j])
+                {
+                    number_active_ps_constraints++;
+                    lut_ps_constraints[j] = index;
+                    index++;
+                }
+            }
+
+            // Creating active constraint pure state (ps) matrixes
+            std::vector<Eigen::MatrixXd> Gk(
+                number_time_steps,
+                Eigen::MatrixXd::Zero(number_active_ps_constraints, number_states));
+            std::vector<Eigen::VectorXd> hk(number_time_steps,
+                                            Eigen::VectorXd::Zero(number_active_ps_constraints));
+
+            number_constrained_ps_timesteps = constrained_ps_timesteps.size();
+            for(uint i = 0; i < number_constrained_ps_timesteps; i++)
+            {
+                uint timestep_index = constrained_ps_timesteps[i];
+                for(uint j = 0; j < active_ps_constraints_horizon[timestep_index].size(); j++)
+                {
+                    uint constraint_index = active_ps_constraints_horizon[timestep_index][j];
+
+                    Gk[timestep_index].row(lut_ps_constraints[constraint_index]) =
+                        G_hor[timestep_index].row(constraint_index);
+                }
+            }
+
+            if(number_active_ps_constraints)
+                std::cout << yellow
+                          << "[MotionPlanner::generateConstrainedMotionPlan]: Number of pure state "
+                             "constrained time_steps: "
+                          << number_constrained_ps_timesteps << nocolor << std::endl;
+
+
+            // Matrixes predefinitions
+            std::vector<Eigen::MatrixXd> Dh(
+                number_time_steps,
+                Eigen::MatrixXd::Zero(number_active_si_constraints, number_active_si_constraints));
+            std::vector<Eigen::MatrixXd> E(
+                number_time_steps,
+                Eigen::MatrixXd::Zero(number_active_si_constraints, number_states));
+            std::vector<Eigen::VectorXd> rh(number_time_steps,
+                                            Eigen::VectorXd::Zero(number_active_si_constraints));
+
+            std::vector<Eigen::MatrixXd> Ah(number_time_steps,
+                                            Eigen::MatrixXd::Zero(number_states, number_states));
+            std::vector<Eigen::MatrixXd> Rh(number_time_steps,
+                                            Eigen::MatrixXd::Zero(number_states, number_states));
+            std::vector<Eigen::MatrixXd> Qh(number_time_steps,
+                                            Eigen::MatrixXd::Zero(number_states, number_states));
+            std::vector<Eigen::VectorXd> x0h(number_time_steps,
+                                             Eigen::VectorXd::Zero(number_states));
+            std::vector<Eigen::VectorXd> u0h(number_time_steps,
+                                             Eigen::VectorXd::Zero(number_states));
+
+            for(uint i = 0; i < number_constrained_si_timesteps; i++)
+            {
+                uint timestep_index = constrained_si_timesteps[i];
+                for(uint j = 0; j < active_si_constraints_horizon[timestep_index].size(); j++)
+                {
+                    uint constraint_index =
+                        lut_si_constraints[active_si_constraints_horizon[timestep_index][j]];
+                    Dh[timestep_index](constraint_index, constraint_index) =
+                        1 / (Dl[timestep_index].row(constraint_index) * R_hor_inv *
+                             Dl[timestep_index].row(constraint_index).transpose());
+                }
+            }
+
+            for(uint i = 0; i < number_time_steps; i++)
+            {
+                E[i] = Cl[i] - Dl[i] * R_hor_inv * K_hor[i].transpose();
+                rh[i] = rl[i] - Dl[i] * (R_hor_inv * us0[i]);
+
+                Ah[i] = A_hor[i] - B_hor[i] * R_hor_inv *
+                                       (K_hor[i].transpose() + Dl[i].transpose() * Dh[i] * E[i]);
+                Rh[i] = B_hor[i] * R_hor_inv *
+                        (I_inputs - Dl[i].transpose() * Dh[i] * Dl[i] * R_hor_inv) *
+                        B_hor[i].transpose();
+                Qh[i] = Q_hor[i] - K_hor[i] * R_hor_inv * K_hor[i].transpose() +
+                        E[i].transpose() * Dh[i] * E[i];
+                x0h[i] =
+                    xs0[i] - K_hor[i] * (R_hor_inv * us0[i]) + E[i].transpose() * (Dh[i] * rh[i]);
+                u0h[i] = -B_hor[i] * (R_hor_inv * (us0[i] + Dl[i].transpose() * (Dh[i] * rh[i])));
+            }
+
+            // If checking safety, generate obstacles repulsive cost
+            std::vector<Eigen::VectorXd> obstacles_repulsive_cost(
+                number_time_steps, Eigen::VectorXd::Zero(number_states));
+
+            if(check_safety)
+            {
+                for(uint i = 0; i < number_time_steps; i++)
+                {
+                    robot_ss_model->getObstaclesCost(x[i],
+                                                     map_resolution,
+                                                     gradient_obstacles_map_x,
+                                                     gradient_obstacles_map_y,
+                                                     time_horizon,
+                                                     obstacles_repulsive_cost[i]);
+                }
+            }
+
+            // LQR problem solution
+            std::vector<Eigen::MatrixXd> M(number_time_steps,
+                                           Eigen::MatrixXd::Identity(number_states, number_states));
+            std::vector<Eigen::MatrixXd> P = Qh;
+            std::vector<Eigen::VectorXd> z = obstacles_repulsive_cost;
+
+            z[number_time_steps - 1].noalias() += xs0[number_time_steps - 1];
+
+            // Solve backwards
+            for(int i = number_time_steps - 2; i >= 0; i--)
+            {
+                M[i].noalias() += Rh[i] * P[i + 1];
+                M[i].noalias() = M[i].partialPivLu().solve(I_states);
+
+                P[i].noalias() += Ah[i].transpose() * P[i + 1] * M[i] * Ah[i];
+
+                z[i].noalias() += Ah[i].transpose() * (M[i].transpose() * z[i + 1]);
+                z[i].noalias() += Ah[i].transpose() * (P[i + 1] * (M[i] * u0h[i]));
+                z[i].noalias() += x0h[i];
+            }
+
+            // Solve over all state constraints
+            Eigen::MatrixXd Gamma = Eigen::MatrixXd::Zero(
+                number_active_ps_constraints * number_constrained_ps_timesteps, number_states);
+            std::vector<std::vector<Eigen::MatrixXd>> Gammak(
+                number_time_steps,
+                std::vector<Eigen::MatrixXd>(
+                    number_constrained_ps_timesteps,
+                    Eigen::MatrixXd::Zero(number_active_ps_constraints, number_states)));
+            Eigen::VectorXd y = Eigen::VectorXd::Zero(number_active_ps_constraints *
+                                                      number_constrained_ps_timesteps);
+            Eigen::MatrixXd F = Eigen::MatrixXd::Zero(
+                number_active_ps_constraints * number_constrained_ps_timesteps,
+                number_active_ps_constraints * number_constrained_ps_timesteps);
+            Eigen::VectorXd H = Eigen::VectorXd::Zero(number_active_ps_constraints *
+                                                      number_constrained_ps_timesteps);
+
+            for(uint k = 0; k < number_constrained_ps_timesteps; k++)
+            {
+                uint time_step = constrained_ps_timesteps[k];
+                std::vector<Eigen::VectorXd> yk(
+                    time_step + 1, Eigen::VectorXd::Zero(number_active_ps_constraints));
+
+                Gammak[time_step][k] = Gk[time_step];
+
+                for(int n = time_step - 1; n >= 0; n--)
+                {
+                    Gammak[n][k] = Gammak[n + 1][k] * M[n] * Ah[n];
+                    yk[n] = yk[n + 1] + Gammak[n + 1][k] * M[n] * (u0h[n] - Rh[n] * z[n + 1]);
+                }
+
+                for(uint n = k * number_active_ps_constraints;
+                    n < (k + 1) * number_active_ps_constraints;
+                    n++)
+                {
+                    H(n) = hk[time_step](n - k * number_active_ps_constraints);
+                    Gamma.row(n) = Gammak[0][k].row(n - k * number_active_ps_constraints);
+                    y(n) = yk[0](n - k * number_active_ps_constraints);
+                }
+            }
+
+            for(uint k = 0; k < number_constrained_ps_timesteps; k++)
+            {
+                for(uint j = 0; j < number_constrained_ps_timesteps; j++)
+                {
+                    uint min_constraint_time_step =
+                        constrained_ps_timesteps[k] < constrained_ps_timesteps[j] ?
+                            constrained_ps_timesteps[k] :
+                            constrained_ps_timesteps[j];
+
+                    std::vector<Eigen::MatrixXd> Fkj(
+                        min_constraint_time_step + 1,
+                        Eigen::MatrixXd::Zero(number_active_ps_constraints,
+                                              number_active_ps_constraints));
+                    for(int n = min_constraint_time_step - 1; n > 0; n--)
+                    {
+                        Fkj[n] = Fkj[n + 1] -
+                                 Gammak[n + 1][k] * M[n] * Rh[n] * Gammak[n + 1][j].transpose();
+                    }
+
+                    for(uint m = k * number_active_ps_constraints;
+                        m < (k + 1) * number_active_ps_constraints;
+                        m++)
+                    {
+                        for(uint n = j * number_active_ps_constraints;
+                            n < (j + 1) * number_active_ps_constraints;
+                            n++)
+                        {
+                            F(m, n) = Fkj[0](m - k * number_active_ps_constraints,
+                                             n - j * number_active_ps_constraints);
+                        }
                     }
                 }
             }
-        }
 
-        Eigen::VectorXd nuV =
-            Eigen::VectorXd::Zero(number_active_ps_constraints * number_constrained_ps_timesteps);
+            Eigen::VectorXd nuV = Eigen::VectorXd::Zero(number_active_ps_constraints *
+                                                        number_constrained_ps_timesteps);
 
-        if(number_active_ps_constraints > 0)
-            nuV = F.inverse() * (-Gamma * step_state[0] - y - H);
+            if(number_active_ps_constraints > 0)
+                nuV = F.inverse() * (-Gamma * step_state[0] - y - H);
 
-        std::vector<Eigen::VectorXd> nu(number_time_steps,
-                                        Eigen::VectorXd::Zero(number_active_ps_constraints));
-        for(uint k = 0; k < number_constrained_ps_timesteps; k++)
-        {
-            uint time_step = constrained_ps_timesteps[k];
-            for(uint n = k * number_active_ps_constraints;
-                n < (k + 1) * number_active_ps_constraints;
-                n++)
+            nu = std::vector<Eigen::VectorXd>(number_time_steps,
+                                            Eigen::VectorXd::Zero(number_active_ps_constraints));
+            for(uint k = 0; k < number_constrained_ps_timesteps; k++)
             {
-                nu[k](n - k * number_active_ps_constraints) = nuV(n);
-            }
-        }
-
-        std::vector<Eigen::VectorXd> s = z;
-
-        if(number_active_ps_constraints > 0)
-        {
-            for(uint i = 0; i < number_time_steps; i++)
-            {
-                Eigen::VectorXd sum_g = Eigen::VectorXd::Zero(number_states);
-                for(uint k = 0; k < number_constrained_ps_timesteps; k++)
+                uint time_step = constrained_ps_timesteps[k];
+                for(uint n = k * number_active_ps_constraints;
+                    n < (k + 1) * number_active_ps_constraints;
+                    n++)
                 {
-                    uint time_step = constrained_ps_timesteps[k];
-                    if(time_step >= i) sum_g += Gammak[i][k].transpose() * nu[time_step];
+                    nu[k](n - k * number_active_ps_constraints) = nuV(n);
                 }
-                s[i] += sum_g;
             }
-        }
 
-        // Solve forwards
-        std::vector<Eigen::VectorXd> v(number_time_steps, Eigen::VectorXd::Zero(number_states));
-        std::vector<Eigen::VectorXd> lambda = s;
-        std::vector<Eigen::VectorXd> mu(number_time_steps,
-                                        Eigen::VectorXd::Zero(number_active_si_constraints));
+            std::vector<Eigen::VectorXd> s = z;
 
-        for(uint i = 0; i < number_time_steps - 1; i++)
-        {
-            v[i] = M[i] * (u0h[i] - Rh[i] * s[i + 1]);
+            if(number_active_ps_constraints > 0)
+            {
+                for(uint i = 0; i < number_time_steps; i++)
+                {
+                    Eigen::VectorXd sum_g = Eigen::VectorXd::Zero(number_states);
+                    for(uint k = 0; k < number_constrained_ps_timesteps; k++)
+                    {
+                        uint time_step = constrained_ps_timesteps[k];
+                        if(time_step >= i) sum_g += Gammak[i][k].transpose() * nu[time_step];
+                    }
+                    s[i] += sum_g;
+                }
+            }
 
-            step_state[i + 1] = v[i];
-            step_state[i + 1].noalias() += M[i] * (A_hor[i] * step_state[i]);
+            // Solve forwards
+            std::vector<Eigen::VectorXd> v(number_time_steps, Eigen::VectorXd::Zero(number_states));
+            std::vector<Eigen::VectorXd> lambda = s;
+            mu = std::vector<Eigen::VectorXd>(number_time_steps,
+                                            Eigen::VectorXd::Zero(number_active_si_constraints));
 
-            lambda[i + 1].noalias() += P[i + 1] * step_state[i + 1];
+            for(uint i = 0; i < number_time_steps - 1; i++)
+            {
+                v[i] = M[i] * (u0h[i] - Rh[i] * s[i + 1]);
 
-            mu[i] = Dh[i] * (E[i] * step_state[i] -
+                step_state[i + 1] = v[i];
+                step_state[i + 1].noalias() += M[i] * (Ah[i] * step_state[i]);
+
+                lambda[i + 1].noalias() += P[i + 1] * step_state[i + 1];
+
+                mu[i] =
+                    Dh[i] * (E[i] * step_state[i] -
                              Dl[i] * (R_hor_inv * (B_hor[i].transpose() * lambda[i + 1])) + rh[i]);
 
-            step_control[i] = -R_hor_inv * (K_hor[i].transpose() * step_state[i] + B_hor[i].transpose() * lambda[i + 1] +
-                                  Dl[i].transpose() * mu[i] + us0[i]);
+                step_control[i] = -R_hor_inv * (K_hor[i].transpose() * step_state[i] +
+                                                B_hor[i].transpose() * lambda[i + 1] +
+                                                Dl[i].transpose() * mu[i] + us0[i]);
+            }
         }
 
         // Checking termination conditions
@@ -1840,52 +1876,60 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
             // Step 2: checking if any constraint has been violated
             double alfak = 1;
 
-            std::vector<Eigen::VectorXd> rhoi(number_time_steps,Eigen::VectorXd::Ones(number_si_constraints));
-            std::vector<Eigen::VectorXd> deltai(number_time_steps,Eigen::VectorXd::Ones(number_si_constraints));
+            std::vector<Eigen::VectorXd> rhoi(number_time_steps,
+                                              Eigen::VectorXd::Ones(number_si_constraints));
+            std::vector<Eigen::VectorXd> deltai(number_time_steps,
+                                                Eigen::VectorXd::Ones(number_si_constraints));
 
-            std::vector<Eigen::VectorXd> rhoj(number_time_steps,Eigen::VectorXd::Ones(number_ps_constraints));
-            std::vector<Eigen::VectorXd> deltaj(number_time_steps,Eigen::VectorXd::Ones(number_ps_constraints));
+            std::vector<Eigen::VectorXd> rhoj(number_time_steps,
+                                              Eigen::VectorXd::Ones(number_ps_constraints));
+            std::vector<Eigen::VectorXd> deltaj(number_time_steps,
+                                                Eigen::VectorXd::Ones(number_ps_constraints));
 
             if(number_si_constraints > 0 || number_ps_constraints > 0)
             {
-
                 double thetak = inf;
                 double betak = inf;
 
                 for(uint n = 0; n < number_time_steps; n++)
                 {
-                    rhoi[n] = C_hor[n]*x[n] + D_hor[n]*u[n] + r_hor[n];
-                    deltai[n] = C_hor[n]*xs[n] + D_hor[n]*step_control[n];
-                    for(uint i = 0; i < number_si_constraints; i ++)
+                    for(uint i = 0; i < number_si_constraints; i++)
                     {
-                        if(!I_hor[i][n])
+                        if(!I_hor[n][i])
                         {
+                            rhoi[n](i) = C_hor[n].row(i) * x[n];
+                            rhoi[n](i) += D_hor[n].row(i) * u[n];
+                            rhoi[n](i) += r_hor[n](i);
+
+                            deltai[n](i) = C_hor[n].row(i) * step_state[n];
+                            deltai[n](i) += D_hor[n].row(i) * step_control[n];
+
                             if(deltai[n](i) > 0)
                             {
-                                double thetak_aux = -rhoi[n](i)/deltai[n](i);
-                                thetak = thetak_aux < thetak? thetak_aux:thetak;
+                                double thetak_aux = -rhoi[n](i) / deltai[n](i);
+                                thetak = thetak_aux < thetak ? thetak_aux : thetak;
                             }
                         }
                     }
 
-                    for(uint j = 0; j < number_ps_constraints; j ++)
+                    for(uint j = 0; j < number_ps_constraints; j++)
                     {
-                        if(!J_hor[j][n])
+                        if(!J_hor[n][j])
                         {
-                            rhoj[n](j) = G_hor[n].row(j)*x[n] + h_hor[n](j);
-                            deltaj[n](j) = G_hor[n].row(j)*xs[n];
+                            rhoj[n](j) = G_hor[n].row(j) * x[n] + h_hor[n](j);
+                            deltaj[n](j) = G_hor[n].row(j) * step_state[n];
 
                             if(deltaj[n](j) > 0)
                             {
-                                double betak_aux = -rhoj[n](j)/deltaj[n](j);
-                                betak = betak_aux < betak? betak_aux:betak;
+                                double betak_aux = -rhoj[n](j) / deltaj[n](j);
+                                betak = betak_aux < betak ? betak_aux : betak;
                             }
                         }
                     }
                 }
 
-                alfak = thetak < alfak? thetak:alfak;
-                alfak = betak < alfak? betak:alfak;
+                alfak = thetak < alfak ? thetak : alfak;
+                alfak = betak < alfak ? betak : alfak;
             }
 
             // No violated constraints
@@ -1905,7 +1949,8 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                 // Decide the best way to apply the last obtained state and control
                 // steps (xs and us)
                 double final_alfa;
-                computeLineSearch(x, reference_state, u, reference_control, step_control, alfak, final_alfa);
+                computeLineSearch(
+                    x, reference_state, u, reference_control, step_control, alfak, final_alfa);
 
                 if(alfak == final_alfa)
                 {
@@ -1913,18 +1958,27 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                     {
                         for(uint i = 0; i < number_si_constraints; i++)
                         {
-                            if(-rhoi[n](i)/deltai[n](i) == alfak)
+                            if(-rhoi[n](i) / deltai[n](i) == alfak)
                             {
-                                std::cout<<magenta<<"[MotionPlanner::generateConstrainedMotionPlan]: New state input constraint reached\n"<<nocolor;
-                                I_hor[i][n] = 1;
+                                std::cout << magenta
+                                          << "[MotionPlanner::generateConstrainedMotionPlan]: New "
+                                             "state input constraint reached, at timestamp "
+                                          << n << " in constraint " << i << "\n"
+                                          << nocolor;
+                                I_hor[n][i] = 1;
                             }
                         }
                         for(uint j = 0; j < number_ps_constraints; j++)
                         {
-                            if(-rhoj[n](j)/deltaj[n](j) == alfak)
+                            if(-rhoj[n](j) / deltaj[n](j) == alfak)
                             {
-                                std::cout<<magenta<<"[MotionPlanner::generateConstrainedMotionPlan]: New pure state constraint reached\n"<<nocolor;
-                                J_hor[j][n] = 1;
+                                std::cout << magenta
+                                          << "[MotionPlanner::generateConstrainedMotionPlan]: New "
+                                             "pure state constraint reached, at timestamp "
+                                          << n << " in constraint " << j << "\n"
+                                          << nocolor;
+
+                                J_hor[n][j] = 1;
                             }
                         }
                     }
@@ -1932,17 +1986,13 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
             }
         }
 
-        std::cout << blue << "[MotionPlanner::generateConstrainedMotionPlan]: Iteration number "
-                  << number_iterations << nocolor << std::endl;
         std::cout << yellow
                   << "[MotionPlanner::generateConstrainedMotionPlan]: Elapsed iteration time: "
                   << (double)(clock() - it_time) / CLOCKS_PER_SEC << nocolor << std::endl;
-        number_iterations++;
 
         // Exit procedure
         if(step_3)
         {
-
             Eigen::VectorXd iS = Eigen::VectorXd::Zero(number_time_steps);
             uint mS = 0;
             double minimum_mu = inf;
@@ -1958,7 +2008,8 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                     min_mu(time_step) = inf;
                     for(uint i = 0; i < constraints.size(); i++)
                     {
-                        if(I_hor[constraints[i]][time_step] && (mu[time_step](i) < min_mu(time_step)))
+                        if(I_hor[time_step][constraints[i]] &&
+                           (mu[time_step](i) < min_mu(time_step)))
                         {
                             min_mu(time_step) = mu[time_step](i);
                             iS(time_step) = i;
@@ -1993,7 +2044,8 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                     min_nu(time_step) = inf;
                     for(uint j = 0; j < constraints.size(); j++)
                     {
-                        if(J_hor[constraints[j]][time_step] && (nu[time_step](j) < min_nu(time_step)))
+                        if(J_hor[time_step][constraints[j]] &&
+                           (nu[time_step](j) < min_nu(time_step)))
                         {
                             min_nu(time_step) = nu[time_step](j);
                             jS(time_step) = j;
@@ -2013,13 +2065,8 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                 minimum_nu = 0;
             }
 
-
             double distance_to_goal;
             double orientation_to_goal;
-
-            // Check if the control is not changing
-            for(uint i = 0; i < number_time_steps; i++)
-                convergence_condition &= (step_control[i].norm() <= control_threshold * u[i].norm());
 
             // If the control can be improved, check if a suitable solution is already planned
             if(!convergence_condition)
@@ -2046,7 +2093,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                             convergence_condition &=
                                 (step_control[i].norm() <= (20 * control_threshold * u[i].norm()));
                     }
-                    std::cout << blue
+                    std::cout << yellow
                               << "[MotionPlanner::generateConstrainedMotionPlan]: Distance to "
                                  "goal position: "
                               << distance_to_goal << nocolor << std::endl;
@@ -2070,7 +2117,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
 
                     convergence_condition &= (orientation_to_goal < orientation_threshold);
 
-                    std::cout << blue
+                    std::cout << yellow
                               << "[MotionPlanner::generateConstrainedMotionPlan]: Distance to "
                                  "goal orientation: "
                               << orientation_to_goal << nocolor << std::endl;
@@ -2109,7 +2156,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
             }
 
             // If the algorithm has converged!!
-            if(convergence_condition)
+            if(convergence_condition && number_iterations > 0)
             {
                 std::cout << green
                           << "[MotionPlanner::generateConstrainedMotionPlan]: The motion planner "
@@ -2124,12 +2171,17 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
             }
             else
             {
-                if(minimum_mu <= minimum_nu && active_si_constraints_horizon[mS].size() > 0)
-                    I_hor[active_si_constraints_horizon[mS][iS(mS)]][mS] = 0;
-                else if(minimum_mu > minimum_nu && active_ps_constraints_horizon[lS].size() > 0)
-                    J_hor[active_ps_constraints_horizon[lS][jS(lS)]][lS] = 0;
+                if(number_constrained_si_timesteps || number_constrained_ps_timesteps)
+                {
+                    if(minimum_mu <= minimum_nu && active_si_constraints_horizon[mS].size() > 0)
+                        I_hor[mS][active_si_constraints_horizon[mS][iS(mS)]] = 0;
+                    else if(minimum_mu > minimum_nu && active_ps_constraints_horizon[lS].size() > 0)
+                        J_hor[lS][active_ps_constraints_horizon[lS][jS(lS)]] = 0;
+                }
             }
         }
+
+        number_iterations++;
 
         // If the algorithm finally failed to converge
         if(number_iterations > max_iter)
@@ -2209,8 +2261,7 @@ int MotionPlanner::generateSteppedMotionPlan(const Eigen::VectorXd & x_ini,
         us[i] -= u_ini;
     }
 
-    if(generateConstrainedMotionPlan(
-           x_ini, x0, planned_state, u_ini, u0, planned_control, (uint)(max_iterations / 2)) != 1)
+    if(generateConstrainedMotionPlan(x_ini, x0, xs, u_ini, u0, us, (uint)(max_iterations / 2)) != 1)
     {
         std::cout << red
                   << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Failed to generate the "
@@ -2240,10 +2291,10 @@ int MotionPlanner::generateSteppedMotionPlan(const Eigen::VectorXd & x_ini,
     else
     {
         std::cout << red
-                  << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Unexpected behaviour of the constrained motion planner, the imposed constraints are not satisfied"
+                  << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Unexpected behaviour of "
+                     "the constrained motion planner, the imposed constraints are not satisfied"
                   << nocolor << std::endl;
         return -1;
-
     }
 
     return 1;

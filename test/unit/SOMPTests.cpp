@@ -97,9 +97,14 @@ TEST(SOMP, unconstrained_mp_test)
 
     SOMP::MapInfo mp_map;
     mp_map.map_resolution = 0.05;
+
     std::vector<double> goal_pose;
-    FileManager::readVectorFile("inputs/goal_pose.txt", goal_pose);
+    std::vector<double> goal_ee_pose;
+    FileManager::readVectorFile("inputs/goal_ee_pose.txt", goal_ee_pose);
+    goal_pose.push_back(goal_ee_pose[0]);
+    goal_pose.push_back(goal_ee_pose[1]);
     mp_map.goal_pose = goal_pose;
+
     FileManager::readMatrixFile("inputs/dummy_obstacles_map.txt", mp_map.obstacles_map);
 
     MotionPlanner * exoter_mp = new MotionPlanner(exoter_model, mp_config, mp_map);
@@ -122,8 +127,6 @@ TEST(SOMP, unconstrained_mp_test)
     std::vector<Eigen::VectorXd> u0(number_time_steps,
                                     Eigen::VectorXd::Zero(exoter_model->getNumberInputs()));
 
-    std::vector<double> goal_ee_pose;
-    FileManager::readVectorFile("inputs/goal_ee_pose.txt", goal_ee_pose);
     x0[number_time_steps - 1] = exoter_model->getGoalStateVectorEigen(goal_ee_pose);
 
     double ini_time = clock();
@@ -159,9 +162,14 @@ TEST(SOMP, constrained_mp_test)
 
     SOMP::MapInfo mp_map;
     mp_map.map_resolution = 0.05;
+
     std::vector<double> goal_pose;
-    FileManager::readVectorFile("inputs/goal_pose.txt", goal_pose);
+    std::vector<double> goal_ee_pose;
+    FileManager::readVectorFile("inputs/goal_ee_pose.txt", goal_ee_pose);
+    goal_pose.push_back(goal_ee_pose[0]);
+    goal_pose.push_back(goal_ee_pose[1]);
     mp_map.goal_pose = goal_pose;
+
     FileManager::readMatrixFile("inputs/dummy_obstacles_map.txt", mp_map.obstacles_map);
 
     MotionPlanner * exoter_mp = new MotionPlanner(exoter_model, mp_config, mp_map);
@@ -189,8 +197,6 @@ TEST(SOMP, constrained_mp_test)
     std::vector<Eigen::VectorXd> us(number_time_steps,
                                     Eigen::VectorXd::Zero(exoter_model->getNumberInputs()));
 
-    std::vector<double> goal_ee_pose;
-    FileManager::readVectorFile("inputs/goal_ee_pose.txt", goal_ee_pose);
     x0[number_time_steps - 1] = exoter_model->getGoalStateVectorEigen(goal_ee_pose);
 
     double ini_time = clock();
@@ -225,9 +231,14 @@ TEST(SOMP, stepped_mp_test)
 
     SOMP::MapInfo mp_map;
     mp_map.map_resolution = 0.05;
+
     std::vector<double> goal_pose;
-    FileManager::readVectorFile("inputs/goal_pose.txt", goal_pose);
+    std::vector<double> goal_ee_pose;
+    FileManager::readVectorFile("inputs/goal_ee_pose.txt", goal_ee_pose);
+    goal_pose.push_back(goal_ee_pose[0]);
+    goal_pose.push_back(goal_ee_pose[1]);
     mp_map.goal_pose = goal_pose;
+
     FileManager::readMatrixFile("inputs/dummy_obstacles_map.txt", mp_map.obstacles_map);
 
     MotionPlanner * exoter_mp = new MotionPlanner(exoter_model, mp_config, mp_map);
@@ -250,8 +261,6 @@ TEST(SOMP, stepped_mp_test)
     std::vector<Eigen::VectorXd> u0(number_time_steps,
                                     Eigen::VectorXd::Zero(exoter_model->getNumberInputs()));
 
-    std::vector<double> goal_ee_pose;
-    FileManager::readVectorFile("inputs/goal_ee_pose.txt", goal_ee_pose);
     x0[number_time_steps - 1] = exoter_model->getGoalStateVectorEigen(goal_ee_pose);
 
     double ini_time = clock();

@@ -1571,12 +1571,13 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                         D_hor[timestep_index].row(constraint_index);
                 }
             }
-            
+
             if(number_constrained_si_timesteps)
-                std::cout << yellow
-                          << "[MotionPlanner::generateConstrainedMotionPlan]: Number of state-input "
-                             "constrained time_steps: "
-                          << number_constrained_si_timesteps << nocolor << std::endl;
+                std::cout
+                    << yellow
+                    << "[MotionPlanner::generateConstrainedMotionPlan]: Number of state-input "
+                       "constrained time_steps: "
+                    << number_constrained_si_timesteps << nocolor << std::endl;
 
             // Pure state constraints
             active_ps_constraints_horizon.resize(number_time_steps);
@@ -1638,7 +1639,6 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                           << "[MotionPlanner::generateConstrainedMotionPlan]: Number of pure state "
                              "constrained time_steps: "
                           << number_constrained_ps_timesteps << nocolor << std::endl;
-
 
             // Matrixes predefinitions
             std::vector<Eigen::MatrixXd> Dh(
@@ -1810,7 +1810,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                 nuV = F.inverse() * (-Gamma * step_state[0] - y - H);
 
             nu = std::vector<Eigen::VectorXd>(number_time_steps,
-                                            Eigen::VectorXd::Zero(number_active_ps_constraints));
+                                              Eigen::VectorXd::Zero(number_active_ps_constraints));
             for(uint k = 0; k < number_constrained_ps_timesteps; k++)
             {
                 uint time_step = constrained_ps_timesteps[k];
@@ -1842,7 +1842,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
             std::vector<Eigen::VectorXd> v(number_time_steps, Eigen::VectorXd::Zero(number_states));
             std::vector<Eigen::VectorXd> lambda = s;
             mu = std::vector<Eigen::VectorXd>(number_time_steps,
-                                            Eigen::VectorXd::Zero(number_active_si_constraints));
+                                              Eigen::VectorXd::Zero(number_active_si_constraints));
 
             for(uint i = 0; i < number_time_steps - 1; i++)
             {

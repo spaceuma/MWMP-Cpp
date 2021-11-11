@@ -308,7 +308,6 @@ private:
                            double max_alfa,
                            double & final_alfa);
 
-
     // Compute the line search procedure, trying to find the best way to apply
     // the computed state and control steps (xh and uh),if convergence is not
     // reached yet, decreasing the intensity of the actuation step

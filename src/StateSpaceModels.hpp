@@ -98,16 +98,24 @@ private:
     std::vector<uint> arm_position_indexes;
 
     // Indexes of the wheels speed
-    // Size: 2 (right and left speed trains, differential steering)
+    // Size: 2 (right and left speed trains)
     std::vector<uint> wheels_speed_indexes;
+
+    // Indexes of the wheels steering angle
+    // Size: 1 (the rest steering angles are geometrically dependant)
+    std::vector<uint> wheels_steering_indexes;
 
     // Indexes of the arm joints speed control input of the robot
     // Size: number_arm_joints
     std::vector<uint> arm_actuators_indexes;
 
-    // Indexes of the arm joints speed control input of the robot
-    // Size: 2 (right and left speed trains, differential steering)
+    // Indexes of the wheels speed control input
+    // Size: 2 (right and left speed trains)
     std::vector<uint> wheels_actuators_indexes;
+
+    // Indexes of the wheels steering speed control input
+    // Size: 1 (the rest steering angles are geometrically dependant)
+    std::vector<uint> steering_actuator_indexes;
 
     // Indexes of the constrained states
     std::vector<uint> state_constrained_indexes;
@@ -193,6 +201,12 @@ private:
     // Percentage of the time horizon where to start reducing the robot speed progressively
     double horizon_speed_reduction;
 
+    // Percentage of the time horizon where to start reducing the robot arm acceleration
+    double horizon_arm_acceleration_reduction;
+
+    // Hardness of reduction of the robot arm acceleration
+    double hardness_arm_acceleration_reduction;
+
     // Distance to obstacles considered risky for the robot
     double risk_distance;
 
@@ -217,6 +231,8 @@ private:
 
     // Extra costs
     double yaw_linearization_cost;
+    double steering_forward_linearization_cost;
+    double steering_angular_linearization_cost;
 
     //**********************//
     // Supporting variables //
@@ -315,30 +331,38 @@ public:
 
     // Returns the input vector given the robot inputs.
     Eigen::VectorXd getInputVectorEigen(const std::vector<double> & arm_speeds,
-                                        const std::vector<double> & wheel_speeds);
+                                        const std::vector<double> & wheel_speeds,
+                                        const std::vector<double> & wheel_steerings = {});
 
     // Returns the input vector given the robot inputs.
     bool getInputVectorEigen(const std::vector<double> & arm_speeds,
                              const std::vector<double> & wheel_speeds,
-                             Eigen::VectorXd & u);
+                             Eigen::VectorXd & u,
+                             const std::vector<double> & wheel_steerings = {});
 
     // Returns the input vector given the robot inputs.
     std::vector<double> getInputVector(const std::vector<double> & arm_speeds,
-                                       const std::vector<double> & wheel_speeds);
+                                       const std::vector<double> & wheel_speeds,
+                                       const std::vector<double> & wheel_steerings = {});
 
     // Returns the input vector given the robot inputs.
     bool getInputVector(const std::vector<double> & arm_speeds,
                         const std::vector<double> & wheel_speeds,
-                        std::vector<double> & u);
+                        std::vector<double> & u,
+                        const std::vector<double> & wheel_steerings = {});
 
     // Returns the linearized state space model matrix A.
     // Size of A: number_states x number_states
     bool getLinearizedMatrixA(const std::vector<double> & x,
+                              const std::vector<double> & u,
                               double time_step,
                               std::vector<std::vector<double>> & A);
 
     // Eigen overload
-    bool getLinearizedMatrixA(const Eigen::VectorXd & x, double time_step, Eigen::MatrixXd & A);
+    bool getLinearizedMatrixA(const Eigen::VectorXd & x,
+                              const Eigen::VectorXd & u,
+                              double time_step,
+                              Eigen::MatrixXd & A);
 
     // Returns the linearized state space model matrix B.
     // Size of B: number_states x number_inputs
@@ -476,6 +500,9 @@ public:
 
     // Returns the wheel inertia
     double getWheelInertia();
+
+    // Returns the steering angle of the front right wheel in function of the front left one
+    double getRightWheelSteer(double left_wheel_steer);
 
     // Returns the updated state after applying the control input u into the previous state x
     // over a time interval time_step.

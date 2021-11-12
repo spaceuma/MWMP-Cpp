@@ -36,6 +36,7 @@ using namespace MatrixOperations;
 MobileManipulator::MobileManipulator(std::string _robot_name)
 {
     robot_name = _robot_name;
+
     if(robot_name == "exoter")
     {
         //******************//
@@ -121,6 +122,8 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         orientation_threshold = 0.15;
 
         horizon_speed_reduction = 90;
+        horizon_arm_acceleration_reduction = 98;
+        hardness_arm_acceleration_reduction = 100000;
 
         risk_distance = 0.30;
         safety_distance = 1.00;
@@ -151,6 +154,142 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         number_si_constraints = 10;
         number_ps_constraints = 14;
     }
+    else if(robot_name == "exoter_ack")
+    {
+        //******************//
+        // Model properties //
+        //******************//
+
+        goal_distance_indexes = {0, 1, 2};
+        goal_orientation_indexes = {15, 7, 19};
+
+        world_ee_pose_indexes = {0, 1, 2};
+        base_ee_pose_indexes = {3, 4, 5, 6, 7, 8};
+
+        robot_pose_indexes = {9, 10, 11};
+
+        base_speed_indexes = {12, 13, 14};
+
+        arm_position_indexes = {15, 16, 17, 18, 19};
+        arm_actuators_indexes = {0, 1, 2, 3, 4};
+
+        wheels_speed_indexes = {35, 36};
+        wheels_actuators_indexes = {5};
+
+        wheels_steering_indexes = {41};
+        steering_actuator_indexes = {6};
+
+        state_constrained_indexes = {15, 16, 17, 18, 19, 39, 40};
+        input_constrained_indexes = {0, 1, 2, 3, 4};
+
+        goal_states_indexes = {0, 1, 2, 15, 7, 19};
+        whole_states_indexes = {9, 10, 11, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 39, 40};
+
+        whole_inputs_indexes = {0, 1, 2, 3, 4, 5, 6};
+
+        //********************//
+        // General parameters //
+        //********************//
+        rolling_resistance = 0.0036;
+        gravity = 9.81;
+
+        //******************//
+        // Robot Parameters //
+        //******************//
+        differential_width = 0.3;
+        differential_length = 0.27;
+
+        robot_weight = 15;
+
+        robot_height = 0.202;
+
+        wheels_radius = 0.07;
+        wheels_width = 0.09;
+        wheels_weight = 0.484;
+
+        nominal_speed = 0.10;
+
+        state_limits = {-30 * pi / 180,
+                        90 * pi / 180,
+                        -190 * pi / 180,
+                        -10 * pi / 180,
+                        -160 * pi / 180,
+                        160 * pi / 180,
+                        -70 * pi / 180,
+                        250 * pi / 180,
+                        -160 * pi / 180,
+                        160 * pi / 180,
+                        -2.85,
+                        2.85,
+                        -2.85,
+                        2.85};
+
+        input_limits = {-0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01};
+
+        arm_lengths = {0.0895, 0.206, 0.176, 0.0555, 0.14};
+        arm_masses = {0.5, 0.8, 0.8, 0.3, 0.2};
+        arm_widths = {0.055, 0.02, 0.02, 0.05, 0.02};
+
+        position_offset_cb = {0.165, -0.15, 0.028};
+        orientation_offset_cb = {0.0, pi / 2, 0.0};
+
+        arm_reachability = 0.65;
+
+        //********************************//
+        // Model configuration parameters //
+        //********************************//
+        distance_threshold = 0.015;
+        orientation_threshold = 0.15;
+
+        horizon_speed_reduction = 90;
+        horizon_arm_acceleration_reduction = 98;
+        hardness_arm_acceleration_reduction = 100000;
+
+        risk_distance = 0.30;
+        safety_distance = 1.00;
+
+        //*****************//
+        // Quadratic costs //
+        //*****************//
+        obstacles_repulsive_cost = 250.0;
+
+        goal_states_cost = {1000000000, 1000000000, 1000000000, 1000000000, 1000000000, 1000000000};
+        goal_speed_cost = 10000000;
+
+        whole_states_cost = {20,
+                             20,
+                             20,
+                             70000000,
+                             70000000,
+                             70000000,
+                             70000000,
+                             70000000,
+                             10,
+                             10,
+                             10,
+                             10,
+                             10,
+                             100000,
+                             100000};
+
+        whole_inputs_cost = {1500000, 1500000, 1500000, 1500000, 1500000, 20000, 150000};
+
+        yaw_linearization_cost = 0.08;
+        steering_forward_linearization_cost = 0.001;
+        steering_angular_linearization_cost = 0.8;
+
+        //**********************//
+        // Supporting variables //
+        //**********************//
+        number_states = 42;
+        number_inputs = 7;
+
+        number_arm_joints = 5;
+        number_wheels = 6;
+
+        number_si_constraints = 10;
+        number_ps_constraints = 14;
+    }
     else
     {
         throw std::domain_error(
@@ -160,6 +299,8 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
             nocolor);
     }
 }
+
+MobileManipulator::~MobileManipulator() {}
 
 uint MobileManipulator::getNumberStates()
 {
@@ -212,7 +353,7 @@ Eigen::VectorXd MobileManipulator::getInitialStateVectorEigen(
 {
     Eigen::VectorXd x = Eigen::VectorXd::Zero(number_states);
 
-    if(robot_name == "exoter")
+    if(robot_name == "exoter" || robot_name == "exoter_ack")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
         if(robot_pose.size() != 3)
@@ -301,7 +442,7 @@ bool MobileManipulator::getInitialStateVectorEigen(const std::vector<double> & r
                                                    const std::vector<double> & arm_positions,
                                                    Eigen::VectorXd & x)
 {
-    if(robot_name == "exoter")
+    if(robot_name == "exoter" || robot_name == "exoter_ack")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
         if(x.size() != number_states)
@@ -403,7 +544,7 @@ std::vector<double> MobileManipulator::getInitialStateVector(
 {
     std::vector<double> x(number_states, 0);
 
-    if(robot_name == "exoter")
+    if(robot_name == "exoter" || robot_name == "exoter_ack")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
         if(robot_pose.size() != 3)
@@ -492,7 +633,7 @@ bool MobileManipulator::getInitialStateVector(const std::vector<double> & robot_
                                               const std::vector<double> & arm_positions,
                                               std::vector<double> & x)
 {
-    if(robot_name == "exoter")
+    if(robot_name == "exoter" || robot_name == "exoter_ack")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
         if(x.size() != number_states)
@@ -689,7 +830,8 @@ bool MobileManipulator::getGoalStateVector(const std::vector<double> & goal_ee_p
 }
 
 Eigen::VectorXd MobileManipulator::getInputVectorEigen(const std::vector<double> & arm_speeds,
-                                                       const std::vector<double> & wheel_speeds)
+                                                       const std::vector<double> & wheel_speeds,
+                                                       const std::vector<double> & wheel_steerings)
 {
     if(arm_speeds.size() != arm_actuators_indexes.size())
     {
@@ -705,6 +847,15 @@ Eigen::VectorXd MobileManipulator::getInputVectorEigen(const std::vector<double>
                                 std::string("ERROR [MobileManipulator::getInputVector]: The "
                                             "provided wheel speeds don't match the expected size") +
                                 nocolor);
+    }
+
+    if(wheel_steerings.size() != steering_actuator_indexes.size())
+    {
+        throw std::domain_error(
+            red +
+            std::string("ERROR [MobileManipulator::getInputVector]: The "
+                        "provided wheel steerings don't match the expected size") +
+            nocolor);
     }
 
     Eigen::VectorXd u = Eigen::VectorXd::Zero(number_inputs);
@@ -715,12 +866,16 @@ Eigen::VectorXd MobileManipulator::getInputVectorEigen(const std::vector<double>
     for(uint i = 0; i < wheels_actuators_indexes.size(); i++)
         u(wheels_actuators_indexes[i]) = wheel_speeds[i];
 
+    for(uint i = 0; i < steering_actuator_indexes.size(); i++)
+        u(steering_actuator_indexes[i]) = wheel_steerings[i];
+
     return u;
 }
 
 bool MobileManipulator::getInputVectorEigen(const std::vector<double> & arm_speeds,
                                             const std::vector<double> & wheel_speeds,
-                                            Eigen::VectorXd & u)
+                                            Eigen::VectorXd & u,
+                                            const std::vector<double> & wheel_steerings)
 {
     if(u.size() != number_inputs)
     {
@@ -749,17 +904,30 @@ bool MobileManipulator::getInputVectorEigen(const std::vector<double> & arm_spee
         return false;
     }
 
+    if(wheel_steerings.size() != steering_actuator_indexes.size())
+    {
+        throw std::domain_error(
+            red +
+            std::string("ERROR [MobileManipulator::getInputVector]: The "
+                        "provided wheel steerings don't match the expected size") +
+            nocolor);
+    }
+
     for(uint i = 0; i < arm_actuators_indexes.size(); i++)
         u(arm_actuators_indexes[i]) = arm_speeds[i];
 
     for(uint i = 0; i < wheels_actuators_indexes.size(); i++)
         u(wheels_actuators_indexes[i]) = wheel_speeds[i];
 
+    for(uint i = 0; i < steering_actuator_indexes.size(); i++)
+        u(steering_actuator_indexes[i]) = wheel_steerings[i];
+
     return true;
 }
 
 std::vector<double> MobileManipulator::getInputVector(const std::vector<double> & arm_speeds,
-                                                      const std::vector<double> & wheel_speeds)
+                                                      const std::vector<double> & wheel_speeds,
+                                                      const std::vector<double> & wheel_steerings)
 {
     if(arm_speeds.size() != arm_actuators_indexes.size())
     {
@@ -777,6 +945,15 @@ std::vector<double> MobileManipulator::getInputVector(const std::vector<double> 
                                 nocolor);
     }
 
+    if(wheel_steerings.size() != steering_actuator_indexes.size())
+    {
+        throw std::domain_error(
+            red +
+            std::string("ERROR [MobileManipulator::getInputVector]: The "
+                        "provided wheel steerings don't match the expected size") +
+            nocolor);
+    }
+
     std::vector<double> u(number_inputs, 0);
 
     for(uint i = 0; i < arm_actuators_indexes.size(); i++)
@@ -785,12 +962,16 @@ std::vector<double> MobileManipulator::getInputVector(const std::vector<double> 
     for(uint i = 0; i < wheels_actuators_indexes.size(); i++)
         u[wheels_actuators_indexes[i]] = wheel_speeds[i];
 
+    for(uint i = 0; i < steering_actuator_indexes.size(); i++)
+        u[steering_actuator_indexes[i]] = wheel_steerings[i];
+
     return u;
 }
 
 bool MobileManipulator::getInputVector(const std::vector<double> & arm_speeds,
                                        const std::vector<double> & wheel_speeds,
-                                       std::vector<double> & u)
+                                       std::vector<double> & u,
+                                       const std::vector<double> & wheel_steerings)
 {
     if(u.size() != number_inputs)
     {
@@ -819,16 +1000,29 @@ bool MobileManipulator::getInputVector(const std::vector<double> & arm_speeds,
         return false;
     }
 
+    if(wheel_steerings.size() != steering_actuator_indexes.size())
+    {
+        throw std::domain_error(
+            red +
+            std::string("ERROR [MobileManipulator::getInputVector]: The "
+                        "provided wheel steerings don't match the expected size") +
+            nocolor);
+    }
+
     for(uint i = 0; i < arm_actuators_indexes.size(); i++)
         u[arm_actuators_indexes[i]] = arm_speeds[i];
 
     for(uint i = 0; i < wheels_actuators_indexes.size(); i++)
         u[wheels_actuators_indexes[i]] = wheel_speeds[i];
 
+    for(uint i = 0; i < steering_actuator_indexes.size(); i++)
+        u[steering_actuator_indexes[i]] = wheel_steerings[i];
+
     return true;
 }
 
 bool MobileManipulator::getLinearizedMatrixA(const std::vector<double> & x,
+                                             const std::vector<double> & u,
                                              double time_step,
                                              std::vector<std::vector<double>> & A)
 {
@@ -928,13 +1122,6 @@ bool MobileManipulator::getLinearizedMatrixA(const std::vector<double> & x,
         }
     }
 
-    // Wheels accelerations
-    for(uint i = 0; i < wheels_speed_indexes.size(); i++)
-    {
-        A[wheels_speed_indexes[i] + wheels_speed_indexes.size()][wheels_speed_indexes[i]] =
-            -1 / time_step;
-    }
-
     // Wheels torques
     for(uint i = 0; i < wheels_speed_indexes.size(); i++)
     {
@@ -943,10 +1130,56 @@ bool MobileManipulator::getLinearizedMatrixA(const std::vector<double> & x,
              getWheelInertia() + robot_weight / number_wheels * pow(wheels_radius, 2);
     }
 
+    if(robot_name == "exoter")
+    {
+        // Wheels accelerations
+        for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+        {
+            A[wheels_speed_indexes[i] + wheels_speed_indexes.size()][wheels_speed_indexes[i]] =
+                -1 / time_step;
+        }
+    }
+    else if(robot_name == "exoter_ack")
+    {
+        // Additionnal Ackermann model elements
+        double left_wheel_steer = x[wheels_steering_indexes[0]];
+        double right_wheel_steer = getRightWheelSteer(left_wheel_steer);
+        double left_wheels_speed = u[wheels_actuators_indexes[0]];
+        double steering_ratio =
+            left_wheel_steer == 0 ? 1 : sin(left_wheel_steer) / sin(right_wheel_steer);
+
+        // Wheels accelerations
+        A[wheels_speed_indexes[0] + wheels_speed_indexes.size()][wheels_speed_indexes[0]] =
+            -1 / time_step;
+        A[wheels_speed_indexes[1] + wheels_speed_indexes.size()][wheels_speed_indexes[0]] =
+            -1 / time_step * steering_ratio;
+
+        // W2C Speed x
+        A[base_speed_indexes[0]][wheels_speed_indexes[1]] =
+            wheels_radius / 2 * cos(right_wheel_steer);
+        A[base_speed_indexes[0]][wheels_steering_indexes[0]] =
+            -wheels_radius / 2 * sin(left_wheel_steer) * left_wheels_speed *
+            steering_forward_linearization_cost;
+
+        // W2C Speed Heading
+        A[base_speed_indexes[2]][base_speed_indexes[0]] =
+            (tan(left_wheel_steer) - (pow(tan(left_wheel_steer), 2) + 1) * left_wheel_steer *
+                                         steering_angular_linearization_cost) /
+            (differential_length + differential_width * tan(left_wheel_steer));
+        A[base_speed_indexes[2]][wheels_steering_indexes[0]] =
+            (robot_speed[0] * (pow(tan(left_wheel_steer), 2) + 1) *
+             steering_angular_linearization_cost) /
+            (differential_length + differential_width * tan(left_wheel_steer));
+
+        // Steering Joints Position
+        A[wheels_steering_indexes[0]][wheels_steering_indexes[0]] = 1;
+    }
+
     return true;
 }
 
 bool MobileManipulator::getLinearizedMatrixA(const Eigen::VectorXd & x,
+                                             const Eigen::VectorXd & u,
                                              double time_step,
                                              Eigen::MatrixXd & A)
 {
@@ -1046,19 +1279,57 @@ bool MobileManipulator::getLinearizedMatrixA(const Eigen::VectorXd & x,
         }
     }
 
-    // Wheels accelerations
-    for(uint i = 0; i < wheels_speed_indexes.size(); i++)
-    {
-        A(wheels_speed_indexes[i] + wheels_speed_indexes.size(), wheels_speed_indexes[i]) =
-            -1 / time_step;
-    }
-
     // Wheels torques
     for(uint i = 0; i < wheels_speed_indexes.size(); i++)
     {
         A(wheels_speed_indexes[i] + wheels_speed_indexes.size() * 2,
           wheels_speed_indexes[i] + wheels_speed_indexes.size()) =
             getWheelInertia() + robot_weight / number_wheels * pow(wheels_radius, 2);
+    }
+
+    if(robot_name == "exoter")
+    {
+        // Wheels accelerations
+        for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+        {
+            A(wheels_speed_indexes[i] + wheels_speed_indexes.size(), wheels_speed_indexes[i]) =
+                -1 / time_step;
+        }
+    }
+    else if(robot_name == "exoter_ack")
+    {
+        // Additionnal Ackermann model elements
+        double left_wheel_steer = x(wheels_steering_indexes[0]);
+        double right_wheel_steer = getRightWheelSteer(left_wheel_steer);
+        double left_wheels_speed = u(wheels_actuators_indexes[0]);
+        double steering_ratio =
+            left_wheel_steer == 0 ? 1 : sin(left_wheel_steer) / sin(right_wheel_steer);
+
+        // Wheels accelerations
+        A(wheels_speed_indexes[0] + wheels_speed_indexes.size(), wheels_speed_indexes[0]) =
+            -1 / time_step;
+        A(wheels_speed_indexes[1] + wheels_speed_indexes.size(), wheels_speed_indexes[0]) =
+            -1 / time_step * steering_ratio;
+
+        // W2C Speed x
+        A(base_speed_indexes[0], wheels_speed_indexes[1]) =
+            wheels_radius / 2 * cos(right_wheel_steer);
+        A(base_speed_indexes[0], wheels_steering_indexes[0]) =
+            -wheels_radius / 2 * sin(left_wheel_steer) * left_wheels_speed *
+            steering_forward_linearization_cost;
+
+        // W2C Speed Heading
+        A(base_speed_indexes[2], base_speed_indexes[0]) =
+            (tan(left_wheel_steer) - (pow(tan(left_wheel_steer), 2) + 1) * left_wheel_steer *
+                                         steering_angular_linearization_cost) /
+            (differential_length + differential_width * tan(left_wheel_steer));
+        A(base_speed_indexes[2], wheels_steering_indexes[0]) =
+            (robot_speed[0] * (pow(tan(left_wheel_steer), 2) + 1) *
+             steering_angular_linearization_cost) /
+            (differential_length + differential_width * tan(left_wheel_steer));
+
+        // Steering Joints Position
+        A(wheels_steering_indexes[0], wheels_steering_indexes[0]) = 1;
     }
 
     return true;
@@ -1095,7 +1366,7 @@ bool MobileManipulator::getLinearizedMatrixB(const std::vector<double> & x,
     if(!getArmJacobianMatrix(arm_positions, J))
     {
         std::cout << red
-                  << "ERROR [MobileManipulator::forwardIntegrateModel]: Failure while computing "
+                  << "ERROR [MobileManipulator::getLinearizedMatrixB]: Failure while computing "
                      "jacobian matrix"
                   << nocolor << std::endl;
         return false;
@@ -1114,16 +1385,6 @@ bool MobileManipulator::getLinearizedMatrixB(const std::vector<double> & x,
             B[base_ee_pose_indexes[i]][arm_actuators_indexes[j]] = -time_step * J[i][j];
         }
     }
-
-    // W2C Speed x
-    B[base_speed_indexes[0]][wheels_actuators_indexes[0]] = wheels_radius / 2;
-    B[base_speed_indexes[0]][wheels_actuators_indexes[1]] = wheels_radius / 2;
-
-    // W2C Speed heading
-    B[base_speed_indexes[2]][wheels_actuators_indexes[0]] =
-        wheels_radius / (2 * differential_width);
-    B[base_speed_indexes[2]][wheels_actuators_indexes[1]] =
-        -wheels_radius / (2 * differential_width);
 
     // Arm joints position
     for(uint i = 0; i < number_arm_joints; i++)
@@ -1163,17 +1424,56 @@ bool MobileManipulator::getLinearizedMatrixB(const std::vector<double> & x,
         }
     }
 
-    // Wheels speeds
-    for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+    if(robot_name == "exoter")
     {
-        B[wheels_speed_indexes[i]][wheels_actuators_indexes[i]] = 1;
-    }
+        // W2C Speed x
+        B[base_speed_indexes[0]][wheels_actuators_indexes[0]] = wheels_radius / 2;
+        B[base_speed_indexes[0]][wheels_actuators_indexes[1]] = wheels_radius / 2;
 
-    // Wheels speeds
-    for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+        // W2C Speed heading
+        B[base_speed_indexes[2]][wheels_actuators_indexes[0]] =
+            wheels_radius / (2 * differential_width);
+        B[base_speed_indexes[2]][wheels_actuators_indexes[1]] =
+            -wheels_radius / (2 * differential_width);
+
+        // Wheels speeds
+        for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+        {
+            B[wheels_speed_indexes[i]][wheels_actuators_indexes[i]] = 1;
+        }
+
+        // Wheels accelerations
+        for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+        {
+            B[wheels_speed_indexes[i] + wheels_speed_indexes.size()][wheels_actuators_indexes[i]] =
+                1 / time_step;
+        }
+    }
+    else if(robot_name == "exoter_ack")
     {
-        B[wheels_speed_indexes[i] + wheels_speed_indexes.size()][wheels_actuators_indexes[i]] =
+        double left_wheel_steer = x[wheels_steering_indexes[0]];
+        double right_wheel_steer = getRightWheelSteer(left_wheel_steer);
+        double steering_ratio =
+            left_wheel_steer == 0 ? 1 : sin(left_wheel_steer) / sin(right_wheel_steer);
+
+        // W2C Speed x
+        B[base_speed_indexes[0]][wheels_actuators_indexes[0]] =
+            wheels_radius / 2 *
+            (cos(left_wheel_steer) +
+             left_wheel_steer * sin(left_wheel_steer) * steering_forward_linearization_cost);
+
+        // Wheels speeds
+        B[wheels_speed_indexes[0]][wheels_actuators_indexes[0]] = 1;
+        B[wheels_speed_indexes[1]][wheels_actuators_indexes[0]] = steering_ratio;
+
+        // Wheels accelerations
+        B[wheels_speed_indexes[0] + wheels_speed_indexes.size()][wheels_actuators_indexes[0]] =
             1 / time_step;
+        B[wheels_speed_indexes[1] + wheels_speed_indexes.size()][wheels_actuators_indexes[0]] =
+            1 / time_step * steering_ratio;
+
+        // Steering Joints Position
+        B[wheels_steering_indexes[0]][steering_actuator_indexes[0]] = 1;
     }
 
     return true;
@@ -1210,7 +1510,7 @@ bool MobileManipulator::getLinearizedMatrixB(const Eigen::VectorXd & x,
     if(!getArmJacobianMatrix(arm_positions, J))
     {
         std::cout << red
-                  << "ERROR [MobileManipulator::forwardIntegrateModel]: Failure while computing "
+                  << "ERROR [MobileManipulator::getLinearizedMatrixB]: Failure while computing "
                      "jacobian matrix"
                   << nocolor << std::endl;
         return false;
@@ -1229,16 +1529,6 @@ bool MobileManipulator::getLinearizedMatrixB(const Eigen::VectorXd & x,
             B(base_ee_pose_indexes[i], arm_actuators_indexes[j]) = +time_step * J[i][j];
         }
     }
-
-    // W2C Speed x
-    B(base_speed_indexes[0], wheels_actuators_indexes[0]) = wheels_radius / 2;
-    B(base_speed_indexes[0], wheels_actuators_indexes[1]) = wheels_radius / 2;
-
-    // W2C Speed heading
-    B(base_speed_indexes[2], wheels_actuators_indexes[0]) =
-        wheels_radius / (2 * differential_width);
-    B(base_speed_indexes[2], wheels_actuators_indexes[1]) =
-        -wheels_radius / (2 * differential_width);
 
     // Arm joints position
     for(uint i = 0; i < number_arm_joints; i++)
@@ -1278,17 +1568,56 @@ bool MobileManipulator::getLinearizedMatrixB(const Eigen::VectorXd & x,
         }
     }
 
-    // Wheels speeds
-    for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+    if(robot_name == "exoter")
     {
-        B(wheels_speed_indexes[i], wheels_actuators_indexes[i]) = 1;
-    }
+        // W2C Speed x
+        B(base_speed_indexes[0], wheels_actuators_indexes[0]) = wheels_radius / 2;
+        B(base_speed_indexes[0], wheels_actuators_indexes[1]) = wheels_radius / 2;
 
-    // Wheels speeds
-    for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+        // W2C Speed heading
+        B(base_speed_indexes[2], wheels_actuators_indexes[0]) =
+            wheels_radius / (2 * differential_width);
+        B(base_speed_indexes[2], wheels_actuators_indexes[1]) =
+            -wheels_radius / (2 * differential_width);
+
+        // Wheels speeds
+        for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+        {
+            B(wheels_speed_indexes[i], wheels_actuators_indexes[i]) = 1;
+        }
+
+        // Wheels accelerations
+        for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+        {
+            B(wheels_speed_indexes[i] + wheels_speed_indexes.size(), wheels_actuators_indexes[i]) =
+                1 / time_step;
+        }
+    }
+    else if(robot_name == "exoter_ack")
     {
-        B(wheels_speed_indexes[i] + wheels_speed_indexes.size(), wheels_actuators_indexes[i]) =
+        double left_wheel_steer = x(wheels_steering_indexes[0]);
+        double right_wheel_steer = getRightWheelSteer(left_wheel_steer);
+        double steering_ratio =
+            left_wheel_steer == 0 ? 1 : sin(left_wheel_steer) / sin(right_wheel_steer);
+
+        // W2C Speed x
+        B(base_speed_indexes[0], wheels_actuators_indexes[0]) =
+            wheels_radius / 2 *
+            (cos(left_wheel_steer) +
+             left_wheel_steer * sin(left_wheel_steer) * steering_forward_linearization_cost);
+
+        // Wheels speeds
+        B(wheels_speed_indexes[0], wheels_actuators_indexes[0]) = 1;
+        B(wheels_speed_indexes[1], wheels_actuators_indexes[0]) = steering_ratio;
+
+        // Wheels accelerations
+        B(wheels_speed_indexes[0] + wheels_speed_indexes.size(), wheels_actuators_indexes[0]) =
             1 / time_step;
+        B(wheels_speed_indexes[1] + wheels_speed_indexes.size(), wheels_actuators_indexes[0]) =
+            1 / time_step * steering_ratio;
+
+        // Steering Joints Position
+        B(wheels_steering_indexes[0], steering_actuator_indexes[0]) = 1;
     }
 
     return true;
@@ -1544,6 +1873,16 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
         }
     }
 
+    if(percentage_horizon > horizon_arm_acceleration_reduction)
+    {
+        for(uint i = 0; i < number_arm_joints; i++)
+        {
+            Q[arm_position_indexes[i] + 2 * number_arm_joints]
+             [arm_position_indexes[i] + 2 * number_arm_joints] *=
+                hardness_arm_acceleration_reduction;
+        }
+    }
+
     return true;
 }
 
@@ -1592,6 +1931,16 @@ bool MobileManipulator::getStateCostMatrix(double percentage_horizon,
         {
             Q(base_speed_indexes[i], base_speed_indexes[i]) =
                 linear_cost * goal_speed_cost / time_ratio;
+        }
+    }
+
+    if(percentage_horizon > horizon_arm_acceleration_reduction)
+    {
+        for(uint i = 0; i < number_arm_joints; i++)
+        {
+            Q(arm_position_indexes[i] + 2 * number_arm_joints,
+              arm_position_indexes[i] + 2 * number_arm_joints) *=
+                hardness_arm_acceleration_reduction;
         }
     }
 
@@ -1695,7 +2044,7 @@ bool MobileManipulator::getArmGravityMatrix(std::vector<double> arm_positions,
         return false;
     }
 
-    if(robot_name == "exoter")
+    if(robot_name == "exoter" || robot_name == "exoter_ack")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
         G[0] = 2.45e-4 * sin(arm_positions[0]) *
@@ -1735,7 +2084,7 @@ bool MobileManipulator::getArmInertiaMatrix(const std::vector<double> & arm_posi
         return false;
     }
 
-    if(robot_name == "exoter")
+    if(robot_name == "exoter" || robot_name == "exoter_ack")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
         I[0][0] =
@@ -1796,7 +2145,7 @@ bool MobileManipulator::getArmCoriolisMatrix(const std::vector<double> & arm_pos
         return false;
     }
 
-    if(robot_name == "exoter")
+    if(robot_name == "exoter" || robot_name == "exoter_ack")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
         C[0][1] =
@@ -1948,7 +2297,7 @@ bool MobileManipulator::getArmJacobianMatrix(const std::vector<double> & arm_pos
         return false;
     }
 
-    if(robot_name == "exoter")
+    if(robot_name == "exoter" || robot_name == "exoter_ack")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
         std::vector<std::vector<std::vector<double>>> TB(
@@ -2048,7 +2397,7 @@ bool MobileManipulator::getDirectKinematicsTransform(const std::vector<double> &
         return false;
     }
 
-    if(robot_name == "exoter")
+    if(robot_name == "exoter" || robot_name == "exoter_ack")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
         if(joint_index > number_arm_joints)
@@ -2156,7 +2505,7 @@ bool MobileManipulator::getDirectKinematicsTransform(
         return false;
     }
 
-    if(robot_name == "exoter")
+    if(robot_name == "exoter" || robot_name == "exoter_ack")
     {
         // TODO This should be obtained from a URDF file, not hardcoded
 
@@ -2370,6 +2719,21 @@ double MobileManipulator::getWheelInertia()
     return I;
 }
 
+double MobileManipulator::getRightWheelSteer(double left_wheel_steer)
+{
+    double right_wheel_steer =
+        atan2(differential_length,
+              differential_length / tan(left_wheel_steer) + 2 * differential_width) +
+        0.000000000000001;
+
+    while(right_wheel_steer > pi / 2)
+        right_wheel_steer = right_wheel_steer - pi;
+    while(right_wheel_steer < -pi / 2)
+        right_wheel_steer = right_wheel_steer + pi;
+
+    return right_wheel_steer;
+}
+
 bool MobileManipulator::forwardIntegrateModel(std::vector<double> x,
                                               std::vector<double> u,
                                               double time_step,
@@ -2428,18 +2792,29 @@ bool MobileManipulator::forwardIntegrateModel(std::vector<double> x,
 
     double robot_yaw = x[robot_pose_indexes[2]];
 
-    std::vector<double> base_speed = {
-        x[base_speed_indexes[0]], x[base_speed_indexes[1]], x[base_speed_indexes[2]]};
+    std::vector<double> base_speed;
+    for(uint i = 0; i < base_speed_indexes.size(); i++)
+    {
+        base_speed.push_back(x[base_speed_indexes[i]]);
+    }
 
-    std::vector<double> wheels_speed = {u[wheels_actuators_indexes[0]],
-                                        u[wheels_actuators_indexes[1]]};
+    std::vector<double> wheels_speed;
+    for(uint i = 0; i < wheels_actuators_indexes.size(); i++)
+    {
+        wheels_speed.push_back(u[wheels_actuators_indexes[i]]);
+    }
 
-    std::vector<double> wheels_previous_speed = {x[wheels_speed_indexes[0]],
-                                                 x[wheels_speed_indexes[1]]};
+    std::vector<double> wheels_previous_speed;
+    for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+    {
+        wheels_previous_speed.push_back(x[wheels_speed_indexes[i]]);
+    }
 
-    std::vector<double> wheels_accelerations = {
-        x[wheels_speed_indexes[0] + wheels_speed_indexes.size()],
-        x[wheels_speed_indexes[1] + wheels_speed_indexes.size()]};
+    std::vector<double> wheels_accelerations;
+    for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+    {
+        wheels_accelerations.push_back(x[wheels_speed_indexes[i] + wheels_speed_indexes.size()]);
+    }
 
     std::vector<std::vector<double>> J(6, std::vector<double>(number_arm_joints, 0));
     if(!getArmJacobianMatrix(arm_positions, J))
@@ -2470,12 +2845,6 @@ bool MobileManipulator::forwardIntegrateModel(std::vector<double> x,
     xf[robot_pose_indexes[1]] = robot_pose[1] + sin(robot_yaw) * base_speed[0] * time_step +
                                 cos(robot_yaw) * base_speed[1] * time_step;
     xf[robot_pose_indexes[2]] = robot_pose[2] + base_speed[2] * time_step;
-
-    // BSpeed
-    xf[base_speed_indexes[0]] = wheels_radius / 2 * (wheels_speed[0] + wheels_speed[1]);
-    xf[base_speed_indexes[1]] = 0;
-    xf[base_speed_indexes[2]] =
-        wheels_radius * (wheels_speed[0] - wheels_speed[1]) / (2 * differential_width);
 
     // Arm joints position
     for(uint i = 0; i < number_arm_joints; i++)
@@ -2518,16 +2887,6 @@ bool MobileManipulator::forwardIntegrateModel(std::vector<double> x,
             dot(I[i], arm_accelerations) + dot(C[i], arm_speeds) + G[i];
     }
 
-    // Wheels speeds
-    xf[wheels_speed_indexes[0]] = wheels_speed[0];
-    xf[wheels_speed_indexes[1]] = wheels_speed[1];
-
-    // Wheels accelerations
-    xf[wheels_speed_indexes[0] + wheels_speed_indexes.size()] =
-        (wheels_speed[0] - wheels_previous_speed[0]) / time_step;
-    xf[wheels_speed_indexes[1] + wheels_speed_indexes.size()] =
-        (wheels_speed[1] - wheels_previous_speed[1]) / time_step;
-
     // Wheels torques
     xf[wheels_speed_indexes[0] + wheels_speed_indexes.size() * 2] =
         wheels_accelerations[0] *
@@ -2537,6 +2896,56 @@ bool MobileManipulator::forwardIntegrateModel(std::vector<double> x,
         wheels_accelerations[1] *
             (getWheelInertia() + robot_weight / number_wheels * pow(wheels_radius, 2)) +
         rolling_resistance * robot_weight * gravity * wheels_radius / number_wheels;
+
+    if(robot_name == "exoter")
+    {
+        // BSpeed
+        xf[base_speed_indexes[0]] = wheels_radius / 2 * (wheels_speed[0] + wheels_speed[1]);
+        xf[base_speed_indexes[1]] = 0;
+        xf[base_speed_indexes[2]] =
+            wheels_radius * (wheels_speed[0] - wheels_speed[1]) / (2 * differential_width);
+
+        // Wheels speeds
+        xf[wheels_speed_indexes[0]] = wheels_speed[0];
+        xf[wheels_speed_indexes[1]] = wheels_speed[1];
+
+        // Wheels accelerations
+        xf[wheels_speed_indexes[0] + wheels_speed_indexes.size()] =
+            (wheels_speed[0] - wheels_previous_speed[0]) / time_step;
+        xf[wheels_speed_indexes[1] + wheels_speed_indexes.size()] =
+            (wheels_speed[1] - wheels_previous_speed[1]) / time_step;
+    }
+    else if(robot_name == "exoter_ack")
+    {
+        // Additionnal Ackermann model elements
+        double left_wheel_steer = x[wheels_steering_indexes[0]];
+        double left_wheel_steer_speed = u[steering_actuator_indexes[0]];
+        double right_wheel_steer = getRightWheelSteer(left_wheel_steer);
+        double steering_ratio =
+            left_wheel_steer == 0 ? 1 : sin(left_wheel_steer) / sin(right_wheel_steer);
+
+        // BSpeed
+        xf[base_speed_indexes[0]] = wheels_radius / 2 *
+                                    (cos(left_wheel_steer) * wheels_speed[0] +
+                                     cos(right_wheel_steer) * wheels_previous_speed[1]);
+        xf[base_speed_indexes[1]] = 0;
+        xf[base_speed_indexes[2]] =
+            base_speed[0] * tan(left_wheel_steer) /
+            (differential_length + differential_width * tan(left_wheel_steer));
+
+        // Wheels speeds
+        xf[wheels_speed_indexes[0]] = wheels_speed[0];
+        xf[wheels_speed_indexes[1]] = wheels_speed[0] * steering_ratio;
+
+        // Wheels accelerations
+        xf[wheels_speed_indexes[0] + wheels_speed_indexes.size()] =
+            (wheels_speed[0] - wheels_previous_speed[0]) / time_step;
+        xf[wheels_speed_indexes[1] + wheels_speed_indexes.size()] =
+            (wheels_speed[0] - wheels_previous_speed[0]) / time_step * steering_ratio;
+
+        // Steering joints position
+        xf[wheels_steering_indexes[0]] = left_wheel_steer + left_wheel_steer_speed * time_step;
+    }
 
     return true;
 }
@@ -2599,18 +3008,29 @@ bool MobileManipulator::forwardIntegrateModel(const Eigen::VectorXd & x,
 
     double robot_yaw = x(robot_pose_indexes[2]);
 
-    std::vector<double> base_speed = {
-        x(base_speed_indexes[0]), x(base_speed_indexes[1]), x(base_speed_indexes[2])};
+    std::vector<double> base_speed;
+    for(uint i = 0; i < base_speed_indexes.size(); i++)
+    {
+        base_speed.push_back(x(base_speed_indexes[i]));
+    }
 
-    std::vector<double> wheels_speed = {u(wheels_actuators_indexes[0]),
-                                        u(wheels_actuators_indexes[1])};
+    std::vector<double> wheels_speed;
+    for(uint i = 0; i < wheels_actuators_indexes.size(); i++)
+    {
+        wheels_speed.push_back(u(wheels_actuators_indexes[i]));
+    }
 
-    std::vector<double> wheels_previous_speed = {x(wheels_speed_indexes[0]),
-                                                 x(wheels_speed_indexes[1])};
+    std::vector<double> wheels_previous_speed;
+    for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+    {
+        wheels_previous_speed.push_back(x(wheels_speed_indexes[i]));
+    }
 
-    std::vector<double> wheels_accelerations = {
-        x(wheels_speed_indexes[0] + wheels_speed_indexes.size()),
-        x(wheels_speed_indexes[1] + wheels_speed_indexes.size())};
+    std::vector<double> wheels_accelerations;
+    for(uint i = 0; i < wheels_speed_indexes.size(); i++)
+    {
+        wheels_accelerations.push_back(x(wheels_speed_indexes[i] + wheels_speed_indexes.size()));
+    }
 
     std::vector<std::vector<double>> J(6, std::vector<double>(number_arm_joints, 0));
     if(!getArmJacobianMatrix(arm_positions, J))
@@ -2642,12 +3062,6 @@ bool MobileManipulator::forwardIntegrateModel(const Eigen::VectorXd & x,
                                 cos(robot_yaw) * base_speed[1] * time_step;
     xf(robot_pose_indexes[2]) = robot_pose[2] + base_speed[2] * time_step;
 
-    // BSpeed
-    xf(base_speed_indexes[0]) = wheels_radius / 2 * (wheels_speed[0] + wheels_speed[1]);
-    xf(base_speed_indexes[1]) = 0;
-    xf(base_speed_indexes[2]) =
-        wheels_radius * (wheels_speed[0] - wheels_speed[1]) / (2 * differential_width);
-
     // Arm joints position
     for(uint i = 0; i < number_arm_joints; i++)
     {
@@ -2677,8 +3091,8 @@ bool MobileManipulator::forwardIntegrateModel(const Eigen::VectorXd & x,
        !getArmCoriolisMatrix(arm_positions, arm_speeds, C))
     {
         std::cout << red
-                  << "ERROR [MobileManipulator::forwardIntegrateModel]: Failure while computing "
-                     "arm dynamic matrixes"
+                  << "ERROR [MobileManipulator::forwardIntegrateModel]: Failure computing arm "
+                     "dynamic matrixes"
                   << nocolor << std::endl;
         return false;
     }
@@ -2689,16 +3103,6 @@ bool MobileManipulator::forwardIntegrateModel(const Eigen::VectorXd & x,
             dot(I[i], arm_accelerations) + dot(C[i], arm_speeds) + G[i];
     }
 
-    // Wheels speeds
-    xf(wheels_speed_indexes[0]) = wheels_speed[0];
-    xf(wheels_speed_indexes[1]) = wheels_speed[1];
-
-    // Wheels accelerations
-    xf(wheels_speed_indexes[0] + wheels_speed_indexes.size()) =
-        (wheels_speed[0] - wheels_previous_speed[0]) / time_step;
-    xf(wheels_speed_indexes[1] + wheels_speed_indexes.size()) =
-        (wheels_speed[1] - wheels_previous_speed[1]) / time_step;
-
     // Wheels torques
     xf(wheels_speed_indexes[0] + wheels_speed_indexes.size() * 2) =
         wheels_accelerations[0] *
@@ -2708,6 +3112,56 @@ bool MobileManipulator::forwardIntegrateModel(const Eigen::VectorXd & x,
         wheels_accelerations[1] *
             (getWheelInertia() + robot_weight / number_wheels * pow(wheels_radius, 2)) +
         rolling_resistance * robot_weight * gravity * wheels_radius / number_wheels;
+
+    if(robot_name == "exoter")
+    {
+        // BSpeed
+        xf(base_speed_indexes[0]) = wheels_radius / 2 * (wheels_speed[0] + wheels_speed[1]);
+        xf(base_speed_indexes[1]) = 0;
+        xf(base_speed_indexes[2]) =
+            wheels_radius * (wheels_speed[0] - wheels_speed[1]) / (2 * differential_width);
+
+        // Wheels speeds
+        xf(wheels_speed_indexes[0]) = wheels_speed[0];
+        xf(wheels_speed_indexes[1]) = wheels_speed[1];
+
+        // Wheels accelerations
+        xf(wheels_speed_indexes[0] + wheels_speed_indexes.size()) =
+            (wheels_speed[0] - wheels_previous_speed[0]) / time_step;
+        xf(wheels_speed_indexes[1] + wheels_speed_indexes.size()) =
+            (wheels_speed[1] - wheels_previous_speed[1]) / time_step;
+    }
+    else if(robot_name == "exoter_ack")
+    {
+        // Additionnal Ackermann model elements
+        double left_wheel_steer = x[wheels_steering_indexes[0]];
+        double left_wheel_steer_speed = u[steering_actuator_indexes[0]];
+        double right_wheel_steer = getRightWheelSteer(left_wheel_steer);
+        double steering_ratio =
+            left_wheel_steer == 0 ? 1 : sin(left_wheel_steer) / sin(right_wheel_steer);
+
+        // BSpeed
+        xf(base_speed_indexes[0]) = wheels_radius / 2 *
+                                    (cos(left_wheel_steer) * wheels_speed[0] +
+                                     cos(right_wheel_steer) * wheels_previous_speed[1]);
+        xf(base_speed_indexes[1]) = 0;
+        xf(base_speed_indexes[2]) =
+            base_speed[0] * tan(left_wheel_steer) /
+            (differential_length + differential_width * tan(left_wheel_steer));
+
+        // Wheels speeds
+        xf(wheels_speed_indexes[0]) = wheels_speed[0];
+        xf(wheels_speed_indexes[1]) = wheels_speed[0] * steering_ratio;
+
+        // Wheels accelerations
+        xf(wheels_speed_indexes[0] + wheels_speed_indexes.size()) =
+            (wheels_speed[0] - wheels_previous_speed[0]) / time_step;
+        xf(wheels_speed_indexes[1] + wheels_speed_indexes.size()) =
+            (wheels_speed[0] - wheels_previous_speed[0]) / time_step * steering_ratio;
+
+        // Steering joints position
+        xf(wheels_steering_indexes[0]) = left_wheel_steer + left_wheel_steer_speed * time_step;
+    }
 
     return true;
 }

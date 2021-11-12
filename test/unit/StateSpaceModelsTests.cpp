@@ -79,6 +79,8 @@ TEST(StateSpaceModels, linearized_matrixes_test)
     // Matrix A
     Eigen::VectorXd x;
     FileManager::readVectorFile("inputs/x.txt", x);
+    Eigen::VectorXd u;
+    FileManager::readVectorFile("inputs/u.txt", u);
 
     double time_step = 1.006289308;
 
@@ -87,7 +89,7 @@ TEST(StateSpaceModels, linearized_matrixes_test)
 
     double ini_time = clock();
     Eigen::MatrixXd A2 = Eigen::MatrixXd::Zero(x.size(), x.size());
-    exoter_model->getLinearizedMatrixA(x, time_step, A2);
+    exoter_model->getLinearizedMatrixA(x, u, time_step, A2);
     std::cout << cyan << "[StateSpaceModels::linearized_matrixes_test] Elapsed time matrix A: "
               << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
@@ -103,9 +105,6 @@ TEST(StateSpaceModels, linearized_matrixes_test)
     ASSERT_TRUE(A1.isApprox(A2));
 
     // Matrix B
-    Eigen::VectorXd u;
-    FileManager::readVectorFile("inputs/u.txt", u);
-
     Eigen::MatrixXd B1;
     FileManager::readMatrixFile("results/B.txt", B1);
 

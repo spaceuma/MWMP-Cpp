@@ -40,7 +40,7 @@ bool MotionPlanner::generateHorizonLinearization(std::vector<Eigen::VectorXd> & 
                                                  std::vector<Eigen::MatrixXd> & A_hor_output,
                                                  std::vector<Eigen::MatrixXd> & B_hor_output)
 {
-    if(!robot_ss_model->getLinearizedMatrixA(x[0], time_step, A_hor_output[0]) ||
+    if(!robot_ss_model->getLinearizedMatrixA(x[0], u[0], time_step, A_hor_output[0]) ||
        !robot_ss_model->getLinearizedMatrixB(x[0], u[0], time_step, B_hor_output[0]))
     {
         std::cout << red
@@ -61,7 +61,7 @@ bool MotionPlanner::generateHorizonLinearization(std::vector<Eigen::VectorXd> & 
             return false;
         }
 
-        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, A_hor_output[i]) ||
+        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], u[i - 1], time_step, A_hor_output[i]) ||
            !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, B_hor_output[i]))
         {
             std::cout << red
@@ -82,7 +82,7 @@ bool MotionPlanner::generateHorizonLinearization(
     std::vector<std::vector<std::vector<double>>> & A_hor_output,
     std::vector<std::vector<std::vector<double>>> & B_hor_output)
 {
-    if(!robot_ss_model->getLinearizedMatrixA(x[0], time_step, A_hor_output[0]) ||
+    if(!robot_ss_model->getLinearizedMatrixA(x[0], u[0], time_step, A_hor_output[0]) ||
        !robot_ss_model->getLinearizedMatrixB(x[0], u[0], time_step, B_hor_output[0]))
     {
         std::cout << red
@@ -103,7 +103,7 @@ bool MotionPlanner::generateHorizonLinearization(
             return false;
         }
 
-        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, A_hor_output[i]) ||
+        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], u[i - 1], time_step, A_hor_output[i]) ||
            !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, B_hor_output[i]))
         {
             std::cout << red
@@ -196,7 +196,7 @@ bool MotionPlanner::updateLinearModel(const std::vector<Eigen::VectorXd> & x,
 {
     for(uint i = 1; i < number_time_steps; i++)
     {
-        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, A_hor_output[i]) ||
+        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], u[i - 1], time_step, A_hor_output[i]) ||
            !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, B_hor_output[i]))
         {
             std::cout << red
@@ -217,7 +217,7 @@ bool MotionPlanner::updateLinearModel(const std::vector<std::vector<double>> & x
 {
     for(uint i = 1; i < number_time_steps; i++)
     {
-        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], time_step, A_hor_output[i]) ||
+        if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], u[i - 1], time_step, A_hor_output[i]) ||
            !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, B_hor_output[i]))
         {
             std::cout << red

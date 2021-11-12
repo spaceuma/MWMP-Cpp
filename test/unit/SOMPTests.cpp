@@ -49,7 +49,7 @@ using namespace SOMP;
 TEST(SOMP, constructors_test)
 {
     StateSpaceModels::MobileManipulator * exoter_model =
-        new StateSpaceModels::MobileManipulator("exoter");
+        new StateSpaceModels::MobileManipulator("exoter_ack");
 
     MotionPlanner * exoter_mp1 = new MotionPlanner(exoter_model);
 
@@ -77,12 +77,17 @@ TEST(SOMP, constructors_test)
     FileManager::readMatrixFile("inputs/dummy_obstacles_map.txt", mp_map.obstacles_map);
 
     MotionPlanner * exoter_mp3 = new MotionPlanner(exoter_model, mp_config, mp_map);
+
+    delete(exoter_model);
+    delete(exoter_mp1);
+    delete(exoter_mp2);
+    delete(exoter_mp3);
 }
 
-TEST(SOMP, unconstrained_mp_test)
+/*TEST(SOMP, unconstrained_mp_test)
 {
     StateSpaceModels::MobileManipulator * exoter_model =
-        new StateSpaceModels::MobileManipulator("exoter");
+        new StateSpaceModels::MobileManipulator("exoter_ack");
 
     SOMP::Config mp_config;
     mp_config.time_horizon = 160;
@@ -117,15 +122,17 @@ TEST(SOMP, unconstrained_mp_test)
     FileManager::readVectorFile("inputs/ini_arm_speeds.txt", ini_arm_speeds);
     std::vector<double> ini_wheels_speed;
     FileManager::readVectorFile("inputs/ini_wheels_speed.txt", ini_wheels_speed);
+    std::vector<double> ini_wheels_steering = {0};
 
     Eigen::VectorXd x_ini =
         exoter_model->getInitialStateVectorEigen(ini_rover_pose, ini_arm_positions);
-    Eigen::VectorXd u_ini = exoter_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed);
+    Eigen::VectorXd u_ini = exoter_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed, ini_wheels_steering);
 
     std::vector<Eigen::VectorXd> x0(number_time_steps,
                                     Eigen::VectorXd::Zero(exoter_model->getNumberStates()));
     std::vector<Eigen::VectorXd> u0(number_time_steps,
                                     Eigen::VectorXd::Zero(exoter_model->getNumberInputs()));
+
 
     x0[number_time_steps - 1] = exoter_model->getGoalStateVectorEigen(goal_ee_pose);
 
@@ -142,12 +149,15 @@ TEST(SOMP, unconstrained_mp_test)
 
     FileManager::writeMatrixFile("results/unconstrained_planned_state.txt", x);
     FileManager::writeMatrixFile("results/unconstrained_planned_control.txt", u);
+
+    delete(exoter_model);
+    delete(exoter_mp);
 }
 
 TEST(SOMP, constrained_mp_test)
 {
     StateSpaceModels::MobileManipulator * exoter_model =
-        new StateSpaceModels::MobileManipulator("exoter");
+        new StateSpaceModels::MobileManipulator("exoter_ack");
 
     SOMP::Config mp_config;
     mp_config.time_horizon = 160;
@@ -182,10 +192,11 @@ TEST(SOMP, constrained_mp_test)
     FileManager::readVectorFile("inputs/ini_arm_speeds.txt", ini_arm_speeds);
     std::vector<double> ini_wheels_speed;
     FileManager::readVectorFile("inputs/ini_wheels_speed.txt", ini_wheels_speed);
+    std::vector<double> ini_wheels_steering = {0};
 
     Eigen::VectorXd x_ini =
         exoter_model->getInitialStateVectorEigen(ini_rover_pose, ini_arm_positions);
-    Eigen::VectorXd u_ini = exoter_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed);
+    Eigen::VectorXd u_ini = exoter_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed, ini_wheels_steering);
 
     std::vector<Eigen::VectorXd> x0(number_time_steps,
                                     Eigen::VectorXd::Zero(exoter_model->getNumberStates()));
@@ -211,12 +222,15 @@ TEST(SOMP, constrained_mp_test)
 
     FileManager::writeMatrixFile("results/constrained_planned_state.txt", x);
     FileManager::writeMatrixFile("results/constrained_planned_control.txt", u);
-}
+
+    delete(exoter_model);
+    delete(exoter_mp);
+}*/
 
 TEST(SOMP, stepped_mp_test)
 {
     StateSpaceModels::MobileManipulator * exoter_model =
-        new StateSpaceModels::MobileManipulator("exoter");
+        new StateSpaceModels::MobileManipulator("exoter_ack");
 
     SOMP::Config mp_config;
     mp_config.time_horizon = 160;
@@ -251,10 +265,11 @@ TEST(SOMP, stepped_mp_test)
     FileManager::readVectorFile("inputs/ini_arm_speeds.txt", ini_arm_speeds);
     std::vector<double> ini_wheels_speed;
     FileManager::readVectorFile("inputs/ini_wheels_speed.txt", ini_wheels_speed);
+    std::vector<double> ini_wheels_steering = {0};
 
     Eigen::VectorXd x_ini =
         exoter_model->getInitialStateVectorEigen(ini_rover_pose, ini_arm_positions);
-    Eigen::VectorXd u_ini = exoter_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed);
+    Eigen::VectorXd u_ini = exoter_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed, ini_wheels_steering);
 
     std::vector<Eigen::VectorXd> x0(number_time_steps,
                                     Eigen::VectorXd::Zero(exoter_model->getNumberStates()));
@@ -275,4 +290,8 @@ TEST(SOMP, stepped_mp_test)
 
     FileManager::writeMatrixFile("results/stepped_planned_state.txt", x);
     FileManager::writeMatrixFile("results/stepped_planned_control.txt", u);
+
+    delete(exoter_model);
+    delete(exoter_mp);
 }
+

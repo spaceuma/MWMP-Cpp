@@ -152,6 +152,19 @@ armJointsPositionLimits = [-30 +90;
                    -70 +250;
                    -160 +160]*pi/180; % rad
 
+armJointsSpeedLimit = 0.01; % rad/s
+
+alphaR = zeros(size(x,2),1);
+for i = 1:timeSteps
+    alphaR(i) = atan2(dfy,dfy/tan(x(42,i))+2*dfx)+0.000000000000001;
+    while alphaR(i) > pi/2
+        alphaR(i) = alphaR(i) - pi;
+    end
+    while alphaR(i) < -pi/2
+        alphaR(i) = alphaR(i) + pi;
+    end
+end
+
 for i = 2:timeSteps
     if(x(16,i) < armJointsPositionLimits(1,1) || x(16,i) > armJointsPositionLimits(1,2))
         warning(['Arm joint 1 is violating its position limits at waypoint ',num2str(i)]);
@@ -330,9 +343,10 @@ set(h11,'XData',x(1,:),'YData',x(2,:),'ZData',x(3,:),...
 set(h12,'XData',x(10,1:end-1),'YData',x(11,1:end-1),'ZData',zGC*ones(size(x,2)-1,1),...
     'LineWidth', 1.5, 'Color', [1,0.5,0]);
 
-hold off; 
-        
+hold off;
+
 figure(2)
+clf(2)
 plot(t,x(16:20,:))
 title('Evolution of the arm joints position', 'interpreter', ...
 'latex','fontsize',18)
@@ -340,4 +354,56 @@ legend('$\theta_1$','$\theta_2$','$\theta_3$','$\theta_4$','$\theta_5$', 'interp
 'latex','fontsize',18)
 xlabel('$t (s)$', 'interpreter', 'latex','fontsize',18)
 ylabel('$\theta (rad)$', 'interpreter', 'latex','fontsize',18)
-grid 
+grid
+
+figure(3)
+clf(3)
+plot(t,u(1:5,:))
+hold on
+yline(armJointsSpeedLimit,'--');
+yline(-armJointsSpeedLimit,'--');
+title('Evolution of the arm joints speed', 'interpreter', ...
+'latex','fontsize',18)
+legend('$\dot\theta_1$','$\dot\theta_2$','$\dot\theta_3$','$\dot\theta_4$','$\dot\theta_5$', 'interpreter', ...
+'latex','fontsize',18)
+xlabel('$t (s)$', 'interpreter', 'latex','fontsize',18)
+ylabel('$\dot\theta (rad/s)$', 'interpreter', 'latex','fontsize',18)
+grid
+hold off
+
+figure(4)
+clf(4)
+plot(t,u(6,:))
+hold on
+plot(t,x(37,:))
+x(37,:) = u(6,:).*sin(x(42,:))./sin(alphaR(:).');
+plot(t,x(37,:))
+title('Actuating wheels speed','interpreter','latex','fontsize',18)
+xlabel('t(s)','interpreter','latex','fontsize',18)
+ylabel('$\omega(rad/s$)','interpreter','latex','fontsize',18)
+legend('$\omega_l$','$\omega_r$','interpreter', ...
+'latex','fontsize',18)
+grid
+hold off
+
+figure(5)
+clf(5)
+plot(t,x(13:15,:))
+title('Evolution of the rover base speed', 'interpreter', ...
+'latex','fontsize',18)
+legend('$\dot x_B$','$\dot y_B$', '$\dot \theta_B$', 'interpreter','latex','fontsize',18)
+xlabel('$t (s)$', 'interpreter', 'latex','fontsize',18)
+ylabel('$Speed (m/s)$', 'interpreter', 'latex','fontsize',18)
+grid
+
+figure(6)
+clf(6)
+plot(t,x(42,:)*180/pi)
+hold on
+plot(t,alphaR(:)*180/pi)
+title('Evolution of the steering joints position', 'interpreter', ...
+'latex','fontsize',18)
+legend('$\theta_L$','$\theta_R$', 'interpreter','latex','fontsize',18)
+xlabel('$t (s)$', 'interpreter', 'latex','fontsize',18)
+ylabel('$\theta (^o)$', 'interpreter', 'latex','fontsize',18)
+grid

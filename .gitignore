@@ -41,12 +41,8 @@ build
 test/unit/runUnitTests
 
 # Unit test results
-test/unit/results/stepped_planned_control.txt
-test/unit/results/stepped_planned_state.txt
-test/unit/results/planned_control.txt
-test/unit/results/planned_state.txt
-test/unit/results/constrained_planned_state.txt
-test/unit/results/constrained_planned_control.txt
-test/unit/results/unconstrained_planned_state.txt
-test/unit/results/unconstrained_planned_control.txt
+test/unit/results
+
+# Unit test inputs
+test/unit/inputs
 

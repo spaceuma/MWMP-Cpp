@@ -38,6 +38,7 @@
 
 #include "FastMarching.hpp"
 #include "StateSpaceModels.hpp"
+#include "FileManager.hpp"
 
 #define inf 1000000007
 

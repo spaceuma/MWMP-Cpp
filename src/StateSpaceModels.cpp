@@ -251,7 +251,7 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         //*****************//
         // Quadratic costs //
         //*****************//
-        obstacles_repulsive_cost = 250.0;
+        obstacles_repulsive_cost = 200.0;
 
         goal_states_cost = {1000000000, 1000000000, 1000000000, 1000000000, 1000000000, 1000000000};
         goal_speed_cost = 10000000;
@@ -274,9 +274,9 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
 
         whole_inputs_cost = {1500000, 1500000, 1500000, 1500000, 1500000, 20000, 150000};
 
-        yaw_linearization_cost = 0.08;
+        yaw_linearization_cost = 0.35;
         steering_forward_linearization_cost = 0.001;
-        steering_angular_linearization_cost = 0.8;
+        steering_angular_linearization_cost = 0.80;
 
         //**********************//
         // Supporting variables //

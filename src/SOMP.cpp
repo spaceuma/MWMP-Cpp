@@ -1312,6 +1312,12 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
             }
         }
 
+        /*std::string state_file = std::string("./results/")+std::to_string(number_iterations)+std::string("_stepped_planned_state.txt");
+        std::string control_file = std::string("./results/")+std::to_string(number_iterations)+std::string("_stepped_planned_control.txt");
+
+        FileManager::writeMatrixFile(state_file, x);
+        FileManager::writeMatrixFile(control_file, u);*/
+
         // If the algorithm has converged!!
         if(convergence_condition)
         {

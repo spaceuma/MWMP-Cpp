@@ -66,21 +66,20 @@ xei = x(1,1);
 yei = x(2,1);
 zei = x(3,1);
 
-xC0 = x(10,1);
-yC0 = x(11,1);
-yawC0 = x(12,1);
+xC0 = x(11,1);
+yC0 = x(12,1);
+yawC0 = x(13,1);
 
 % Goal end effector pose
-goal_ee_pose = importdata("../../test/unit/inputs/goal_ee_pose.txt");
-xef = goal_ee_pose(1);
-yef = goal_ee_pose(2);
-zef = goal_ee_pose(3);
-rollef = goal_ee_pose(4);
-pitchef = goal_ee_pose(5);
-yawef = goal_ee_pose(6);
+xef = x(1,end);
+yef = x(2,end);
+zef = x(3,end);
+rollef = x(4,end);
+pitchef = x(9,end);
+yawef = x(10,end);
 
 % Solution characteristics
-timeSteps = 160;
+timeSteps = size(x,2);
 tf = 160; 
 dt = tf/(timeSteps-1);
 t = 0:dt:tf;
@@ -96,17 +95,15 @@ safetyDistance = 1.00;
 % FMM to compute totalCostMap
 % Loading obstacles map
 % Name of the obst map to be used
-obstMapFile = 'obstMap4';
-
-load(obstMapFile,'obstMap')
-mapResolution = 0.05;
+obstMap = 1-importdata('../global_terrainMap_2cm.txt');
+mapResolution = 0.02;
 
 % Initial spot and goal indexes in the map
 iInit = [round(xC0/mapResolution)+1 round(yC0/mapResolution)+1];
 iGoal = [round(xef/mapResolution)+1 round(yef/mapResolution)+1];
 
 % Generating a fake obstacle on the sample to avoid stepping on it
-obstMap(iGoal(2), iGoal(1)) = 1;
+%obstMap(iGoal(2), iGoal(1)) = 1;
 
 % Dilating obstacles map to ensure rover safety
 dilatedObstMap = dilateObstMap(obstMap, riskDistance, mapResolution);
@@ -156,7 +153,7 @@ armJointsSpeedLimit = 0.01; % rad/s
 
 alphaR = zeros(size(x,2),1);
 for i = 1:timeSteps
-    alphaR(i) = atan2(dfy,dfy/tan(x(42,i))+2*dfx)+0.000000000000001;
+    alphaR(i) = atan2(dfy,dfy/tan(x(43,i))+2*dfx)+0.000000000000001;
     while alphaR(i) > pi/2
         alphaR(i) = alphaR(i) - pi;
     end
@@ -166,36 +163,36 @@ for i = 1:timeSteps
 end
 
 for i = 2:timeSteps
-    if(x(16,i) < armJointsPositionLimits(1,1) || x(16,i) > armJointsPositionLimits(1,2))
+    if(x(17,i) < armJointsPositionLimits(1,1) || x(17,i) > armJointsPositionLimits(1,2))
         warning(['Arm joint 1 is violating its position limits at waypoint ',num2str(i)]);
     end
-    if(x(17,i) < armJointsPositionLimits(2,1) || x(17,i) > armJointsPositionLimits(2,2))
+    if(x(18,i) < armJointsPositionLimits(2,1) || x(18,i) > armJointsPositionLimits(2,2))
         warning(['Arm joint 2 is violating its position limits at waypoint ',num2str(i)]);
     end
-    if(x(18,i) < armJointsPositionLimits(3,1) || x(18,i) > armJointsPositionLimits(3,2))
+    if(x(19,i) < armJointsPositionLimits(3,1) || x(19,i) > armJointsPositionLimits(3,2))
         warning(['Arm joint 3 is violating its position limits at waypoint ',num2str(i)]);
     end
-    if(x(19,i) < armJointsPositionLimits(3,1) || x(18,i) > armJointsPositionLimits(3,2))
+    if(x(20,i) < armJointsPositionLimits(3,1) || x(20,i) > armJointsPositionLimits(3,2))
         warning(['Arm joint 3 is violating its position limits at waypoint ',num2str(i)]);
     end      
-    if(x(20,i) < armJointsPositionLimits(3,1) || x(18,i) > armJointsPositionLimits(3,2))
+    if(x(21,i) < armJointsPositionLimits(3,1) || x(21,i) > armJointsPositionLimits(3,2))
         warning(['Arm joint 3 is violating its position limits at waypoint ',num2str(i)]);
     end      
 end
 
-iu = cumsum(abs(x(31,:))*dt);
-disp(['Total torque applied arm joint 1: ',num2str(iu(end)),' Nm'])
 iu = cumsum(abs(x(32,:))*dt);
-disp(['Total torque applied arm joint 2: ',num2str(iu(end)),' Nm'])
+disp(['Total torque applied arm joint 1: ',num2str(iu(end)),' Nm'])
 iu = cumsum(abs(x(33,:))*dt);
-disp(['Total torque applied arm joint 3: ',num2str(iu(end)),' Nm'])
+disp(['Total torque applied arm joint 2: ',num2str(iu(end)),' Nm'])
 iu = cumsum(abs(x(34,:))*dt);
-disp(['Total torque applied arm joint 4: ',num2str(iu(end)),' Nm'])
+disp(['Total torque applied arm joint 3: ',num2str(iu(end)),' Nm'])
 iu = cumsum(abs(x(35,:))*dt);
+disp(['Total torque applied arm joint 4: ',num2str(iu(end)),' Nm'])
+iu = cumsum(abs(x(36,:))*dt);
 disp(['Total torque applied arm joint 5: ',num2str(iu(end)),' Nm'])
-iu = cumsum(abs(x(40,:))*dt);
-disp(['Total torque applied left wheels: ',num2str(iu(end)),' Nm'])
 iu = cumsum(abs(x(41,:))*dt);
+disp(['Total torque applied left wheels: ',num2str(iu(end)),' Nm'])
+iu = cumsum(abs(x(42,:))*dt);
 disp(['Total torque applied right wheels: ',num2str(iu(end)),' Nm'])
 
 %% Visualization stuff
@@ -209,8 +206,8 @@ xVect = linspace(0,(size(obstMap,1)-1)*mapResolution,size(obstMap,1));
 figure(1)
 clf(1)
 % Plotting first arm config
-[TB0, TB1, TB2, TB3, TB4, TB5] = realDirect5(x(16:20,1));
-TWC = getTraslation([x(10,1),x(11,1),zGC])*getZRot(x(12,1));
+[TB0, TB1, TB2, TB3, TB4, TB5] = realDirect5(x(17:21,1));
+TWC = getTraslation([x(11,1),x(12,1),zGC])*getZRot(x(13,1));
 TCB = getTraslation([xCB, yCB, zCB])*getYRot(pi/2);
 TW0 = TWC*TCB*TB0;
 TWWh1 = TWC*TCB*TB1;
@@ -226,7 +223,7 @@ hold on;
     
 % Plotting first rover position [TODO] Update the representation to look
 % like exoter
-TWC = getTraslation([x(10,1),x(11,1),zGC])*getZRot(x(12,1));
+TWC = getTraslation([x(11,1),x(12,1),zGC])*getZRot(x(13,1));
 TCWh1 = getTraslation([dfy,dfx,-zGC]);
 TCWh2 = getTraslation([-dfy,dfx,-zGC]);
 TCWh3 = getTraslation([-dfy,-dfx,-zGC]);
@@ -243,8 +240,8 @@ h2 = plot3([TWC(1,4) TWWh1(1,4) TWC(1,4) TWWh2(1,4) TWC(1,4) TWWh3(1,4) TWC(1,4)
 h3 = plotFrame(TWC, 0.3);
 
 % Plotting last arm config
-[TB0, TB1, TB2, TB3, TB4, TB5] = realDirect5(x(16:20,end-1));
-TWC = getTraslation([x(10,end-1),x(11,end-1),zGC])*getZRot(x(12,end-1));
+[TB0, TB1, TB2, TB3, TB4, TB5] = realDirect5(x(17:21,end-1));
+TWC = getTraslation([x(11,end-1),x(12,end-1),zGC])*getZRot(x(13,end-1));
 TW0 = TWC*TCB*TB0;
 TWWh1 = TWC*TCB*TB1;
 TWWh2 = TWC*TCB*TB2;
@@ -257,7 +254,7 @@ h4 = plot3([TW0(1,4) TWWh1(1,4) TWWh2(1,4) TWWh3(1,4) TWWh4(1,4) TW5(1,4)],...
                          'Color', [0.8 0.8 0.8], 'LineWidth', 2.5);
                      
 % Plotting last rover position
-TWC = getTraslation([x(10,end-1),x(11,end-1),zGC])*getZRot(x(12,end-1));
+TWC = getTraslation([x(11,end-1),x(12,end-1),zGC])*getZRot(x(13,end-1));
 TCWh1 = getTraslation([dfy,dfx,-zGC]);
 TCWh2 = getTraslation([-dfy,dfx,-zGC]);
 TCWh3 = getTraslation([-dfy,-dfx,-zGC]);
@@ -291,7 +288,7 @@ h10 = contourf(X,Y,dilatedObstMap+obstMap,0:2);
 h11 = plot3(x(1,:),x(2,:),x(3,:), 'LineWidth', 1, 'Color', 'y');
 
 % Plotting base path
-h12 = plot3(x(10,1:end-1),x(11,1:end-1),zGC*ones(size(x,2)-1), 'LineWidth', 1.5, 'Color', [1,0.5,0]);
+h12 = plot3(x(11,1:end-1),x(12,1:end-1),zGC*ones(size(x,2)-1), 'LineWidth', 1.5, 'Color', [1,0.5,0]);
 
 % Plotting starting reference path
 h14 = plot3(referencePath(:,1),referencePath(:,2), zGC*ones(timeSteps,2), 'LineWidth', 1, 'Color', [0,0,1]);
@@ -303,8 +300,8 @@ daspect([1 1 1])
 hold off;
 figure(1);        
 % Plotting last arm config
-[TB0, TB1, TB2, TB3, TB4, TB5] = realDirect5(x(16:20,end-1));
-TWC = getTraslation([x(10,end-1),x(11,end-1),zGC])*getZRot(x(12,end-1));
+[TB0, TB1, TB2, TB3, TB4, TB5] = realDirect5(x(17:21,end-1));
+TWC = getTraslation([x(11,end-1),x(12,end-1),zGC])*getZRot(x(13,end-1));
 TW0 = TWC*TCB*TB0;
 TWWh1 = TWC*TCB*TB1;
 TWWh2 = TWC*TCB*TB2;
@@ -317,7 +314,7 @@ set(h4,'XData',[TW0(1,4) TWWh1(1,4) TWWh2(1,4) TWWh3(1,4) TWWh4(1,4) TW5(1,4)],.
        'Color', [0.8 0.8 0.8], 'LineWidth', 2.5);
 
 % Plotting last rover position
-TWC = getTraslation([x(10,end-1),x(11,end-1),zGC])*getZRot(x(12,end-1));
+TWC = getTraslation([x(11,end-1),x(12,end-1),zGC])*getZRot(x(13,end-1));
 TCWh1 = getTraslation([dfy,dfx,-zGC]);
 TCWh2 = getTraslation([-dfy,dfx,-zGC]);
 TCWh3 = getTraslation([-dfy,-dfx,-zGC]);
@@ -340,14 +337,14 @@ set(h11,'XData',x(1,:),'YData',x(2,:),'ZData',x(3,:),...
     'LineWidth', 1, 'Color', 'y');
 
 % Plotting base path
-set(h12,'XData',x(10,1:end-1),'YData',x(11,1:end-1),'ZData',zGC*ones(size(x,2)-1,1),...
+set(h12,'XData',x(11,1:end-1),'YData',x(12,1:end-1),'ZData',zGC*ones(size(x,2)-1,1),...
     'LineWidth', 1.5, 'Color', [1,0.5,0]);
 
 hold off;
 
 figure(2)
 clf(2)
-plot(t,x(16:20,:))
+plot(t,x(17:21,:))
 title('Evolution of the arm joints position', 'interpreter', ...
 'latex','fontsize',18)
 legend('$\theta_1$','$\theta_2$','$\theta_3$','$\theta_4$','$\theta_5$', 'interpreter', ...
@@ -375,9 +372,7 @@ figure(4)
 clf(4)
 plot(t,u(6,:))
 hold on
-plot(t,x(37,:))
-x(37,:) = u(6,:).*sin(x(42,:))./sin(alphaR(:).');
-plot(t,x(37,:))
+plot(t,x(38,:))
 title('Actuating wheels speed','interpreter','latex','fontsize',18)
 xlabel('t(s)','interpreter','latex','fontsize',18)
 ylabel('$\omega(rad/s$)','interpreter','latex','fontsize',18)
@@ -388,7 +383,7 @@ hold off
 
 figure(5)
 clf(5)
-plot(t,x(13:15,:))
+plot(t,x(14:16,:))
 title('Evolution of the rover base speed', 'interpreter', ...
 'latex','fontsize',18)
 legend('$\dot x_B$','$\dot y_B$', '$\dot \theta_B$', 'interpreter','latex','fontsize',18)
@@ -398,7 +393,7 @@ grid
 
 figure(6)
 clf(6)
-plot(t,x(42,:)*180/pi)
+plot(t,x(43,:)*180/pi)
 hold on
 plot(t,alphaR(:)*180/pi)
 title('Evolution of the steering joints position', 'interpreter', ...

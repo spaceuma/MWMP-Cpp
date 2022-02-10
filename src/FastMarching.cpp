@@ -60,10 +60,40 @@ bool PathPlanner::planPath(const std::vector<std::vector<double>> * costMap,
 
     std::vector<std::vector<double>> * TMap = new std::vector<std::vector<double>>;
 
+    if((*costMap)[goal[1]][goal[0]] > 9999)
+    {
+        std::cout << red << "ERROR [PathPlanner::planPath()]: The goal waypoint [" << goal[0] << " "
+                  << goal[1] << "] is an obstacle" << nocolor << std::endl;
+        return false;
+    }
+
+    if((*costMap)[start[1]][start[0]] > 9999)
+    {
+        std::cout << red << "ERROR [PathPlanner::planPath()]: The start waypoint [" << start[0]
+                  << " " << start[1] << "] is an obstacle" << nocolor << std::endl;
+        return false;
+    }
+
+    if(goal[1] <= 0 || goal[1] >= costMap->size() || goal[0] <= 0 ||
+       goal[0] >= (*costMap)[0].size())
+    {
+        std::cout << red << "ERROR [PathPlanner::planPath()]: The goal waypoint [" << goal[0] << " "
+                  << goal[1] << "] is outside the map limits" << nocolor << std::endl;
+        return false;
+    }
+
+    if(start[1] <= 0 || start[1] >= costMap->size() || start[0] <= 0 ||
+       start[0] >= (*costMap)[0].size())
+    {
+        std::cout << red << "ERROR [PathPlanner::planPath()]: The start waypoint [" << start[0]
+                  << " " << start[1] << "] is outside the map limits" << nocolor << std::endl;
+        return false;
+    }
+
     if(!computeTMap(costMap, goal, start, TMap))
     {
-        std::cout << magenta
-                  << "WARNING [PathPlanner::planPath()]: Could not compute Total Cost Map properly"
+        std::cout << red
+                  << "ERROR [PathPlanner::planPath()]: Could not compute Total Cost Map properly"
                   << nocolor << std::endl;
         return false;
     }
@@ -124,7 +154,10 @@ void PathPlanner::computeEntireTMap(const std::vector<std::vector<double>> * cos
     {
         for(int j = 0; j < m; j++)
         {
-            if(isinf((*costMap)[i][j])) { (*closedMap)[i][j] = 1; }
+            if(isinf((*costMap)[i][j]))
+            {
+                (*closedMap)[i][j] = 1;
+            }
             else
             {
                 (*closedMap)[i][j] = 0;
@@ -172,7 +205,10 @@ bool PathPlanner::computeTMap(const std::vector<std::vector<double>> * costMap,
     {
         for(int j = 0; j < m; j++)
         {
-            if(isinf((*costMap)[i][j])) { (*closedMap)[i][j] = 1; }
+            if(isinf((*costMap)[i][j]))
+            {
+                (*closedMap)[i][j] = 1;
+            }
             else
             {
                 (*closedMap)[i][j] = 0;
@@ -198,7 +234,10 @@ bool PathPlanner::computeTMap(const std::vector<std::vector<double>> * costMap,
         (*closedMap)[nodeTarget[1]][nodeTarget[0]] = 1;
         updateNode(nodeTarget, costMap, TMap, nbT, nbNodes, closedMap);
 
-        if((nodeTarget[0] == start[0]) && (nodeTarget[1] == start[1])) { return true; }
+        if((nodeTarget[0] == start[0]) && (nodeTarget[1] == start[1]))
+        {
+            return true;
+        }
     }
     return false;
 }

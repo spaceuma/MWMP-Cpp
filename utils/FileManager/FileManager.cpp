@@ -402,6 +402,21 @@ void FileManager::writeMatrixFile(std::string matrix_file,
     }
     target_file.close();
 }
+void FileManager::writeMatrixFile(std::string matrix_file, std::vector<std::vector<uint>> & matrix)
+{
+    std::ofstream target_file;
+
+    target_file.open(matrix_file);
+    for(int j = 0; j < matrix.size(); j++)
+    {
+        for(int i = 0; i < matrix[0].size(); i++)
+        {
+            target_file << matrix[j][i] << " ";
+        }
+        target_file << "\n";
+    }
+    target_file.close();
+}
 
 void FileManager::writeVolumeFile(std::string volume_file,
                                   std::vector<std::vector<std::vector<double>>> * volume)

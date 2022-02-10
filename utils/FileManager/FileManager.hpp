@@ -72,6 +72,8 @@ void writeMatrixFile(std::string matrix_file, std::vector<std::vector<int>> & ma
 
 void writeMatrixFile(std::string matrix_file, std::vector<std::vector<int8_t>> & matrix);
 
+void writeMatrixFile(std::string matrix_file, std::vector<std::vector<uint>> & matrix);
+
 void writeVolumeFile(std::string volume_file,
                      std::vector<std::vector<std::vector<double>>> * volume);
 

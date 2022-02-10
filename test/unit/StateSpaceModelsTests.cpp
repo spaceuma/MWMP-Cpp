@@ -50,7 +50,7 @@ TEST(StateSpaceModels, getters_test)
 {
     MobileManipulator * exoter_model = new MobileManipulator("exoter");
 
-    EXPECT_EQ(41, exoter_model->getNumberStates());
+    EXPECT_EQ(42, exoter_model->getNumberStates());
 
     EXPECT_EQ(7, exoter_model->getNumberInputs());
 
@@ -59,12 +59,12 @@ TEST(StateSpaceModels, getters_test)
 
     EXPECT_EQ(0.015, exoter_model->getThresholdGoalDistance());
 
-    std::vector<uint> goal_orientation_indexes = {15, 7, 19};
+    std::vector<uint> goal_orientation_indexes = {3, 8, 9};
     EXPECT_EQ(goal_orientation_indexes, exoter_model->getIndexesGoalOrientation());
 
     EXPECT_EQ(0.15, exoter_model->getThresholdGoalOrientation());
 
-    std::vector<uint> robot_pose_indexes = {9, 10, 11};
+    std::vector<uint> robot_pose_indexes = {10, 11, 12};
     EXPECT_EQ(robot_pose_indexes, exoter_model->getIndexesRobotPose());
 
     EXPECT_EQ(0.30, exoter_model->getRiskDistance());
@@ -243,6 +243,7 @@ TEST(StateSpaceModels, costs_matrixes_test)
             Q2(i, j) = (int)(Q2(i, j) * 1000 + 0.5);
             Q2(i, j) /= 1000;
         }
+
     ASSERT_TRUE(Q1.isApprox(Q2));
 
     // Matrix R

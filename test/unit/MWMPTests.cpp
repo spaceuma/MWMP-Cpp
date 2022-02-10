@@ -48,12 +48,12 @@ using namespace MWMP;
 
 TEST(MWMP, constructors_test)
 {
-    StateSpaceModels::MobileManipulator * exoter_model =
+    StateSpaceModels::MobileManipulator * robot_model =
         new StateSpaceModels::MobileManipulator("exoter_ack");
 
-    MotionPlanner * exoter_mp1 = new MotionPlanner(exoter_model);
+    MotionPlanner * robot_mp1 = new MotionPlanner(robot_model);
 
-    EXPECT_EQ(true, exoter_mp1->setTimeStep(1));
+    EXPECT_EQ(true, robot_mp1->setTimeStep(1));
 
     MWMP::Config mp_config;
     mp_config.time_horizon = 160;
@@ -66,9 +66,9 @@ TEST(MWMP, constructors_test)
     mp_config.track_reference_trajectory = true;
     uint number_time_steps = 159;
 
-    MotionPlanner * exoter_mp2 = new MotionPlanner(exoter_model, mp_config);
+    MotionPlanner * robot_mp2 = new MotionPlanner(robot_model, mp_config);
 
-    EXPECT_EQ(true, exoter_mp2->setTimeHorizon(200));
+    EXPECT_EQ(true, robot_mp2->setTimeHorizon(200));
 
     MWMP::MapInfo mp_map;
     mp_map.map_resolution = 0.05;
@@ -76,17 +76,17 @@ TEST(MWMP, constructors_test)
     mp_map.goal_pose = goal_pose;
     FileManager::readMatrixFile("inputs/dummy_obstacles_map.txt", mp_map.obstacles_map);
 
-    MotionPlanner * exoter_mp3 = new MotionPlanner(exoter_model, mp_config, mp_map);
+    MotionPlanner * robot_mp3 = new MotionPlanner(robot_model, mp_config, mp_map);
 
-    delete(exoter_model);
-    delete(exoter_mp1);
-    delete(exoter_mp2);
-    delete(exoter_mp3);
+    delete(robot_model);
+    delete(robot_mp1);
+    delete(robot_mp2);
+    delete(robot_mp3);
 }
 
 /*TEST(MWMP, unconstrained_mp_test)
 {
-    StateSpaceModels::MobileManipulator * exoter_model =
+    StateSpaceModels::MobileManipulator * robot_model =
         new StateSpaceModels::MobileManipulator("exoter_ack");
 
     MWMP::Config mp_config;
@@ -112,7 +112,7 @@ TEST(MWMP, constructors_test)
 
     FileManager::readMatrixFile("inputs/dummy_obstacles_map.txt", mp_map.obstacles_map);
 
-    MotionPlanner * exoter_mp = new MotionPlanner(exoter_model, mp_config, mp_map);
+    MotionPlanner * robot_mp = new MotionPlanner(robot_model, mp_config, mp_map);
 
     std::vector<double> ini_rover_pose;
     FileManager::readVectorFile("inputs/ini_rover_pose.txt", ini_rover_pose);
@@ -125,38 +125,39 @@ TEST(MWMP, constructors_test)
     std::vector<double> ini_wheels_steering = {0};
 
     Eigen::VectorXd x_ini =
-        exoter_model->getInitialStateVectorEigen(ini_rover_pose, ini_arm_positions);
-    Eigen::VectorXd u_ini = exoter_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed, ini_wheels_steering);
+        robot_model->getInitialStateVectorEigen(ini_rover_pose, ini_arm_positions);
+    Eigen::VectorXd u_ini = robot_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed,
+ini_wheels_steering);
 
     std::vector<Eigen::VectorXd> x0(number_time_steps,
-                                    Eigen::VectorXd::Zero(exoter_model->getNumberStates()));
+                                    Eigen::VectorXd::Zero(robot_model->getNumberStates()));
     std::vector<Eigen::VectorXd> u0(number_time_steps,
-                                    Eigen::VectorXd::Zero(exoter_model->getNumberInputs()));
+                                    Eigen::VectorXd::Zero(robot_model->getNumberInputs()));
 
 
-    x0[number_time_steps - 1] = exoter_model->getGoalStateVectorEigen(goal_ee_pose);
+    x0[number_time_steps - 1] = robot_model->getGoalStateVectorEigen(goal_ee_pose);
 
     double ini_time = clock();
-    EXPECT_EQ(1, exoter_mp->generateUnconstrainedMotionPlan(x_ini, x0, u_ini, u0, 100));
+    EXPECT_EQ(1, robot_mp->generateUnconstrainedMotionPlan(x_ini, x0, u_ini, u0, 100));
     std::cout << cyan << "[MWMP::unconstrained_mp_test] Elapsed time: "
               << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     std::vector<Eigen::VectorXd> x;
     std::vector<Eigen::VectorXd> u;
 
-    exoter_mp->getPlannedState(x);
-    exoter_mp->getPlannedControl(u);
+    robot_mp->getPlannedState(x);
+    robot_mp->getPlannedControl(u);
 
     FileManager::writeMatrixFile("results/unconstrained_planned_state.txt", x);
     FileManager::writeMatrixFile("results/unconstrained_planned_control.txt", u);
 
-    delete(exoter_model);
-    delete(exoter_mp);
+    delete(robot_model);
+    delete(robot_mp);
 }
 
 TEST(MWMP, constrained_mp_test)
 {
-    StateSpaceModels::MobileManipulator * exoter_model =
+    StateSpaceModels::MobileManipulator * robot_model =
         new StateSpaceModels::MobileManipulator("exoter_ack");
 
     MWMP::Config mp_config;
@@ -182,7 +183,7 @@ TEST(MWMP, constrained_mp_test)
 
     FileManager::readMatrixFile("inputs/dummy_obstacles_map.txt", mp_map.obstacles_map);
 
-    MotionPlanner * exoter_mp = new MotionPlanner(exoter_model, mp_config, mp_map);
+    MotionPlanner * robot_mp = new MotionPlanner(robot_model, mp_config, mp_map);
 
     std::vector<double> ini_rover_pose;
     FileManager::readVectorFile("inputs/ini_rover_pose.txt", ini_rover_pose);
@@ -195,41 +196,42 @@ TEST(MWMP, constrained_mp_test)
     std::vector<double> ini_wheels_steering = {0};
 
     Eigen::VectorXd x_ini =
-        exoter_model->getInitialStateVectorEigen(ini_rover_pose, ini_arm_positions);
-    Eigen::VectorXd u_ini = exoter_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed, ini_wheels_steering);
+        robot_model->getInitialStateVectorEigen(ini_rover_pose, ini_arm_positions);
+    Eigen::VectorXd u_ini = robot_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed,
+ini_wheels_steering);
 
     std::vector<Eigen::VectorXd> x0(number_time_steps,
-                                    Eigen::VectorXd::Zero(exoter_model->getNumberStates()));
+                                    Eigen::VectorXd::Zero(robot_model->getNumberStates()));
     std::vector<Eigen::VectorXd> u0(number_time_steps,
-                                    Eigen::VectorXd::Zero(exoter_model->getNumberInputs()));
+                                    Eigen::VectorXd::Zero(robot_model->getNumberInputs()));
 
     std::vector<Eigen::VectorXd> xs(number_time_steps,
-                                    Eigen::VectorXd::Zero(exoter_model->getNumberStates()));
+                                    Eigen::VectorXd::Zero(robot_model->getNumberStates()));
     std::vector<Eigen::VectorXd> us(number_time_steps,
-                                    Eigen::VectorXd::Zero(exoter_model->getNumberInputs()));
+                                    Eigen::VectorXd::Zero(robot_model->getNumberInputs()));
 
-    x0[number_time_steps - 1] = exoter_model->getGoalStateVectorEigen(goal_ee_pose);
+    x0[number_time_steps - 1] = robot_model->getGoalStateVectorEigen(goal_ee_pose);
 
     double ini_time = clock();
-    EXPECT_EQ(1, exoter_mp->generateConstrainedMotionPlan(x_ini, x0, xs, u_ini, u0, us, 100));
+    EXPECT_EQ(1, robot_mp->generateConstrainedMotionPlan(x_ini, x0, xs, u_ini, u0, us, 100));
     std::cout << cyan << "[MWMP::constrained_mp_test] Elapsed time: "
               << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     std::vector<Eigen::VectorXd> x;
     std::vector<Eigen::VectorXd> u;
-    exoter_mp->getPlannedState(x);
-    exoter_mp->getPlannedControl(u);
+    robot_mp->getPlannedState(x);
+    robot_mp->getPlannedControl(u);
 
     FileManager::writeMatrixFile("results/constrained_planned_state.txt", x);
     FileManager::writeMatrixFile("results/constrained_planned_control.txt", u);
 
-    delete(exoter_model);
-    delete(exoter_mp);
+    delete(robot_model);
+    delete(robot_mp);
 }*/
 
 TEST(MWMP, stepped_mp_test)
 {
-    StateSpaceModels::MobileManipulator * exoter_model =
+    StateSpaceModels::MobileManipulator * robot_model =
         new StateSpaceModels::MobileManipulator("exoter_ack");
 
     MWMP::Config mp_config;
@@ -255,7 +257,7 @@ TEST(MWMP, stepped_mp_test)
 
     FileManager::readMatrixFile("inputs/dummy_obstacles_map.txt", mp_map.obstacles_map);
 
-    MotionPlanner * exoter_mp = new MotionPlanner(exoter_model, mp_config, mp_map);
+    MotionPlanner * robot_mp = new MotionPlanner(robot_model, mp_config, mp_map);
 
     std::vector<double> ini_rover_pose;
     FileManager::readVectorFile("inputs/ini_rover_pose.txt", ini_rover_pose);
@@ -268,30 +270,32 @@ TEST(MWMP, stepped_mp_test)
     std::vector<double> ini_wheels_steering = {0};
 
     Eigen::VectorXd x_ini =
-        exoter_model->getInitialStateVectorEigen(ini_rover_pose, ini_arm_positions);
-    Eigen::VectorXd u_ini = exoter_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed, ini_wheels_steering);
+        robot_model->getInitialStateVectorEigen(ini_rover_pose, ini_arm_positions);
+    std::vector<Eigen::VectorXd> u_ini{number_time_steps,
+                                       Eigen::VectorXd::Zero(robot_model->getNumberInputs())};
+    u_ini[0] =
+        robot_model->getInputVectorEigen(ini_arm_speeds, ini_wheels_speed, ini_wheels_steering);
 
     std::vector<Eigen::VectorXd> x0(number_time_steps,
-                                    Eigen::VectorXd::Zero(exoter_model->getNumberStates()));
+                                    Eigen::VectorXd::Zero(robot_model->getNumberStates()));
     std::vector<Eigen::VectorXd> u0(number_time_steps,
-                                    Eigen::VectorXd::Zero(exoter_model->getNumberInputs()));
+                                    Eigen::VectorXd::Zero(robot_model->getNumberInputs()));
 
-    x0[number_time_steps - 1] = exoter_model->getGoalStateVectorEigen(goal_ee_pose);
+    x0[number_time_steps - 1] = robot_model->getGoalStateVectorEigen(goal_ee_pose);
 
     double ini_time = clock();
-    EXPECT_EQ(1, exoter_mp->generateSteppedMotionPlan(x_ini, x0, u_ini, u0));
+    EXPECT_EQ(1, robot_mp->generateSteppedMotionPlan(x_ini, x0, u_ini, u0));
     std::cout << cyan << "[MWMP::stepped_mp_test] Elapsed time: "
               << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     std::vector<Eigen::VectorXd> x;
     std::vector<Eigen::VectorXd> u;
-    exoter_mp->getPlannedState(x);
-    exoter_mp->getPlannedControl(u);
+    robot_mp->getPlannedState(x);
+    robot_mp->getPlannedControl(u);
 
     FileManager::writeMatrixFile("results/stepped_planned_state.txt", x);
     FileManager::writeMatrixFile("results/stepped_planned_control.txt", u);
 
-    delete(exoter_model);
-    delete(exoter_mp);
+    delete(robot_model);
+    delete(robot_mp);
 }
-

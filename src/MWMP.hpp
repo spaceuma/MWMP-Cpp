@@ -24,12 +24,12 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 // Author: Gonzalo J. Paz Delgado
-// Supervisor: Carlos J. PÃ©rez del Pulgar
+// Supervisor: Carlos J. Pe©rez del Pulgar
 // Affiliation: Department of Systems Engineering and Automation
 // Space Robotics Lab (www.uma.es/space-robotics)
 
-#ifndef __MOTION_PLANNER_SOMP__
-#define __MOTION_PLANNER_SOMP__
+#ifndef __MOTION_PLANNER_MWMP__
+#define __MOTION_PLANNER_MWMP__
 
 #include <Eigen/Dense>
 #include <exception>
@@ -38,25 +38,24 @@
 
 #include "FastMarching.hpp"
 #include "StateSpaceModels.hpp"
-#include "FileManager.hpp"
 
 #define inf 1000000007
 
-#define nocolor "\033[0m"
-#define black "\033[1;30m"
-#define red "\033[1;31m"
-#define green "\033[1;32m"
-#define yellow "\033[1;33m"
-#define blue "\033[1;34m"
-#define magenta "\033[1;35m"
-#define cyan "\033[1;36m"
-#define white "\033[1;37m"
+#define NOCOLOR "\033[0m"
+#define BLACK "\033[1;30m"
+#define RED "\033[1;31m"
+#define GREEN "\033[1;32m"
+#define YELLOW "\033[1;33m"
+#define BLUE "\033[1;34m"
+#define MAGENTA "\033[1;35m"
+#define CYAN "\033[1;36m"
+#define WHITE "\033[1;37m"
 
-namespace SOMP
+namespace MWMP
 {
 /*********************************************************************************************
  *
- *  SOMP: Stepped Optimal Motion Planner, based on unconstrained and constrained SLQr.
+ *  MWMP: Stepped Optimal Motion Planner, based on unconstrained and constrained SLQr.
  *  Given the system modelled by "state_space_model",
  *  and the configurations given in "config", the SLQR motion planning
  *  problem is solved, trying to reach the objective given by "x0" and "u0"
@@ -65,9 +64,9 @@ namespace SOMP
  *  Info about the map can be provided through "map_info" parameter.
  *
  * CONSTRUCTORS:
- * SOMP::MotionPlanner * somp_planner = new SOMP::MotionPlanner(Config config,
+ * MWMP::MotionPlanner * somp_planner = new MWMP::MotionPlanner(Config config,
  *                                                              SSModel state_space_model);
- * SOMP::MotionPlanner * somp_planner = new SOMP::MotionPlanner(Config config,
+ * MWMP::MotionPlanner * somp_planner = new MWMP::MotionPlanner(Config config,
  *                                                              SSModel state_space_model,
  *                                                              MapInfo map_info);
  *
@@ -369,23 +368,23 @@ public:
      *
      ******************************************************************************************/
 
-    int generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini,
+    int generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_t0,
                                         const std::vector<Eigen::VectorXd> & x0,
-                                        const Eigen::VectorXd & u_ini,
+                                        const std::vector<Eigen::VectorXd> & u_ini,
                                         const std::vector<Eigen::VectorXd> & u0,
                                         uint max_iter);
 
-    int generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
+    int generateConstrainedMotionPlan(const Eigen::VectorXd & x_t0,
                                       const std::vector<Eigen::VectorXd> & x0,
                                       const std::vector<Eigen::VectorXd> & xs,
-                                      const Eigen::VectorXd & u_ini,
+                                      const std::vector<Eigen::VectorXd> & u_ini,
                                       const std::vector<Eigen::VectorXd> & u0,
                                       const std::vector<Eigen::VectorXd> & us,
                                       uint max_iter);
 
-    int generateSteppedMotionPlan(const Eigen::VectorXd & x_ini,
+    int generateSteppedMotionPlan(const Eigen::VectorXd & x_t0,
                                   const std::vector<Eigen::VectorXd> & x0,
-                                  const Eigen::VectorXd & u_ini,
+                                  const std::vector<Eigen::VectorXd> & u_ini,
                                   const std::vector<Eigen::VectorXd> & u0);
     //**********//
     // Get Data //
@@ -393,6 +392,14 @@ public:
     bool getPlannedState(std::vector<Eigen::VectorXd> & x);
 
     bool getPlannedControl(std::vector<Eigen::VectorXd> & u);
+
+    bool getPlannedTimestamps(std::vector<double> & t);
+
+    double getTimeHorizon();
+
+    double getTimeStep();
+
+    uint getNumberTimeSteps();
 };
-}    // namespace SOMP
+}    // namespace MWMP
 #endif

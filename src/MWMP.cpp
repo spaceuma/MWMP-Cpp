@@ -28,10 +28,11 @@
 // Affiliation: Department of Systems Engineering and Automation
 // Space Robotics Lab (www.uma.es/space-robotics)
 
-#include "SOMP.hpp"
+#include "MWMP.hpp"
+#include "FileManager.hpp"
 #include <ctime>
 
-using namespace SOMP;
+using namespace MWMP;
 using namespace StateSpaceModels;
 using namespace MatrixOperations;
 
@@ -43,10 +44,10 @@ bool MotionPlanner::generateHorizonLinearization(std::vector<Eigen::VectorXd> & 
     if(!robot_ss_model->getLinearizedMatrixA(x[0], u[0], time_step, A_hor_output[0]) ||
        !robot_ss_model->getLinearizedMatrixB(x[0], u[0], time_step, B_hor_output[0]))
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to linearize the "
                      "state space model"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return false;
     }
 
@@ -54,21 +55,21 @@ bool MotionPlanner::generateHorizonLinearization(std::vector<Eigen::VectorXd> & 
     {
         if(!robot_ss_model->forwardIntegrateModel(x[i - 1], u[i - 1], time_step, x[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to forward "
                          "integrate the model"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
 
         if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], u[i - 1], time_step, A_hor_output[i]) ||
            !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, B_hor_output[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to linearize "
                          "the state "
                          "space model"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
     }
@@ -85,10 +86,10 @@ bool MotionPlanner::generateHorizonLinearization(
     if(!robot_ss_model->getLinearizedMatrixA(x[0], u[0], time_step, A_hor_output[0]) ||
        !robot_ss_model->getLinearizedMatrixB(x[0], u[0], time_step, B_hor_output[0]))
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to linearize the "
                      "state space model"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return false;
     }
 
@@ -96,21 +97,21 @@ bool MotionPlanner::generateHorizonLinearization(
     {
         if(!robot_ss_model->forwardIntegrateModel(x[i - 1], u[i - 1], time_step, x[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to forward "
                          "integrate the model"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
 
         if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], u[i - 1], time_step, A_hor_output[i]) ||
            !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, B_hor_output[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateHorizonLinearization]: Unable to linearize "
                          "the state "
                          "space model"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
     }
@@ -127,10 +128,10 @@ bool MotionPlanner::generateHorizonCosts(std::vector<Eigen::MatrixXd> & Q_hor_ou
        !robot_ss_model->getInputCostMatrix(R_hor_output[0], time_horizon) ||
        !robot_ss_model->getStateInputCostMatrix(K_hor_output[0]))
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateHorizonCosts]: Unable to compute the "
                      "quadratized costs"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return false;
     }
 
@@ -143,10 +144,10 @@ bool MotionPlanner::generateHorizonCosts(std::vector<Eigen::MatrixXd> & Q_hor_ou
            !robot_ss_model->getInputCostMatrix(R_hor_output[i], time_horizon) ||
            !robot_ss_model->getStateInputCostMatrix(K_hor_output[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateHorizonCosts]: Unable to compute the "
                          "quadratized costs"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
     }
@@ -163,10 +164,10 @@ bool MotionPlanner::generateHorizonCosts(
        !robot_ss_model->getInputCostMatrix(R_hor_output[0], time_horizon) ||
        !robot_ss_model->getStateInputCostMatrix(K_hor_output[0]))
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateHorizonCosts]: Unable to compute the "
                      "quadratized costs"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return false;
     }
 
@@ -178,10 +179,10 @@ bool MotionPlanner::generateHorizonCosts(
            !robot_ss_model->getInputCostMatrix(R_hor_output[i], time_horizon) ||
            !robot_ss_model->getStateInputCostMatrix(K_hor_output[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateHorizonCosts]: Unable to compute the "
                          "quadratized costs"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
     }
@@ -199,10 +200,10 @@ bool MotionPlanner::updateLinearModel(const std::vector<Eigen::VectorXd> & x,
         if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], u[i - 1], time_step, A_hor_output[i]) ||
            !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, B_hor_output[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::updateLinearModel]: Unable to linearize the state "
                          "space model"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
     }
@@ -220,10 +221,10 @@ bool MotionPlanner::updateLinearModel(const std::vector<std::vector<double>> & x
         if(!robot_ss_model->getLinearizedMatrixA(x[i - 1], u[i - 1], time_step, A_hor_output[i]) ||
            !robot_ss_model->getLinearizedMatrixB(x[i - 1], u[i - 1], time_step, B_hor_output[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::updateLinearModel]: Unable to linearize the state "
                          "space model"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
     }
@@ -243,19 +244,19 @@ bool MotionPlanner::generateHorizonConstraints(std::vector<Eigen::MatrixXd> & C_
            !robot_ss_model->getConstraintsMatrixD(D_hor_output[i]) ||
            !robot_ss_model->getConstraintsMatrixR(r_hor_output[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateHorizonConstraints]: Unable to compute the "
                          "state input constraints"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
         if(!robot_ss_model->getConstraintsMatrixG(G_hor_output[i]) ||
            !robot_ss_model->getConstraintsMatrixH(h_hor_output[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateHorizonConstraints]: Unable to compute the "
                          "pure state constraints"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
     }
@@ -276,19 +277,19 @@ bool MotionPlanner::generateHorizonConstraints(
            !robot_ss_model->getConstraintsMatrixD(D_hor_output[i]) ||
            !robot_ss_model->getConstraintsMatrixR(r_hor_output[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateHorizonConstraints]: Unable to compute the "
                          "state input constraints"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
         if(!robot_ss_model->getConstraintsMatrixG(G_hor_output[i]) ||
            !robot_ss_model->getConstraintsMatrixH(h_hor_output[i]))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateHorizonConstraints]: Unable to compute the "
                          "pure state constraints"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return false;
         }
     }
@@ -356,10 +357,12 @@ bool MotionPlanner::computeObstaclesGradient(const std::vector<std::vector<uint>
                 }
                 else
                 {
-                    if(cv_distance_x.at<float>(j, i + 1) == 8193)
+                    if(cv_distance_x.at<float>(j, i + 1) >= 999)
                     {
-                        if(cv_distance_x.at<float>(j, i - 1) == 8193)
-                        { cv_x_gradient.at<double>(j, i) = 0; }
+                        if(cv_distance_x.at<float>(j, i - 1) >= 999)
+                        {
+                            cv_x_gradient.at<double>(j, i) = 0.0;
+                        }
                         else
                         {
                             cv_x_gradient.at<double>(j, i) =
@@ -368,7 +371,7 @@ bool MotionPlanner::computeObstaclesGradient(const std::vector<std::vector<uint>
                     }
                     else
                     {
-                        if(cv_distance_x.at<float>(j, i - 1) == 8193)
+                        if(cv_distance_x.at<float>(j, i - 1) >= 999)
                         {
                             cv_x_gradient.at<double>(j, i) =
                                 cv_distance_x.at<float>(j, i + 1) - cv_distance_x.at<float>(j, i);
@@ -397,10 +400,12 @@ bool MotionPlanner::computeObstaclesGradient(const std::vector<std::vector<uint>
                 }
                 else
                 {
-                    if(cv_distance_y.at<float>(j + 1, i) == 8193)
+                    if(cv_distance_y.at<float>(j + 1, i) >= 999)
                     {
-                        if(cv_distance_y.at<float>(j - 1, i) == 8193)
-                        { cv_y_gradient.at<double>(j, i) = 0; }
+                        if(cv_distance_y.at<float>(j - 1, i) >= 999)
+                        {
+                            cv_y_gradient.at<double>(j, i) = 0.0;
+                        }
                         else
                         {
                             cv_y_gradient.at<double>(j, i) =
@@ -409,7 +414,7 @@ bool MotionPlanner::computeObstaclesGradient(const std::vector<std::vector<uint>
                     }
                     else
                     {
-                        if(cv_distance_y.at<float>(j - 1, i) == 8193)
+                        if(cv_distance_y.at<float>(j - 1, i) >= 999)
                         {
                             cv_y_gradient.at<double>(j, i) =
                                 cv_distance_y.at<float>(j + 1, i) - cv_distance_y.at<float>(j, i);
@@ -427,21 +432,40 @@ bool MotionPlanner::computeObstaclesGradient(const std::vector<std::vector<uint>
     }
 
     // Filtering the gradient
-    cv::Mat f10(cv::Size(10, 10), CV_32FC1, cv::Scalar(0.01));
-    cv::Mat f3(cv::Size(3, 3), CV_32FC1, cv::Scalar(0.1111));
+    cv::Mat f10(cv::Size(10, 10), CV_64FC1, cv::Scalar(0.01));
+    cv::Mat f3(cv::Size(3, 3), CV_64FC1, cv::Scalar(0.1111));
 
     cv::Mat cv_aux_x_gradient = cv::Mat::zeros(m, n, CV_64FC1);
     cv::Mat cv_aux_y_gradient = cv::Mat::zeros(m, n, CV_64FC1);
+    cv::Mat aux_mat;
 
     cv::filter2D(
-        cv_x_gradient, cv_aux_x_gradient, -1, f10, cv::Point(-1, -1), 0, cv::BORDER_CONSTANT);
-    cv::filter2D(
-        cv_aux_x_gradient, cv_x_gradient, -1, f3, cv::Point(-1, -1), 0, cv::BORDER_CONSTANT);
+        cv_x_gradient, cv_aux_x_gradient, -1, f10, cv::Point(-1, -1), 0, cv::BORDER_REPLICATE);
+
+    cv_aux_x_gradient.convertTo(aux_mat, CV_32FC1);
+    cv::patchNaNs(aux_mat, 0);
+    aux_mat.convertTo(cv_aux_x_gradient, CV_64FC1);
 
     cv::filter2D(
-        cv_y_gradient, cv_aux_y_gradient, -1, f10, cv::Point(-1, -1), 0, cv::BORDER_CONSTANT);
+        cv_aux_x_gradient, cv_x_gradient, -1, f3, cv::Point(-1, -1), 0, cv::BORDER_REPLICATE);
+
+    cv_x_gradient.convertTo(aux_mat, CV_32FC1);
+    cv::patchNaNs(aux_mat, 0);
+    aux_mat.convertTo(cv_x_gradient, CV_64FC1);
+
     cv::filter2D(
-        cv_aux_y_gradient, cv_y_gradient, -1, f3, cv::Point(-1, -1), 0, cv::BORDER_CONSTANT);
+        cv_y_gradient, cv_aux_y_gradient, -1, f10, cv::Point(-1, -1), 0, cv::BORDER_REPLICATE);
+
+    cv_aux_y_gradient.convertTo(aux_mat, CV_32FC1);
+    cv::patchNaNs(aux_mat, 0);
+    aux_mat.convertTo(cv_aux_y_gradient, CV_64FC1);
+
+    cv::filter2D(
+        cv_aux_y_gradient, cv_y_gradient, -1, f3, cv::Point(-1, -1), 0, cv::BORDER_REPLICATE);
+
+    cv_y_gradient.convertTo(aux_mat, CV_32FC1);
+    cv::patchNaNs(aux_mat, 0);
+    aux_mat.convertTo(cv_y_gradient, CV_64FC1);
 
     // Generating the output matrixes
     for(uint i = 0; i < m; i++)
@@ -474,14 +498,20 @@ bool MotionPlanner::computeCostMap(const std::vector<std::vector<uint>> & obst_m
     cv::distanceTransform(cv_obst_map, cv_distance, cv::DIST_L2, 5);
     cv::Mat cv_aux_map = 1 / cv_distance;
     double min;
+    for(uint i = 0; i < m; i++)
+        for(uint j = 0; j < n; j++)
+            if(cv_aux_map.at<float>(i, j) == 0) cv_aux_map.at<float>(i, j) = inf;
+
     cv::minMaxLoc(cv_aux_map, &min);
 
     for(uint i = 0; i < m; i++)
+    {
         for(uint j = 0; j < n; j++)
         {
             if(safe_obst_map[i][j]) cost_map[i][j] = (1 + cv_aux_map.at<float>(i, j) / min) / 2;
             if(obst_map[i][j]) cost_map[i][j] = inf;
         }
+    }
 
     return true;
 }
@@ -494,9 +524,9 @@ bool MotionPlanner::dilateObstaclesMap(const std::vector<std::vector<uint>> & ob
 
     if(dilated_map.size() != m || dilated_map[0].size() != n)
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::dilateObstaclesMap]: Wrong size of the output matrix"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return false;
     }
 
@@ -548,10 +578,10 @@ bool MotionPlanner::computeLineSearch(std::vector<Eigen::VectorXd> & x,
             if(!robot_ss_model->forwardIntegrateModel(
                    x_temp[i], u_temp[i], time_step, x_temp[i + 1]))
             {
-                std::cout << red
+                std::cout << RED
                           << "ERROR [MotionPlanner::computeLineSearch]: Unable to forward "
                              "integrate the model"
-                          << nocolor << std::endl;
+                          << NOCOLOR << std::endl;
                 return false;
             }
 
@@ -567,7 +597,7 @@ bool MotionPlanner::computeLineSearch(std::vector<Eigen::VectorXd> & x,
 
         current_cost += (diff_states.transpose() * Q_hor[number_time_steps - 1] * diff_states) / 2;
 
-        if(current_cost(0) < min_cost)
+        if(current_cost(0) < min_cost || alfa == 1)
         {
             min_cost = current_cost(0);
             x = x_temp;
@@ -608,10 +638,10 @@ bool MotionPlanner::computeLineSearch(std::vector<Eigen::VectorXd> & x,
             if(!robot_ss_model->forwardIntegrateModel(
                    x_temp[i], u_temp[i], time_step, x_temp[i + 1]))
             {
-                std::cout << red
+                std::cout << RED
                           << "ERROR [MotionPlanner::computeLineSearch]: Unable to forward "
                              "integrate the model"
-                          << nocolor << std::endl;
+                          << NOCOLOR << std::endl;
                 return false;
             }
 
@@ -627,7 +657,7 @@ bool MotionPlanner::computeLineSearch(std::vector<Eigen::VectorXd> & x,
 
         current_cost += (diff_states.transpose() * Q_hor[number_time_steps - 1] * diff_states) / 2;
 
-        if(current_cost(0) < min_cost)
+        if(current_cost(0) < min_cost || alfa == 1)
         {
             final_alfa = alfa;
             min_cost = current_cost(0);
@@ -666,10 +696,10 @@ bool MotionPlanner::computeLineSearch(std::vector<std::vector<double>> & x,
             if(!robot_ss_model->forwardIntegrateModel(
                    x_temp[i], u_temp[i], time_step, x_temp[i + 1]))
             {
-                std::cout << red
+                std::cout << RED
                           << "ERROR [MotionPlanner::computeLineSearch]: Unable to forward "
                              "integrate the model"
-                          << nocolor << std::endl;
+                          << NOCOLOR << std::endl;
                 return false;
             }
 
@@ -685,7 +715,7 @@ bool MotionPlanner::computeLineSearch(std::vector<std::vector<double>> & x,
         current_cost += dot(diff_states, dot(Q_hor[number_time_steps - 1], diff_states));
         current_cost /= 2;
 
-        if(current_cost < min_cost)
+        if(current_cost < min_cost || alfa == 1)
         {
             min_cost = current_cost;
             x = x_temp;
@@ -700,10 +730,10 @@ bool MotionPlanner::checkConstraints(bool & constraints_satisfied)
 {
     if(!is_motion_planned)
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::checkConstraints]: The motion planner has not yet been "
                      "generated"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return false;
     }
 
@@ -763,10 +793,10 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model)
     if(!generateHorizonCosts(Q_hor_aux, R_hor_aux, K_hor_aux))
     {
         throw std::domain_error(
-            red +
+            RED +
             std::string(
                 "ERROR [MotionPlanner::MotionPlanner]: Failure generating the cost matrixes") +
-            nocolor);
+            NOCOLOR);
     }
 
     Q_hor = Q_hor_aux;
@@ -786,10 +816,10 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model)
 
     if(!generateHorizonConstraints(C_hor_aux, D_hor_aux, r_hor_aux, G_hor_aux, h_hor_aux))
     {
-        throw std::domain_error(red +
+        throw std::domain_error(RED +
                                 std::string("ERROR [MotionPlanner::MotionPlanner]: Failure "
                                             "generating the constraints matrixes") +
-                                nocolor);
+                                NOCOLOR);
     }
 
     C_hor = C_hor_aux;
@@ -814,10 +844,10 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config)
 
     if(line_search_step < 0 || line_search_step >= 1)
     {
-        throw std::domain_error(red +
+        throw std::domain_error(RED +
                                 std::string("ERROR [MotionPlanner::MotionPlanner]: The provided "
                                             "line search step is not inside the interval (0,1)") +
-                                nocolor);
+                                NOCOLOR);
     }
 
     check_distance = config.check_distance;
@@ -846,10 +876,10 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config)
     if(!generateHorizonCosts(Q_hor_aux, R_hor_aux, K_hor_aux))
     {
         throw std::domain_error(
-            red +
+            RED +
             std::string(
                 "ERROR [MotionPlanner::MotionPlanner]: Failure generating the cost matrixes") +
-            nocolor);
+            NOCOLOR);
     }
 
     Q_hor = Q_hor_aux;
@@ -869,10 +899,10 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config)
 
     if(!generateHorizonConstraints(C_hor_aux, D_hor_aux, r_hor_aux, G_hor_aux, h_hor_aux))
     {
-        throw std::domain_error(red +
+        throw std::domain_error(RED +
                                 std::string("ERROR [MotionPlanner::MotionPlanner]: Failure "
                                             "generating the constraints matrixes") +
-                                nocolor);
+                                NOCOLOR);
     }
 
     C_hor = C_hor_aux;
@@ -897,10 +927,10 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
 
     if(line_search_step < 0 || line_search_step >= 1)
     {
-        throw std::domain_error(red +
+        throw std::domain_error(RED +
                                 std::string("ERROR [MotionPlanner::MotionPlanner]: The provided "
                                             "line search step is not inside the interval (0,1)") +
-                                nocolor);
+                                NOCOLOR);
     }
 
     check_distance = config.check_distance;
@@ -919,9 +949,21 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
     obstacles_map = map_info.obstacles_map;
 
     // Creating an obstacle below the goal to avoid stepping into it
-    uint x_index_goal = (uint)(map_info.goal_pose[0] / map_resolution);
-    uint y_index_goal = (uint)(map_info.goal_pose[1] / map_resolution);
-    obstacles_map[y_index_goal][x_index_goal] = 1;
+    // uint x_index_goal = (uint)(map_info.goal_pose[0] / map_resolution);
+    // uint y_index_goal = (uint)(map_info.goal_pose[1] / map_resolution);
+    // obstacles_map[y_index_goal][x_index_goal] = 1;
+
+    // Ensuring 0 means safe and 1 means obstacle, and that the map limits are obstacles
+    for(uint i = 0; i < obstacles_map.size(); i++)
+    {
+        for(uint j = 0; j < obstacles_map[0].size(); j++)
+        {
+            obstacles_map[i][j] = 1 - obstacles_map[i][j];
+            if(i == 0 || j == 0 || i == obstacles_map.size() - 1 ||
+               j == obstacles_map[0].size() - 1)
+                obstacles_map[i][j] = 1;
+        }
+    }
 
     dilated_obstacles_map = obstacles_map;
     safety_obstacles_map = obstacles_map;
@@ -939,10 +981,10 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
        // it will be used later to obtain repulsive costs in the neighbourhood of obstacles
        !computeObstaclesGradient(safety_obstacles_map))
     {
-        throw std::domain_error(red +
+        throw std::domain_error(RED +
                                 std::string("ERROR [MotionPlanner::MotionPlanner]: Failure while "
                                             "processing the input obstacles map") +
-                                nocolor);
+                                NOCOLOR);
     }
 
     if(track_reference_trajectory)
@@ -952,10 +994,10 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
         if(!computeCostMap(obstacles_map, safety_obstacles_map))
         {
             throw std::domain_error(
-                red +
+                RED +
                 std::string("ERROR [MotionPlanner::MotionPlanner]: Failure while "
                             "generating the path planner cost map") +
-                nocolor);
+                NOCOLOR);
         }
     }
 
@@ -974,10 +1016,10 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
     if(!generateHorizonCosts(Q_hor_aux, R_hor_aux, K_hor_aux))
     {
         throw std::domain_error(
-            red +
+            RED +
             std::string(
                 "ERROR [MotionPlanner::MotionPlanner]: Failure generating the cost matrixes") +
-            nocolor);
+            NOCOLOR);
     }
 
     Q_hor = Q_hor_aux;
@@ -997,10 +1039,10 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
 
     if(!generateHorizonConstraints(C_hor_aux, D_hor_aux, r_hor_aux, G_hor_aux, h_hor_aux))
     {
-        throw std::domain_error(red +
+        throw std::domain_error(RED +
                                 std::string("ERROR [MotionPlanner::MotionPlanner]: Failure "
                                             "generating the constraints matrixes") +
-                                nocolor);
+                                NOCOLOR);
     }
 
     C_hor = C_hor_aux;
@@ -1012,39 +1054,103 @@ MotionPlanner::MotionPlanner(MobileManipulator * _robot_ss_model, Config config,
 
 bool MotionPlanner::setTimeHorizon(double new_time_horizon)
 {
-    // TODO generate again Q and R
-    if(new_time_horizon > 0 && new_time_horizon > time_step)
-        time_horizon = new_time_horizon;
-    else
+    if(new_time_horizon < 0)
     {
-        std::cout << magenta
-                  << "WARNING [MotionPlanner::setTimeHorizon]: The new requested time horizon is "
-                     "not valid, the previous one is maintained"
-                  << nocolor << std::endl;
+        std::cout << RED
+                  << "ERROR [MotionPlanner::setTimeHorizon]: The input time horizon is not valid "
+                     "(negative)"
+                  << NOCOLOR << std::endl;
         return false;
     }
+
+    /*if(new_time_horizon < robot_ss_model->getMinTimeHorizon())
+    {
+        new_time_horizon = robot_ss_model->getMinTimeHorizon();
+        std::cout << MAGENTA
+                  << "WARNING [MotionPlanner::setTimeHorizon]: The new requested time horizon is "
+                     "too small, the minimum one will be used"
+                  << NOCOLOR << std::endl;
+        return true;
+    }*/
+
+    time_horizon = new_time_horizon;
+    time_step = time_horizon / (number_time_steps - 1);
+    if(!generateHorizonCosts(Q_hor, R_hor, K_hor))
+    {
+        std::cout << RED
+                  << "ERROR [MotionPlanner::setTimeHorizon]: Failure generating the cost matrixes"
+                  << NOCOLOR << std::endl;
+        return false;
+    }
+
     return true;
 }
 
 bool MotionPlanner::setTimeStep(double new_time_step)
 {
-    // TODO generate again Q and R
     if(new_time_step > 0 && new_time_step < time_horizon)
+    {
         time_step = new_time_step;
+        number_time_steps = (uint)(time_horizon / time_step) + 1;
+
+        // Since the number of time steps changed, resizing everty matrix
+        std::vector<Eigen::MatrixXd> Q_hor_aux(number_time_steps,
+                                               Eigen::MatrixXd::Zero(number_states, number_states));
+        std::vector<Eigen::MatrixXd> R_hor_aux(number_time_steps,
+                                               Eigen::MatrixXd::Zero(number_inputs, number_inputs));
+        std::vector<Eigen::MatrixXd> K_hor_aux(number_time_steps,
+                                               Eigen::MatrixXd::Zero(number_states, number_inputs));
+
+        if(!generateHorizonCosts(Q_hor_aux, R_hor_aux, K_hor_aux))
+        {
+            std::cout << RED
+                      << "ERROR [MotionPlanner::setTimeStep]: Failure generating the cost matrixes"
+                      << NOCOLOR << std::endl;
+        }
+
+        Q_hor = Q_hor_aux;
+        R_hor = R_hor_aux;
+        K_hor = K_hor_aux;
+
+        std::vector<Eigen::MatrixXd> C_hor_aux(
+            number_time_steps, Eigen::MatrixXd::Zero(number_si_constraints, number_states));
+        std::vector<Eigen::MatrixXd> D_hor_aux(
+            number_time_steps, Eigen::MatrixXd::Zero(number_si_constraints, number_inputs));
+        std::vector<Eigen::VectorXd> r_hor_aux(number_time_steps,
+                                               Eigen::VectorXd::Zero(number_si_constraints));
+        std::vector<Eigen::MatrixXd> G_hor_aux(
+            number_time_steps, Eigen::MatrixXd::Zero(number_ps_constraints, number_states));
+        std::vector<Eigen::VectorXd> h_hor_aux(number_time_steps,
+                                               Eigen::VectorXd::Zero(number_ps_constraints));
+
+        if(!generateHorizonConstraints(C_hor_aux, D_hor_aux, r_hor_aux, G_hor_aux, h_hor_aux))
+        {
+            std::cout
+                << RED
+                << "ERROR [MotionPlanner::setTimeStep]: Failure generating the constraints matrixes"
+                << NOCOLOR << std::endl;
+        }
+
+        C_hor = C_hor_aux;
+        D_hor = D_hor_aux;
+        r_hor = r_hor_aux;
+        G_hor = G_hor_aux;
+        h_hor = h_hor_aux;
+    }
     else
     {
-        std::cout << magenta
+        std::cout << MAGENTA
                   << "WARNING [MotionPlanner::setTimeStep]: The new requested time step is not "
                      "valid, the previous one is maintained"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return false;
     }
     return true;
 }
 
-int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini,
+int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_t0,
                                                    const std::vector<Eigen::VectorXd> & x0,
-                                                   const Eigen::VectorXd & u_ini,
+                                                   const std::vector<Eigen::VectorXd> & u_ini,
                                                    const std::vector<Eigen::VectorXd> & u0,
                                                    uint max_iter)
 {
@@ -1053,19 +1159,31 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
 
     if(reference_state.size() != number_time_steps)
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: The provided goal "
-                     "state matrix has a wrong number of time steps"
-                  << nocolor << std::endl;
+                     "state matrix has a wrong number of time steps ("
+                  << reference_state.size() << " time steps instead of the expected "
+                  << number_time_steps << ")." << NOCOLOR << std::endl;
         return -1;
     }
 
     if(reference_control.size() != number_time_steps)
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: The provided goal "
-                     "control matrix has a wrong number of time steps"
-                  << nocolor << std::endl;
+                     "control matrix has a wrong number of time steps ("
+                  << reference_control.size() << " time steps instead of the expected "
+                  << number_time_steps << ")." << NOCOLOR << std::endl;
+        return -1;
+    }
+
+    if(u_ini.size() != number_time_steps)
+    {
+        std::cout << RED
+                  << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: The provided initial "
+                     "control matrix has a wrong number of time steps ("
+                  << u_ini.size() << " time steps instead of the expected " << number_time_steps
+                  << ")." << NOCOLOR << std::endl;
         return -1;
     }
 
@@ -1073,10 +1191,11 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
     if(track_reference_trajectory)
     {
         // Creating the path planner object
-        FastMarching::PathPlanner * path_planner = new FastMarching::PathPlanner();
+        double waypoint_distance = 0.1;
+        FastMarching::PathPlanner * path_planner = new FastMarching::PathPlanner(waypoint_distance);
 
         // Goal and initial poses
-        std::vector<double> ini_pose = {x_ini(pose_indexes[0]), x_ini(pose_indexes[1])};
+        std::vector<double> ini_pose = {x_t0(pose_indexes[0]), x_t0(pose_indexes[1])};
         std::vector<double> goal_pose = {
             reference_state[number_time_steps - 1](distance_indexes[0]),
             reference_state[number_time_steps - 1](distance_indexes[1])};
@@ -1086,10 +1205,10 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
 
         if(!path_planner->planPath(&cost_map, map_resolution, ini_pose, goal_pose, &reference_path))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: Failure while "
                          "computing the reference trajectory"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return -1;
         }
 
@@ -1101,7 +1220,17 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
             reference_state[i](pose_indexes[0]) = reference_path[path_index][0];
             reference_state[i](pose_indexes[1]) = reference_path[path_index][1];
             reference_state[i](pose_indexes[2]) = reference_path[path_index][2];
+
+            // TODO solve this hardcode useful only for ExoTeR tests
+            reference_state[i](18) = 1.4;
         }
+
+        // Wrap the goal roll angle in function of the last vehicle yaw
+        double minimum_yaw = reference_state[number_time_steps - 1](pose_indexes[2]);
+        while(reference_state[number_time_steps - 1](orientation_indexes[0]) < minimum_yaw)
+            reference_state[number_time_steps - 1](orientation_indexes[0]) += pi;
+        while(reference_state[number_time_steps - 1](orientation_indexes[0]) > minimum_yaw + pi)
+            reference_state[number_time_steps - 1](orientation_indexes[0]) -= pi;
     }
 
     // State and input along the whole time horizon
@@ -1109,8 +1238,8 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
     std::vector<Eigen::VectorXd> u(number_time_steps, Eigen::VectorXd::Zero(number_inputs));
 
     // The initial states and inputs are the ones provided
-    x[0] = x_ini;
-    u[0] = u_ini;
+    x[0] = x_t0;
+    u = u_ini;
 
     // Initializing the dynamics matrixes and cost matrixes along the whole time horizon
     std::vector<Eigen::MatrixXd> A_hor(number_time_steps,
@@ -1121,10 +1250,10 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
     // Generating the state and linearized matrixes for the whole time horizon
     if(!generateHorizonLinearization(x, u, A_hor, B_hor))
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: Unable to generate "
                      "the system state and linear matrixes for the time horizon"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return 0;
     }
 
@@ -1222,112 +1351,112 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         computeLineSearch(x, reference_state, u, reference_control, uh);
 
         // Checking termination conditions
-        bool convergence_condition = true;
+        bool convergence_condition = false;
         double distance_to_goal;
         double orientation_to_goal;
-        std::cout << blue << "[MotionPlanner::generateUnconstrainedMotionPlan]: Iteration number "
-                  << number_iterations << nocolor << std::endl;
-        std::cout << yellow
+        std::cout << BLUE << "[MotionPlanner::generateUnconstrainedMotionPlan]: Iteration number "
+                  << number_iterations << NOCOLOR << std::endl;
+        std::cout << YELLOW
                   << "[MotionPlanner::generateUnconstrainedMotionPlan]: Elapsed iteration time: "
-                  << (double)(clock() - it_time) / CLOCKS_PER_SEC << nocolor << std::endl;
+                  << (double)(clock() - it_time) / CLOCKS_PER_SEC << " s" << NOCOLOR << std::endl;
         number_iterations++;
 
         // Check if the control is not changing
-        for(uint i = 0; i < number_time_steps; i++)
-            convergence_condition &= (uh[i].norm() <= control_threshold * u[i].norm());
+        // for(uint i = 0; i < number_time_steps; i++)
+        //    convergence_condition &= (uh[i].norm() <= control_threshold * u[i].norm());
 
-        // If the control can be improved, check if a suitable solution is already planned
-        if(!convergence_condition)
+        // Check if the distance objective has been reached
+        if(check_distance)
         {
-            // Check if the distance objective has been reached
-            if(check_distance)
+            Eigen::VectorXd termination_state(distance_indexes.size());
+            Eigen::VectorXd termination_goal(distance_indexes.size());
+
+            for(uint i = 0; i < distance_indexes.size(); i++)
             {
-                Eigen::VectorXd termination_state(distance_indexes.size());
-                Eigen::VectorXd termination_goal(distance_indexes.size());
-
-                for(uint i = 0; i < distance_indexes.size(); i++)
-                {
-                    termination_state(i) = x[number_time_steps - 1](distance_indexes[i]);
-                    termination_goal(i) =
-                        reference_state[number_time_steps - 1](distance_indexes[i]);
-                }
-                distance_to_goal = (termination_state - termination_goal).norm();
-
-                if(distance_to_goal < distance_threshold)
-                {
-                    convergence_condition = true;
-
-                    for(uint i = 0; i < number_time_steps; i++)
-                        convergence_condition &=
-                            (uh[i].norm() <= (20 * control_threshold * u[i].norm()));
-                }
-                std::cout << yellow
-                          << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
-                             "goal position: "
-                          << distance_to_goal << nocolor << std::endl;
-
-                if(!convergence_condition) convergence_status = -1;
+                termination_state(i) = x[number_time_steps - 1](distance_indexes[i]);
+                termination_goal(i) = reference_state[number_time_steps - 1](distance_indexes[i]);
             }
+            distance_to_goal = (termination_state - termination_goal).norm();
 
-            // Check if the orientation objective has been reached
-            if(check_orientation && convergence_condition)
+            if(distance_to_goal < distance_threshold)
             {
-                Eigen::VectorXd termination_state(orientation_indexes.size());
-                Eigen::VectorXd termination_goal(orientation_indexes.size());
-                for(uint i = 0; i < orientation_indexes.size(); i++)
-                {
-                    termination_state(i) = x[number_time_steps - 1](orientation_indexes[i]);
-                    termination_goal(i) =
-                        reference_state[number_time_steps - 1](orientation_indexes[i]);
-                }
+                convergence_condition = true;
 
-                orientation_to_goal = (termination_state - termination_goal).norm();
-
-                convergence_condition &= (orientation_to_goal < orientation_threshold);
-
-                std::cout << yellow
-                          << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
-                             "goal orientation: "
-                          << orientation_to_goal << nocolor << std::endl;
-
-                if(!convergence_condition) convergence_status = -1;
-            }
-
-            // Check if the planned motion is safe
-            if(check_safety && convergence_condition)
-            {
                 for(uint i = 0; i < number_time_steps; i++)
-                {
-                    std::vector<double> pose = {x[i](pose_indexes[0]), x[i](pose_indexes[1])};
-                    uint ix = (uint)pose[0] / map_resolution;
-                    uint iy = (uint)pose[1] / map_resolution;
-
-                    if(ix >= 0 && ix < dilated_obstacles_map[0].size() && iy >= 0 &&
-                       iy < dilated_obstacles_map.size())
-                    { convergence_condition &= !dilated_obstacles_map[iy][ix]; }
-                    else
-                        convergence_condition = false;
-                }
-                if(!convergence_condition) convergence_status = -3;
+                    convergence_condition &=
+                        (uh[i].norm() <= (20 * control_threshold * u[i].norm()));
             }
+            else
+                convergence_condition = false;
+
+            std::cout << YELLOW
+                      << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
+                         "goal position: "
+                      << distance_to_goal << " m" << NOCOLOR << std::endl;
+
+            if(!convergence_condition) convergence_status = -1;
         }
 
-        /*std::string state_file = std::string("./results/")+std::to_string(number_iterations)+std::string("_stepped_planned_state.txt");
-        std::string control_file = std::string("./results/")+std::to_string(number_iterations)+std::string("_stepped_planned_control.txt");
+        // Check if the orientation objective has been reached
+        if(check_orientation && convergence_condition)
+        {
+            Eigen::VectorXd termination_state(orientation_indexes.size());
+            Eigen::VectorXd termination_goal(orientation_indexes.size());
+            for(uint i = 0; i < orientation_indexes.size(); i++)
+            {
+                termination_state(i) = x[number_time_steps - 1](orientation_indexes[i]);
+                termination_goal(i) =
+                    reference_state[number_time_steps - 1](orientation_indexes[i]);
+            }
 
-        FileManager::writeMatrixFile(state_file, x);
-        FileManager::writeMatrixFile(control_file, u);*/
+            orientation_to_goal = (termination_state - termination_goal).norm();
+
+            convergence_condition &= (orientation_to_goal < orientation_threshold);
+
+            std::cout << YELLOW
+                      << "[MotionPlanner::generateUnconstrainedMotionPlan]: Distance to "
+                         "goal orientation: "
+                      << orientation_to_goal << " rad" << NOCOLOR << std::endl;
+
+            if(!convergence_condition) convergence_status = -1;
+        }
+
+        // Check if the planned motion is safe
+        if(check_safety && convergence_condition)
+        {
+            for(uint i = 0; i < number_time_steps; i++)
+            {
+                std::vector<double> pose = {x[i](pose_indexes[0]), x[i](pose_indexes[1])};
+                uint ix = (uint)(pose[0] / map_resolution);
+                uint iy = (uint)(pose[1] / map_resolution);
+
+                if(ix >= 0 && ix < dilated_obstacles_map[0].size() && iy >= 0 &&
+                   iy < dilated_obstacles_map.size())
+                {
+                    convergence_condition &= !dilated_obstacles_map[iy][ix];
+                }
+                else
+                    convergence_condition = false;
+            }
+            if(!convergence_condition) convergence_status = -3;
+        }
 
         // If the algorithm has converged!!
         if(convergence_condition)
         {
-            std::cout << green
+            std::cout << GREEN
                       << "[MotionPlanner::generateUnconstrainedMotionPlan]: The motion planner "
                          "found a solution!"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
 
             planned_state = x;
             planned_control = u;
+
+            FileManager::writeMatrixFile("/home/user/unconstrained_planned_state.txt",
+                                         planned_state);
+            FileManager::writeMatrixFile("/home/user/unconstrained_planned_control.txt",
+                                         planned_control);
+
             is_motion_planned = true;
 
             return 1;
@@ -1338,10 +1467,10 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
             if(!updateLinearModel(x, u, A_hor, B_hor))
             {
                 std::cout
-                    << red
+                    << RED
                     << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: Unable to update "
                        "the system linear matrixes"
-                    << nocolor << std::endl;
+                    << NOCOLOR << std::endl;
                 return 0;
             }
         }
@@ -1349,7 +1478,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
         // If the algorithm finally failed to converge
         if(number_iterations > max_iter)
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateUnconstrainedMotionPlan]: The motion "
                          "planner failed to find a solution, ";
 
@@ -1369,7 +1498,7 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
                     break;
             }
 
-            std::cout << nocolor << std::endl;
+            std::cout << NOCOLOR << std::endl;
             return convergence_status;
         }
     }
@@ -1377,10 +1506,10 @@ int MotionPlanner::generateUnconstrainedMotionPlan(const Eigen::VectorXd & x_ini
     return 1;
 }
 
-int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
+int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_t0,
                                                  const std::vector<Eigen::VectorXd> & x0,
                                                  const std::vector<Eigen::VectorXd> & xs,
-                                                 const Eigen::VectorXd & u_ini,
+                                                 const std::vector<Eigen::VectorXd> & u_ini,
                                                  const std::vector<Eigen::VectorXd> & u0,
                                                  const std::vector<Eigen::VectorXd> & us,
                                                  uint max_iter)
@@ -1392,19 +1521,31 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
 
     if(reference_state.size() != number_time_steps)
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateConstrainedMotionPlan]: The provided goal "
-                     "state matrix has a wrong number of time steps"
-                  << nocolor << std::endl;
+                     "state matrix has a wrong number of time steps ("
+                  << reference_state.size() << " time steps instead of the expected "
+                  << number_time_steps << ")." << NOCOLOR << std::endl;
         return -1;
     }
 
     if(reference_control.size() != number_time_steps)
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateConstrainedMotionPlan]: The provided goal "
-                     "control matrix has a wrong number of time steps"
-                  << nocolor << std::endl;
+                     "control matrix has a wrong number of time steps ("
+                  << reference_control.size() << " time steps instead of the expected "
+                  << number_time_steps << ")." << NOCOLOR << std::endl;
+        return -1;
+    }
+
+    if(u_ini.size() != number_time_steps)
+    {
+        std::cout << RED
+                  << "ERROR [MotionPlanner::generateConstrainedMotionPlan]: The provided initial "
+                     "control matrix has a wrong number of time steps ("
+                  << u_ini.size() << " time steps instead of the expected " << number_time_steps
+                  << ")." << NOCOLOR << std::endl;
         return -1;
     }
 
@@ -1416,7 +1557,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
         FastMarching::PathPlanner * path_planner = new FastMarching::PathPlanner(waypoint_distance);
 
         // Goal and initial poses
-        std::vector<double> ini_pose = {x_ini(pose_indexes[0]), x_ini(pose_indexes[1])};
+        std::vector<double> ini_pose = {x_t0(pose_indexes[0]), x_t0(pose_indexes[1])};
         std::vector<double> goal_pose = {
             reference_state[number_time_steps - 1](distance_indexes[0]),
             reference_state[number_time_steps - 1](distance_indexes[1])};
@@ -1426,10 +1567,10 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
 
         if(!path_planner->planPath(&cost_map, map_resolution, ini_pose, goal_pose, &reference_path))
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateConstrainedMotionPlan]: Failure while "
                          "computing the reference trajectory"
-                      << nocolor << std::endl;
+                      << NOCOLOR << std::endl;
             return -1;
         }
 
@@ -1446,6 +1587,13 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
         reference_state[number_time_steps - 1](pose_indexes[0]) = reference_path[path_size - 1][0];
         reference_state[number_time_steps - 1](pose_indexes[1]) = reference_path[path_size - 1][1];
         reference_state[number_time_steps - 1](pose_indexes[2]) = reference_path[path_size - 1][2];
+
+        // Wrap the goal roll angle in function of the last vehicle yaw
+        double minimum_yaw = reference_state[number_time_steps - 1](pose_indexes[2]);
+        while(reference_state[number_time_steps - 1](orientation_indexes[0]) < minimum_yaw)
+            reference_state[number_time_steps - 1](orientation_indexes[0]) += pi;
+        while(reference_state[number_time_steps - 1](orientation_indexes[0]) > minimum_yaw + pi)
+            reference_state[number_time_steps - 1](orientation_indexes[0]) -= pi;
     }
 
     // State and input along the whole time horizon
@@ -1453,8 +1601,8 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
     std::vector<Eigen::VectorXd> u(number_time_steps, Eigen::VectorXd::Zero(number_inputs));
 
     // The initial states and inputs are the ones provided
-    x[0] = x_ini;
-    u[0] = u_ini;
+    x[0] = x_t0;
+    u = u_ini;
 
     // Initializing the dynamics matrixes and cost matrixes along the whole time horizon
     std::vector<Eigen::MatrixXd> A_hor(number_time_steps,
@@ -1465,10 +1613,10 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
     // Generating the state and linearized matrixes for the whole time horizon
     if(!generateHorizonLinearization(x, u, A_hor, B_hor))
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateConstrainedMotionPlan]: Unable to generate "
                      "the system state and linear matrixes for the time horizon"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return 0;
     }
 
@@ -1496,8 +1644,8 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
     {
         double it_time = clock();
 
-        std::cout << blue << "[MotionPlanner::generateConstrainedMotionPlan]: Iteration number "
-                  << number_iterations << nocolor << std::endl;
+        std::cout << BLUE << "[MotionPlanner::generateConstrainedMotionPlan]: Iteration number "
+                  << number_iterations << NOCOLOR << std::endl;
 
         std::vector<uint> constrained_si_timesteps;
         uint number_constrained_si_timesteps = 0;
@@ -1580,10 +1728,10 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
 
             if(number_constrained_si_timesteps)
                 std::cout
-                    << yellow
+                    << YELLOW
                     << "[MotionPlanner::generateConstrainedMotionPlan]: Number of state-input "
                        "constrained time_steps: "
-                    << number_constrained_si_timesteps << nocolor << std::endl;
+                    << number_constrained_si_timesteps << NOCOLOR << std::endl;
 
             // Pure state constraints
             active_ps_constraints_horizon.resize(number_time_steps);
@@ -1641,10 +1789,10 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
             }
 
             if(number_active_ps_constraints)
-                std::cout << yellow
+                std::cout << YELLOW
                           << "[MotionPlanner::generateConstrainedMotionPlan]: Number of pure state "
                              "constrained time_steps: "
-                          << number_constrained_ps_timesteps << nocolor << std::endl;
+                          << number_constrained_ps_timesteps << NOCOLOR << std::endl;
 
             // Matrixes predefinitions
             std::vector<Eigen::MatrixXd> Dh(
@@ -1966,11 +2114,11 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                         {
                             if(-rhoi[n](i) / deltai[n](i) == alfak)
                             {
-                                std::cout << magenta
+                                std::cout << MAGENTA
                                           << "[MotionPlanner::generateConstrainedMotionPlan]: New "
                                              "state input constraint reached, at timestamp "
                                           << n << " in constraint " << i << "\n"
-                                          << nocolor;
+                                          << NOCOLOR;
                                 I_hor[n][i] = 1;
                             }
                         }
@@ -1978,11 +2126,11 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                         {
                             if(-rhoj[n](j) / deltaj[n](j) == alfak)
                             {
-                                std::cout << magenta
+                                std::cout << MAGENTA
                                           << "[MotionPlanner::generateConstrainedMotionPlan]: New "
                                              "pure state constraint reached, at timestamp "
                                           << n << " in constraint " << j << "\n"
-                                          << nocolor;
+                                          << NOCOLOR;
 
                                 J_hor[n][j] = 1;
                             }
@@ -1992,9 +2140,9 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
             }
         }
 
-        std::cout << yellow
+        std::cout << YELLOW
                   << "[MotionPlanner::generateConstrainedMotionPlan]: Elapsed iteration time: "
-                  << (double)(clock() - it_time) / CLOCKS_PER_SEC << nocolor << std::endl;
+                  << (double)(clock() - it_time) / CLOCKS_PER_SEC << " s" << NOCOLOR << std::endl;
 
         // Exit procedure
         if(step_3)
@@ -2099,10 +2247,10 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                             convergence_condition &=
                                 (step_control[i].norm() <= (20 * control_threshold * u[i].norm()));
                     }
-                    std::cout << yellow
+                    std::cout << YELLOW
                               << "[MotionPlanner::generateConstrainedMotionPlan]: Distance to "
                                  "goal position: "
-                              << distance_to_goal << nocolor << std::endl;
+                              << distance_to_goal << " m" << NOCOLOR << std::endl;
 
                     if(!convergence_condition) convergence_status = -1;
                 }
@@ -2123,10 +2271,10 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
 
                     convergence_condition &= (orientation_to_goal < orientation_threshold);
 
-                    std::cout << yellow
+                    std::cout << YELLOW
                               << "[MotionPlanner::generateConstrainedMotionPlan]: Distance to "
                                  "goal orientation: "
-                              << orientation_to_goal << nocolor << std::endl;
+                              << orientation_to_goal << " rad" << NOCOLOR << std::endl;
 
                     if(!convergence_condition) convergence_status = -1;
                 }
@@ -2137,12 +2285,14 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                     for(uint i = 0; i < number_time_steps; i++)
                     {
                         std::vector<double> pose = {x[i](pose_indexes[0]), x[i](pose_indexes[1])};
-                        uint ix = (uint)pose[0] / map_resolution;
-                        uint iy = (uint)pose[1] / map_resolution;
+                        uint ix = (uint)(pose[0] / map_resolution);
+                        uint iy = (uint)(pose[1] / map_resolution);
 
                         if(ix >= 0 && ix < dilated_obstacles_map[0].size() && iy >= 0 &&
                            iy < dilated_obstacles_map.size())
-                        { convergence_condition &= !dilated_obstacles_map[iy][ix]; }
+                        {
+                            convergence_condition &= !dilated_obstacles_map[iy][ix];
+                        }
                         else
                             convergence_condition = false;
                     }
@@ -2154,20 +2304,20 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
             if(!updateLinearModel(x, u, A_hor, B_hor))
             {
                 std::cout
-                    << red
+                    << RED
                     << "ERROR [MotionPlanner::generateConstrainedMotionPlan]: Unable to update "
                        "the system linear matrixes"
-                    << nocolor << std::endl;
+                    << NOCOLOR << std::endl;
                 return 0;
             }
 
             // If the algorithm has converged!!
             if(convergence_condition && number_iterations > 0)
             {
-                std::cout << green
+                std::cout << GREEN
                           << "[MotionPlanner::generateConstrainedMotionPlan]: The motion planner "
                              "found a solution!"
-                          << nocolor << std::endl;
+                          << NOCOLOR << std::endl;
 
                 planned_state = x;
                 planned_control = u;
@@ -2192,7 +2342,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
         // If the algorithm finally failed to converge
         if(number_iterations > max_iter)
         {
-            std::cout << red
+            std::cout << RED
                       << "ERROR [MotionPlanner::generateConstrainedMotionPlan]: The motion "
                          "planner failed to find a solution, ";
 
@@ -2212,7 +2362,7 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
                     break;
             }
 
-            std::cout << nocolor << std::endl;
+            std::cout << NOCOLOR << std::endl;
             return convergence_status;
         }
     }
@@ -2220,86 +2370,100 @@ int MotionPlanner::generateConstrainedMotionPlan(const Eigen::VectorXd & x_ini,
     return 1;
 }
 
-int MotionPlanner::generateSteppedMotionPlan(const Eigen::VectorXd & x_ini,
+int MotionPlanner::generateSteppedMotionPlan(const Eigen::VectorXd & x_t0,
                                              const std::vector<Eigen::VectorXd> & x0,
-                                             const Eigen::VectorXd & u_ini,
+                                             const std::vector<Eigen::VectorXd> & u_ini,
                                              const std::vector<Eigen::VectorXd> & u0)
 {
-    if(generateUnconstrainedMotionPlan(x_ini, x0, u_ini, u0, (uint)(max_iterations / 2 + 0.4)) != 1)
+    if(generateUnconstrainedMotionPlan(x_t0, x0, u_ini, u0, (uint)(max_iterations / 2 + 0.4)) != 1)
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Failed to generate the "
                      "unconstrained motion plan"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return -1;
     }
 
     bool constraints_satisfied;
     if(!checkConstraints(constraints_satisfied))
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Failure while checking the "
                      "constraints"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return -1;
     }
 
     if(constraints_satisfied)
     {
-        std::cout << green
+        std::cout << GREEN
                   << "[MotionPlanner::generateSteppedMotionPlan]: The imposed constraints are "
                      "satisfied, the stepped motion planner found a solution!"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
 
         return 1;
     }
 
-    std::cout << blue
+    std::cout << BLUE
               << "[MotionPlanner::generateSteppedMotionPlan]: Generating a further constrained "
                  "motion plan to ensure the imposed constraints are satisfied"
-              << nocolor << std::endl;
+              << NOCOLOR << std::endl;
+
+    std::vector<Eigen::VectorXd> x_ini = planned_state;
 
     std::vector<Eigen::VectorXd> xs = planned_state;
     std::vector<Eigen::VectorXd> us = planned_control;
-    for(uint i = 0; i < number_time_steps; i++)
+    for(uint i = 0; i < number_time_steps - 1; i++)
     {
-        xs[i] -= x_ini;
-        us[i] -= u_ini;
+        if(!robot_ss_model->forwardIntegrateModel(x_ini[i], u_ini[i], time_step, x_ini[i + 1]))
+        {
+            std::cout << RED
+                      << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Unable to forward "
+                         "integrate the model to obtain the initial state"
+                      << NOCOLOR << std::endl;
+            return false;
+        }
+
+        xs[i] -= x_ini[i];
+        us[i] -= u_ini[i];
     }
 
-    if(generateConstrainedMotionPlan(x_ini, x0, xs, u_ini, u0, us, (uint)(max_iterations / 2)) != 1)
+    xs[number_time_steps - 1] -= x_ini[number_time_steps - 1];
+    us[number_time_steps - 1] -= u_ini[number_time_steps - 1];
+
+    if(generateConstrainedMotionPlan(x_t0, x0, xs, u_ini, u0, us, (uint)(max_iterations / 2)) != 1)
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Failed to generate the "
                      "constrained motion plan"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return -1;
     }
 
     if(!checkConstraints(constraints_satisfied))
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Failure while checking the "
                      "constraints"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return -1;
     }
 
     if(constraints_satisfied)
     {
-        std::cout << green
+        std::cout << GREEN
                   << "[MotionPlanner::generateSteppedMotionPlan]: The imposed constraints are "
                      "satisfied, the stepped motion planner found a solution!"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
 
         return 1;
     }
     else
     {
-        std::cout << red
+        std::cout << RED
                   << "ERROR [MotionPlanner::generateSteppedMotionPlan]: Unexpected behaviour of "
                      "the constrained motion planner, the imposed constraints are not satisfied"
-                  << nocolor << std::endl;
+                  << NOCOLOR << std::endl;
         return -1;
     }
 
@@ -2310,9 +2474,10 @@ bool MotionPlanner::getPlannedState(std::vector<Eigen::VectorXd> & x)
 {
     if(!is_motion_planned)
     {
-        std::cout << red
-                  << "ERROR [MotionPlanner::getPlannedState]: No motion plan has yet been generated"
-                  << nocolor << std::endl;
+        std::cout << RED
+                  << "ERROR [MotionPlanner::getPlannedState]: Can not return the planned state, no "
+                     "motion plan has yet been generated"
+                  << NOCOLOR << std::endl;
         return false;
     }
     else
@@ -2325,10 +2490,10 @@ bool MotionPlanner::getPlannedControl(std::vector<Eigen::VectorXd> & u)
 {
     if(!is_motion_planned)
     {
-        std::cout
-            << red
-            << "ERROR [MotionPlanner::getPlannedControl]: No motion plan has yet been generated"
-            << nocolor << std::endl;
+        std::cout << RED
+                  << "ERROR [MotionPlanner::getPlannedControl]: Can not return the planned "
+                     "control, no motion plan has yet been generated"
+                  << NOCOLOR << std::endl;
         return false;
     }
     else
@@ -2337,4 +2502,41 @@ bool MotionPlanner::getPlannedControl(std::vector<Eigen::VectorXd> & u)
     }
 
     return true;
+}
+
+bool MotionPlanner::getPlannedTimestamps(std::vector<double> & t)
+{
+    if(!is_motion_planned)
+    {
+        std::cout << RED
+                  << "ERROR [MotionPlanner::getPlannedControl]: Can not return the planned "
+                     "control, no motion plan has yet been generated"
+                  << NOCOLOR << std::endl;
+        return false;
+    }
+    else
+    {
+        t.resize(number_time_steps);
+        for(uint i = 0; i < number_time_steps; i++)
+        {
+            t[i] = time_step * i;
+        }
+    }
+
+    return true;
+}
+
+double MotionPlanner::getTimeHorizon()
+{
+    return time_horizon;
+}
+
+double MotionPlanner::getTimeStep()
+{
+    return time_step;
+}
+
+uint MotionPlanner::getNumberTimeSteps()
+{
+    return number_time_steps;
 }

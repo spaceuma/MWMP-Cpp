@@ -6,7 +6,7 @@ if (POLICY CMP0048)
 endif (POLICY CMP0048)
 
 # set the project name and version
-project(SOMP VERSION 1)
+project(MWMP VERSION 1)
 
 find_package (OpenCV REQUIRED)
 find_package (Eigen3 REQUIRED)
@@ -20,8 +20,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(GCC_COMPILE_FLAGS "-march=native -fopenmp")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
 
-# SOMP library
-file(GLOB SOMP_SRC
+# MWMP library
+file(GLOB MWMP_SRC
      "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
      "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 )
@@ -31,22 +31,22 @@ file(GLOB FILE_MANAGER
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/FileManager/*.cpp"
 )
 
-add_library(SOMP SHARED
-            ${SOMP_SRC}
-            ${FILE_MANAGER})
+#add_library(MWMP SHARED
+#            ${MWMP_SRC}
+#            ${FILE_MANAGER})
 
-MESSAGE(STATUS "Library SOMP, included files:
-        --SOMP_SRC: ${SOMP_SRC}
-        --FILE_MANAGER: ${FILE_MANAGER}")
+#MESSAGE(STATUS "Library MWMP, included files:
+#        --MWMP_SRC: ${MWMP_SRC}
+#        --FILE_MANAGER: ${FILE_MANAGER}")
 
-target_include_directories(SOMP PUBLIC
-                           "${PROJECT_BINARY_DIR}"
-                           "${PROJECT_SOURCE_DIR}/src"
-                           "${PROJECT_SOURCE_DIR}/utils"
-                           "${PROJECT_SOURCE_DIR}/utils/FileManager"
-                           )
+        #target_include_directories(MWMP PUBLIC
+        #                   "${PROJECT_BINARY_DIR}"
+        #                   "${PROJECT_SOURCE_DIR}/src"
+        #                   "${PROJECT_SOURCE_DIR}/utils"
+        #                   "${PROJECT_SOURCE_DIR}/utils/FileManager"
+        #                   )
 
-target_link_libraries(SOMP PUBLIC ${OpenCV_LIBS} Eigen3::Eigen)
+        #target_link_libraries(MWMP PUBLIC ${OpenCV_LIBS} Eigen3::Eigen)
 
 # Unit tests executable
 find_package (GTest REQUIRED)
@@ -59,11 +59,11 @@ file(GLOB UNIT_TEST
 
 add_executable(runUnitTests
                ${UNIT_TEST}
-               ${SOMP_SRC}
+               ${MWMP_SRC}
                ${FILE_MANAGER})
 
 MESSAGE(STATUS "Executable runUnitTests, included files:
-        --SOMP_SRC: ${SOMP_SRC}
+        --MWMP_SRC: ${MWMP_SRC}
         --FILE_MANAGER: ${FILE_MANAGER}
         --UNIT_TEST: ${UNIT_TEST}")
 

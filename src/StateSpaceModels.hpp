@@ -39,15 +39,15 @@
 
 #define pi 3.14159265359
 
-#define nocolor "\033[0m"
-#define black "\033[1;30m"
-#define red "\033[1;31m"
-#define green "\033[1;32m"
-#define yellow "\033[1;33m"
-#define blue "\033[1;34m"
-#define magenta "\033[1;35m"
-#define cyan "\033[1;36m"
-#define white "\033[1;37m"
+#define NOCOLOR "\033[0m"
+#define BLACK "\033[1;30m"
+#define RED "\033[1;31m"
+#define GREEN "\033[1;32m"
+#define YELLOW "\033[1;33m"
+#define BLUE "\033[1;34m"
+#define MAGENTA "\033[1;35m"
+#define CYAN "\033[1;36m"
+#define WHITE "\033[1;37m"
 
 namespace StateSpaceModels
 {
@@ -71,26 +71,26 @@ private:
     // Model properties //
     //******************//
 
-    // Indexes of the distance goal states. Size: 3
+    // Indexes of the distance goal states. Size: 3 (x, y, z)
     std::vector<uint> goal_distance_indexes;
 
-    // Indexes of the orientation goal states. Size: 3
+    // Indexes of the orientation goal states. Size: 3 (roll, pitch, yaw)
     std::vector<uint> goal_orientation_indexes;
 
     // Indexes of the pose of the arm end effector from the world reference frame
-    // Size: 3
+    // Size: 3 (x, y, z)
     std::vector<uint> world_ee_pose_indexes;
 
     // Indexes of the pose of the arm end effector from its base reference frame
-    // Size: 6
+    // Size: 6 (x, y, z, roll, pitch, yaw)
     std::vector<uint> base_ee_pose_indexes;
 
     // Indexes of the XY pose of the robot
-    // Size: 2
+    // Size: 3 (x, y, yaw)
     std::vector<uint> robot_pose_indexes;
 
     // Indexes of the XY and yaw speed of the robot
-    // Size: 3
+    // Size: 3 (x, y, yaw)
     std::vector<uint> base_speed_indexes;
 
     // Indexes of the arm joints position of the robot
@@ -115,7 +115,7 @@ private:
 
     // Indexes of the wheels steering speed control input
     // Size: 1 (the rest steering angles are geometrically dependant)
-    std::vector<uint> steering_actuator_indexes;
+    std::vector<uint> steering_actuators_indexes;
 
     // Indexes of the constrained states
     std::vector<uint> state_constrained_indexes;
@@ -213,6 +213,9 @@ private:
     // Distance to obstacles the robot should maintain to ensure safety
     double safety_distance;
 
+    // Minimum time horizon in which convergence is ensured
+    double min_time_horizon;
+
     //*****************//
     // Quadratic costs //
     //*****************//
@@ -278,6 +281,12 @@ public:
     // Returns the number of inputs in the state vector.
     uint getNumberInputs();
 
+    // Returns the number of arm joints.
+    uint getNumberArmJoints();
+
+    // Returns the type of steering.
+    std::string getSteeringType();
+
     // Returns the indexes where to check for distance to the goal.
     std::vector<uint> getIndexesGoalDistance();
 
@@ -293,17 +302,49 @@ public:
     // Returns the indexes where to check for the robot pose.
     std::vector<uint> getIndexesRobotPose();
 
+    // Return the end effector pose given the state vector.
+    std::vector<double> getEEPose(Eigen::VectorXd & x);
+
+    // Return the robot pose given the state vector.
+    std::vector<double> getRobotPose(Eigen::VectorXd & x);
+
+    // Return the robot base speed given the state vector.
+    std::vector<double> getRobotBaseSpeed(Eigen::VectorXd & x);
+
+    // Return the arm joints position given the state vector.
+    std::vector<double> getArmJointsPosition(Eigen::VectorXd & x);
+
+    // Return the wheels steering joints position given the state vector.
+    std::vector<double> getSteeringJointsPosition(Eigen::VectorXd & x);
+
+    // Return the arm actuation speed given the control vector.
+    std::vector<double> getArmJointsSpeedCommand(Eigen::VectorXd & u);
+
+    // Return the driving wheels speed given the control vector.
+    std::vector<double> getDrivingWheelsSpeedCommand(Eigen::VectorXd & x, Eigen::VectorXd & u);
+
+    // Return the steering wheels speed given the control vector.
+    std::vector<double> getSteeringWheelsSpeedCommand(Eigen::VectorXd & x, Eigen::VectorXd & u);
+
     // Returns the risk distance to obstacles of the robot.
     double getRiskDistance();
 
     // Returns the safety distance to obstacles of the robot.
     double getSafetyDistance();
 
+    // Returns the minimum allowed time horizon.
+    double getMinTimeHorizon();
+
     // Returns the state vector given the robot state.
     Eigen::VectorXd getInitialStateVectorEigen(const std::vector<double> & robot_pose,
                                                const std::vector<double> & arm_positions);
 
-    // Returns the state vector given the robot state.
+    Eigen::VectorXd getInitialStateVectorEigen(const std::vector<double> & robot_pose,
+                                               const std::vector<double> & arm_positions,
+                                               const std::vector<double> & arm_speeds,
+                                               const std::vector<double> & driving_speeds,
+                                               const std::vector<double> & steer_positions = {});
+
     bool getInitialStateVectorEigen(const std::vector<double> & robot_pose,
                                     const std::vector<double> & arm_positions,
                                     Eigen::VectorXd & x);
@@ -312,7 +353,6 @@ public:
     std::vector<double> getInitialStateVector(const std::vector<double> & robot_pose,
                                               const std::vector<double> & arm_positions);
 
-    // Returns the state vector given the robot state.
     bool getInitialStateVector(const std::vector<double> & robot_pose,
                                const std::vector<double> & arm_positions,
                                std::vector<double> & x);
@@ -503,6 +543,9 @@ public:
 
     // Returns the steering angle of the front right wheel in function of the front left one
     double getRightWheelSteer(double left_wheel_steer);
+
+    // Returns the driving speed of the right wheels in function of the front left steering angle
+    double getRightWheelsSpeed(double left_wheels_speed, double left_wheel_steer);
 
     // Returns the updated state after applying the control input u into the previous state x
     // over a time interval time_step.

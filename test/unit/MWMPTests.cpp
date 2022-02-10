@@ -29,7 +29,7 @@
 // Space Robotics Lab (www.uma.es/space-robotics)
 
 #include "FileManager.hpp"
-#include "SOMP.hpp"
+#include "MWMP.hpp"
 #include <Eigen/Dense>
 #include <ctime>
 #include <gtest/gtest.h>
@@ -44,9 +44,9 @@
 #define cyan "\033[1;36m"
 #define white "\033[1;37m"
 
-using namespace SOMP;
+using namespace MWMP;
 
-TEST(SOMP, constructors_test)
+TEST(MWMP, constructors_test)
 {
     StateSpaceModels::MobileManipulator * exoter_model =
         new StateSpaceModels::MobileManipulator("exoter_ack");
@@ -55,7 +55,7 @@ TEST(SOMP, constructors_test)
 
     EXPECT_EQ(true, exoter_mp1->setTimeStep(1));
 
-    SOMP::Config mp_config;
+    MWMP::Config mp_config;
     mp_config.time_horizon = 160;
     mp_config.time_step = 1.0063;
     mp_config.max_iterations = 200;
@@ -70,7 +70,7 @@ TEST(SOMP, constructors_test)
 
     EXPECT_EQ(true, exoter_mp2->setTimeHorizon(200));
 
-    SOMP::MapInfo mp_map;
+    MWMP::MapInfo mp_map;
     mp_map.map_resolution = 0.05;
     std::vector<double> goal_pose = {3.1, 2.8};
     mp_map.goal_pose = goal_pose;
@@ -84,12 +84,12 @@ TEST(SOMP, constructors_test)
     delete(exoter_mp3);
 }
 
-/*TEST(SOMP, unconstrained_mp_test)
+/*TEST(MWMP, unconstrained_mp_test)
 {
     StateSpaceModels::MobileManipulator * exoter_model =
         new StateSpaceModels::MobileManipulator("exoter_ack");
 
-    SOMP::Config mp_config;
+    MWMP::Config mp_config;
     mp_config.time_horizon = 160;
     mp_config.time_step = 1.006289308;
     mp_config.max_iterations = 200;
@@ -100,7 +100,7 @@ TEST(SOMP, constructors_test)
     mp_config.track_reference_trajectory = true;
     uint number_time_steps = (uint)(mp_config.time_horizon / mp_config.time_step) + 1;
 
-    SOMP::MapInfo mp_map;
+    MWMP::MapInfo mp_map;
     mp_map.map_resolution = 0.05;
 
     std::vector<double> goal_pose;
@@ -138,7 +138,7 @@ TEST(SOMP, constructors_test)
 
     double ini_time = clock();
     EXPECT_EQ(1, exoter_mp->generateUnconstrainedMotionPlan(x_ini, x0, u_ini, u0, 100));
-    std::cout << cyan << "[SOMP::unconstrained_mp_test] Elapsed time: "
+    std::cout << cyan << "[MWMP::unconstrained_mp_test] Elapsed time: "
               << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     std::vector<Eigen::VectorXd> x;
@@ -154,12 +154,12 @@ TEST(SOMP, constructors_test)
     delete(exoter_mp);
 }
 
-TEST(SOMP, constrained_mp_test)
+TEST(MWMP, constrained_mp_test)
 {
     StateSpaceModels::MobileManipulator * exoter_model =
         new StateSpaceModels::MobileManipulator("exoter_ack");
 
-    SOMP::Config mp_config;
+    MWMP::Config mp_config;
     mp_config.time_horizon = 160;
     mp_config.time_step = 1.006289308;
     mp_config.max_iterations = 200;
@@ -170,7 +170,7 @@ TEST(SOMP, constrained_mp_test)
     mp_config.track_reference_trajectory = true;
     uint number_time_steps = (uint)(mp_config.time_horizon / mp_config.time_step) + 1;
 
-    SOMP::MapInfo mp_map;
+    MWMP::MapInfo mp_map;
     mp_map.map_resolution = 0.05;
 
     std::vector<double> goal_pose;
@@ -212,7 +212,7 @@ TEST(SOMP, constrained_mp_test)
 
     double ini_time = clock();
     EXPECT_EQ(1, exoter_mp->generateConstrainedMotionPlan(x_ini, x0, xs, u_ini, u0, us, 100));
-    std::cout << cyan << "[SOMP::constrained_mp_test] Elapsed time: "
+    std::cout << cyan << "[MWMP::constrained_mp_test] Elapsed time: "
               << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     std::vector<Eigen::VectorXd> x;
@@ -227,12 +227,12 @@ TEST(SOMP, constrained_mp_test)
     delete(exoter_mp);
 }*/
 
-TEST(SOMP, stepped_mp_test)
+TEST(MWMP, stepped_mp_test)
 {
     StateSpaceModels::MobileManipulator * exoter_model =
         new StateSpaceModels::MobileManipulator("exoter_ack");
 
-    SOMP::Config mp_config;
+    MWMP::Config mp_config;
     mp_config.time_horizon = 160;
     mp_config.time_step = 1.006289308;
     mp_config.max_iterations = 200;
@@ -243,7 +243,7 @@ TEST(SOMP, stepped_mp_test)
     mp_config.track_reference_trajectory = true;
     uint number_time_steps = (uint)(mp_config.time_horizon / mp_config.time_step) + 1;
 
-    SOMP::MapInfo mp_map;
+    MWMP::MapInfo mp_map;
     mp_map.map_resolution = 0.05;
 
     std::vector<double> goal_pose;
@@ -280,7 +280,7 @@ TEST(SOMP, stepped_mp_test)
 
     double ini_time = clock();
     EXPECT_EQ(1, exoter_mp->generateSteppedMotionPlan(x_ini, x0, u_ini, u0));
-    std::cout << cyan << "[SOMP::stepped_mp_test] Elapsed time: "
+    std::cout << cyan << "[MWMP::stepped_mp_test] Elapsed time: "
               << (double)(clock() - ini_time) / CLOCKS_PER_SEC << " s" << nocolor << std::endl;
 
     std::vector<Eigen::VectorXd> x;

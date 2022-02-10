@@ -1,5 +1,5 @@
-# SOMP-Cpp
-Stepped Optimal Motion Planning (SOMP) C++ library
+# MWMP-Cpp
+Multi-staged Warm started Motion Planning (MWMP) C++ library
 
 Space Robotics Lab, University of Malaga
 

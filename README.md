@@ -1,5 +1,9 @@
-# MWMP-Cpp
-Multi-staged Warm started Motion Planner (MWMP) C++ library
+  <h1 align="center">MWMP-Cpp</h1>
+  <h4 align="center">Multi-staged Warm started Motion Planner (MWMP) C++ library</h4>
+  
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/37618448/177987095-dc7dba1f-7879-4f9e-a723-b7c4c3780e14.png" width="200">
+</p>
 
 ![image](https://user-images.githubusercontent.com/37618448/177952812-e9e866cc-04f3-4659-b53b-97cf3950598f.png)
 

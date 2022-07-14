@@ -31,22 +31,22 @@ file(GLOB FILE_MANAGER
     "${CMAKE_CURRENT_SOURCE_DIR}/utils/FileManager/*.cpp"
 )
 
-#add_library(MWMP SHARED
-#            ${MWMP_SRC}
-#            ${FILE_MANAGER})
+add_library(MWMP SHARED
+            ${MWMP_SRC}
+            ${FILE_MANAGER})
 
-#MESSAGE(STATUS "Library MWMP, included files:
-#        --MWMP_SRC: ${MWMP_SRC}
-#        --FILE_MANAGER: ${FILE_MANAGER}")
+MESSAGE(STATUS "Library MWMP, included files:
+        --MWMP_SRC: ${MWMP_SRC}
+        --FILE_MANAGER: ${FILE_MANAGER}")
 
-        #target_include_directories(MWMP PUBLIC
-        #                   "${PROJECT_BINARY_DIR}"
-        #                   "${PROJECT_SOURCE_DIR}/src"
-        #                   "${PROJECT_SOURCE_DIR}/utils"
-        #                   "${PROJECT_SOURCE_DIR}/utils/FileManager"
-        #                   )
+        target_include_directories(MWMP PUBLIC
+                           "${PROJECT_BINARY_DIR}"
+                           "${PROJECT_SOURCE_DIR}/src"
+                           "${PROJECT_SOURCE_DIR}/utils"
+                           "${PROJECT_SOURCE_DIR}/utils/FileManager"
+                           )
 
-        #target_link_libraries(MWMP PUBLIC ${OpenCV_LIBS} Eigen3::Eigen)
+        target_link_libraries(MWMP PUBLIC ${OpenCV_LIBS} Eigen3::Eigen)
 
 # Unit tests executable
 find_package (GTest REQUIRED)

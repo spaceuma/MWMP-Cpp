@@ -8,9 +8,8 @@ sudo cmake --build . --target install
 
 cd $cur
 rm -rf build
+rm -f test/unit/runUnitTests
 mkdir build
 cd build
 cmake -Wno-dev ..
 cmake --build ./
-
-mv runUnitTests ../test/unit/

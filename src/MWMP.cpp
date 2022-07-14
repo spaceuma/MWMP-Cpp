@@ -2398,7 +2398,7 @@ int MotionPlanner::generateSteppedMotionPlan(const Eigen::VectorXd & x_t0,
     {
         std::cout << GREEN
                   << "[MotionPlanner::generateSteppedMotionPlan]: The imposed constraints are "
-                     "satisfied, the stepped motion planner found a solution!"
+                     "satisfied, MWMP found a solution!"
                   << NOCOLOR << std::endl;
 
         return 1;
@@ -2453,7 +2453,7 @@ int MotionPlanner::generateSteppedMotionPlan(const Eigen::VectorXd & x_t0,
     {
         std::cout << GREEN
                   << "[MotionPlanner::generateSteppedMotionPlan]: The imposed constraints are "
-                     "satisfied, the stepped motion planner found a solution!"
+                     "satisfied, MWMP found a solution!"
                   << NOCOLOR << std::endl;
 
         return 1;

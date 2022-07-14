@@ -21,6 +21,57 @@ Motion planning library that uses Sequential Linear Quadratic regulator (SLQ) in
   - Second, the unconstrained solution of the motion planning problem is found using Unconstrained SLQ.
   - Third, the unconstrained solution is used to initialize the Constrained SLQ algorithm to find the complete constraints compliant, global motion plan.
 
+## File tree
+```bash
+MWMP-Cpp/
+├── src/
+│   ├── FastMarching.cpp
+│   ├── FastMarching.hpp
+│   ├── MatrixOperations.cpp
+│   ├── MatrixOperations.hpp
+│   ├── MWMP.cpp
+│   ├── MWMP.hpp
+│   ├── StateSpaceModels.cpp
+│   └── StateSpaceModels.hpp
+├── test/
+│   └── unit/
+│       ├── inputs/
+│       │   ├── dummy_obstacles_map.txt
+│       │   ├── goal_ee_pose.txt
+│       │   ├── ini_arm_positions.txt
+│       │   ├── ini_arm_speeds.txt
+│       │   ├── ini_rover_pose.txt
+│       │   ├── ini_wheels_speed.txt
+│       │   ├── u.txt
+│       │   └── x.txt
+│       ├── results/
+│       │   ├── A.txt
+│       │   ├── B.txt
+│       │   ├── C.txt
+│       │   ├── D.txt
+│       │   ├── G.txt
+│       │   ├── K.txt
+│       │   ├── Q.txt
+│       │   ├── R.txt
+│       │   ├── h.txt
+│       │   ├── obs_cost.txt
+│       │   ├── r.txt
+│       │   └── xf.txt
+│       ├── MWMPTests.cpp
+│       ├── StateSpaceModelsTests.cpp
+│       └── UnitTests.cpp
+├── utils/
+│   ├── FileManager.cpp
+│   └── FileManager.hpp
+├── .clang-format
+├── .gitignore
+├── CMakeLists.txt
+├── LICNESE
+├── README.md
+├── install.sh
+└── runUnitTests.sh
+```
+
 ## Versions
 
 [Go to the MatLab version](https://github.com/spaceuma/MWMP-MatLab)               

@@ -201,7 +201,7 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         differential_width = 0.3;
         differential_length = 0.27;
 
-        robot_weight = 15;
+        robot_weight = 24.4;
 
         robot_height = 0.202;
 
@@ -257,18 +257,18 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
         //*****************//
         obstacles_repulsive_cost = 200.0;
 
-        goal_states_cost = {1000000000, 1000000000, 1000000000, 1000000000, 1000000000, 1000000000, 1000000000};
+        goal_states_cost = {1000000000, 1000000000, 1000000000, 1000000000, 1000000000, 1000000000, 0};
         goal_speed_cost = 10000000;
 
         whole_states_cost = {20,
                              20,
                              20,
-                             400,
-                             60000000,
-                             60000000,
-                             60000000,
-                             60000000,
-                             60000000,
+                             0,
+                             30000000,
+                             30000000,
+                             30000000,
+                             30000000,
+                             30000000,
                              10,
                              10,
                              10,
@@ -277,7 +277,7 @@ MobileManipulator::MobileManipulator(std::string _robot_name)
                              100000,
                              100000};
 
-        whole_inputs_cost = {400000, 400000, 400000, 400000, 100000, 20000, 150000};
+        whole_inputs_cost = {100000, 100000, 100000, 100000, 20000, 20000, 150000};
 
         yaw_linearization_cost = 0.35;
         steering_forward_linearization_cost = 0.001;

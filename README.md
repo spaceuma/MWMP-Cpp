@@ -144,27 +144,7 @@ MWMP-Cpp/
 ├── test/
 │   └── unit/
 │       ├── inputs/
-│       │   ├── dummy_obstacles_map.txt
-│       │   ├── goal_ee_pose.txt
-│       │   ├── ini_arm_positions.txt
-│       │   ├── ini_arm_speeds.txt
-│       │   ├── ini_rover_pose.txt
-│       │   ├── ini_wheels_speed.txt
-│       │   ├── u.txt
-│       │   └── x.txt
 │       ├── results/
-│       │   ├── A.txt
-│       │   ├── B.txt
-│       │   ├── C.txt
-│       │   ├── D.txt
-│       │   ├── G.txt
-│       │   ├── K.txt
-│       │   ├── Q.txt
-│       │   ├── R.txt
-│       │   ├── h.txt
-│       │   ├── obs_cost.txt
-│       │   ├── r.txt
-│       │   └── xf.txt
 │       ├── MWMPTests.cpp
 │       ├── StateSpaceModelsTests.cpp
 │       └── UnitTests.cpp

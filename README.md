@@ -59,7 +59,7 @@ Then, to run the unit tests, just use the runUnitTests.sh script:
 sh runUnitTests.sh
 ```
 
-This should output the result of the unit tests:
+This should output the result of the unit tests (one unit test for each combination of MWMP stages):
 
 ```bash
 [==========] Running 7 tests from 2 test suites.
@@ -125,6 +125,8 @@ This should output the result of the unit tests:
 [  PASSED  ] 7 tests.
 Finished execution of runUnitTests.sh
 ```
+
+Each unit test will save its results in the test/unit/results folder with a particular name (unconstrained, ws_unconstrained, ...).
 
 
 ## File tree

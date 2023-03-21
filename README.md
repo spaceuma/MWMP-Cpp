@@ -14,6 +14,14 @@
 
 *Organization*: [Space Robotics Lab, University of Malaga](https://www.uma.es/space-robotics)
 
+## Table of Contents
+  * [Description](#description)
+  * [Installation and test scripts](#installation-and-test-scripts)
+  * [File tree](#file-tree)
+  * [Citation](#citation)
+  * [Versions](#versions)
+
+
 ## Description
 
 Motion planning library that uses Sequential Linear Quadratic regulator (SLQ) in a Multi-staged Warm-Started manner to plan the movements of a mobile platform. Given the platform kinematic and dynamics model, a description of the scenario, an initial state and a goal, this algorithm plans the motion sequentially:

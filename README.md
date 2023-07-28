@@ -182,7 +182,7 @@ journal = {Intelligent Service Robotics 2023},
 month = {apr},
 pages = {1--17},
 publisher = {Springer},
-title = {{Multi-stage warm started optimal motion planning for over-actuated mobile platforms}},
+title = {Multi-stage warm started optimal motion planning for over-actuated mobile platforms},
 year = {2023}
 }
 
